@@ -1,0 +1,14 @@
+[workspace]
+
+[package]
+name = "mapstruct"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.56"
+
+[features]
+default = ["alloc"]
+alloc = []
+
+[dependencies]
+"mapstruct-derive" = { path = "mapstruct-derive" }
