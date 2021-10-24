@@ -46,6 +46,17 @@ impl<A, B> MapStruct<A, B> for Option<A> {
     }
 }
 
+impl<A, B, E> MapStruct<A, B> for Result<A, E> {
+    type Output = Result<B, E>;
+
+    fn map_struct<F>(self, f: F) -> Self::Output
+    where
+        F: FnMut(A) -> B,
+    {
+        self.map(f)
+    }
+}
+
 impl<A, B> MapStruct<A, B> for PhantomData<A> {
     type Output = PhantomData<B>;
 
