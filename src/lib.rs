@@ -5,22 +5,20 @@ use core::marker::PhantomData;
 #[doc(hidden)]
 pub use mapstruct_derive::*;
 
-pub trait MapStruct<A, B> {
+pub struct TypeParam<const N: usize>;
+
+pub trait MapStruct<A, B, P = TypeParam<0>>: Sized {
     type Output;
 
-    fn map_struct<F>(self, f: F) -> Self::Output
+    fn map_struct<F>(self, _: F) -> Self::Output
     where
         F: FnMut(A) -> B;
-}
 
-impl<A, B> MapStruct<A, B> for A {
-    type Output = B;
-
-    fn map_struct<F>(self, mut f: F) -> Self::Output
+    fn map_struct_over<F>(self, _: P, f: F) -> Self::Output
     where
         F: FnMut(A) -> B,
     {
-        f(self)
+        self.map_struct(f)
     }
 }
 
@@ -54,6 +52,17 @@ impl<A, B, E> MapStruct<A, B> for Result<A, E> {
         F: FnMut(A) -> B,
     {
         self.map(f)
+    }
+}
+
+impl<T, A, B> MapStruct<A, B, TypeParam<1>> for Result<T, A> {
+    type Output = Result<T, B>;
+
+    fn map_struct<F>(self, f: F) -> Self::Output
+    where
+        F: FnMut(A) -> B,
+    {
+        self.map_err(f)
     }
 }
 

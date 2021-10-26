@@ -7,8 +7,9 @@ edition = "2021"
 rust-version = "1.56"
 
 [features]
-default = ["alloc"]
+default = ["alloc", "debug"] # TODO: remove debug
 alloc = []
+debug = ["mapstruct-derive/debug"]
 
 [dependencies]
 "mapstruct-derive" = { path = "mapstruct-derive" }

@@ -1,10 +1,11 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::visit::Visit;
-use syn::Member;
+use syn::{parse_quote, ConstParam, GenericArgument, GenericParam, LifetimeDef, Member, TypeParam};
 use syn::{spanned::Spanned, Data, DeriveInput, Fields};
 
 use crate::ident_collector::IdentCollector;
+use crate::iter::replace_at;
 use crate::macros::fail;
 use crate::struct_mapper::StructMapper;
 
@@ -20,14 +21,19 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
         ..
     } = input;
 
-    let type_param = {
-        let type_params: Vec<_> = generics.type_params().collect();
+    let type_params: Vec<_> = generics
+        .params
+        .iter()
+        .enumerate()
+        .filter_map(|(param_idx, param)| match param {
+            GenericParam::Type(type_param) => Some((param_idx, type_param)),
+            _ => None,
+        })
+        .collect();
 
-        match type_params.len() {
-            1 => type_params[0],
-            n => fail!(generics, "expected exactly one type parameter, found {}", n),
-        }
-    };
+    if type_params.is_empty() {
+        fail!(generics, "expected at least one type parameter, found none");
+    }
 
     let data_struct = match data {
         Data::Struct(data_struct) => data_struct,
@@ -47,40 +53,76 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
     let a = ident_collector.reserve_uppercase_letter('A');
     let b = ident_collector.reserve_uppercase_letter('B');
 
-    let mut struct_mapper = StructMapper::new(&a, &b);
+    let impls =
+        type_params
+            .into_iter()
+            .enumerate()
+            .map(|(type_param_idx, (param_idx, type_param))| {
+                let mut struct_mapper = StructMapper::new(&a, &b);
 
-    let mappings: Vec<_> = fields
-        .into_iter()
-        .enumerate()
-        .map(|(idx, field)| {
-            let member: Member = match field.ident {
-                Some(ident) => ident.into(),
-                None => idx.into(),
-            };
+                let mappings: Vec<_> = fields
+                    .iter()
+                    .enumerate()
+                    .map(|(idx, field)| {
+                        let member: Member = match &field.ident {
+                            Some(ident) => ident.clone().into(),
+                            None => idx.into(),
+                        };
 
-            let mappable = quote!(self.#member);
-            let mapped = struct_mapper.map_struct(mappable, &field.ty, type_param);
+                        let mappable = quote!(self.#member);
+                        let mapped = struct_mapper.map_struct(mappable, &field.ty, type_param);
 
-            quote! {
-                #member: #mapped
-            }
-        })
-        .collect();
+                        quote! {
+                            #member: #mapped
+                        }
+                    })
+                    .collect();
 
-    let where_clause = struct_mapper.where_clause();
+                let a: GenericParam = a.clone().into();
+                let b: GenericParam = b.clone().into();
+                let impl_params = replace_at(generics.params.iter(), param_idx, [&a, &b]);
+
+                let src_params = replace_at(
+                    generics.params.iter().map(param_to_argument),
+                    param_idx,
+                    Some(parse_quote!(#a)),
+                );
+                let dst_params = replace_at(
+                    generics.params.iter().map(param_to_argument),
+                    param_idx,
+                    Some(parse_quote!(#b)),
+                );
+                let where_clause = struct_mapper.where_clause();
+
+                quote! {
+                    impl<#(#impl_params),*>
+                        ::mapstruct::MapStruct<#a, #b, ::mapstruct::TypeParam<#type_param_idx>>
+                        for #ident<#(#src_params),*>
+                        #where_clause
+                    {
+                        type Output = #ident<#(#dst_params),*>;
+
+                        fn map_struct<F>(self, mut f: F) -> Self::Output
+                        where
+                            F: FnMut(#a) -> #b
+                        {
+                            Self::Output {
+                                #(#mappings,)*
+                            }
+                        }
+                    }
+                }
+            });
 
     quote! {
-        impl<#a, #b> ::mapstruct::MapStruct<#a, #b> for #ident<#a> #where_clause {
-            type Output = #ident<#b>;
+        #(#impls)*
+    }
+}
 
-            fn map_struct<F>(self, mut f: F) -> Self::Output
-            where
-                F: FnMut(#a) -> #b
-            {
-                Self::Output {
-                    #(#mappings,)*
-                }
-            }
-        }
+fn param_to_argument(param: &GenericParam) -> GenericArgument {
+    match param {
+        GenericParam::Type(TypeParam { ident, .. }) => parse_quote!(#ident),
+        GenericParam::Lifetime(LifetimeDef { lifetime, .. }) => parse_quote!(#lifetime),
+        GenericParam::Const(ConstParam { ident, .. }) => parse_quote!(#ident),
     }
 }

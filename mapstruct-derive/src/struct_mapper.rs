@@ -49,22 +49,33 @@ impl<'a> StructMapper<'a> {
 
         match type_nesting(ty) {
             TypeNesting::Basic => quote!(f(#mappable)),
-            TypeNesting::Nested(inner_ty) => {
-                let src_type = subs_type_param(ty, type_param, self.src_type_param);
-                let dst_type = subs_type_param(ty, type_param, self.dst_type_param);
-                let inner_src_type = subs_type_param(inner_ty, type_param, self.src_type_param);
-                let inner_dst_type = subs_type_param(inner_ty, type_param, self.dst_type_param);
+            TypeNesting::Nested(inner_types) => {
+                let mut mappable = mappable;
 
-                self.where_predicates.insert(parse_quote! {
-                    #src_type: ::mapstruct::MapStruct<#inner_src_type, #inner_dst_type, Output = #dst_type>
-                });
+                for (idx, inner_ty) in inner_types
+                    .into_iter()
+                    .enumerate()
+                    .filter(|(_, ty)| depends_on(ty, type_param))
+                {
+                    // TODO: Do not substitute all at once, but one after another
+                    let src_type = subs_type_param(ty, type_param, self.src_type_param);
+                    let dst_type = subs_type_param(ty, type_param, self.dst_type_param);
+                    let inner_src_type = subs_type_param(inner_ty, type_param, self.src_type_param);
+                    let inner_dst_type = subs_type_param(inner_ty, type_param, self.dst_type_param);
 
-                let inner_ident = quote! { value };
-                let mapped = self.map_struct(inner_ident.clone(), inner_ty, type_param);
+                    self.where_predicates.insert(parse_quote! {
+                        #src_type: ::mapstruct::MapStruct<#inner_src_type, #inner_dst_type, ::mapstruct::TypeParam<#idx>, Output = #dst_type>
+                    });
 
-                quote! {
-                    #mappable.map_struct(|#inner_ident: #inner_src_type| #mapped)
+                    let inner_ident = quote! { value };
+                    let mapped = self.map_struct(inner_ident.clone(), inner_ty, type_param);
+
+                    mappable = quote! {
+                        #mappable.map_struct_over(::mapstruct::TypeParam::<#idx>, |#inner_ident| #mapped)
+                    };
                 }
+
+                mappable
             }
             TypeNesting::NotNested => fail!(ty, "type not supported"),
         }

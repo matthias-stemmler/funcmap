@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use mapstruct::MapStruct;
+use mapstruct::{MapStruct, TypeParam};
 
 #[test]
 fn generic_param_gets_mapped() {
@@ -10,7 +10,7 @@ fn generic_param_gets_mapped() {
     }
 
     let src = TestStruct { value: TestTypeA };
-    let dst = src.map_struct(|_: TestTypeA| TestTypeB);
+    let dst = src.map_struct(|_| TestTypeB);
 
     assert_eq!(dst, TestStruct { value: TestTypeB });
 }
@@ -27,7 +27,7 @@ fn field_independent_of_generic_param_does_not_get_mapped() {
         dummy: TestTypeA,
         value: 42,
     };
-    let dst = src.map_struct(|_: TestTypeA| TestTypeB);
+    let dst = src.map_struct(|_| TestTypeB);
 
     assert_eq!(dst.value, 42);
 }
@@ -42,7 +42,7 @@ fn tuple_of_generic_param_gets_mapped() {
     let src = TestStruct {
         value: (TestTypeA, 42, TestTypeA),
     };
-    let dst = src.map_struct(|_: TestTypeA| TestTypeB);
+    let dst = src.map_struct(|_| TestTypeB);
 
     assert_eq!(
         dst,
@@ -62,7 +62,7 @@ fn array_of_generic_param_gets_mapped() {
     let src = TestStruct {
         value: [TestTypeA, TestTypeA],
     };
-    let dst = src.map_struct(|_: TestTypeA| TestTypeB);
+    let dst = src.map_struct(|_| TestTypeB);
 
     assert_eq!(
         dst,
@@ -82,7 +82,7 @@ fn option_of_generic_param_gets_mapped() {
     let src = TestStruct {
         value: Some(TestTypeA),
     };
-    let dst = src.map_struct(|_: TestTypeA| TestTypeB);
+    let dst = src.map_struct(|_| TestTypeB);
 
     assert_eq!(
         dst,
@@ -99,8 +99,8 @@ fn phantom_data_of_generic_param_gets_mapped() {
         value: PhantomData<T>,
     }
 
-    let src = TestStruct { value: PhantomData };
-    let dst = src.map_struct(|_: TestTypeA| TestTypeB);
+    let src = TestStruct::<TestTypeA> { value: PhantomData };
+    let dst = src.map_struct(|_| TestTypeB);
 
     assert_eq!(dst, TestStruct { value: PhantomData });
 }
@@ -129,7 +129,7 @@ fn generics_are_bounded_to_enable_mapping() {
     let src = TestStruct {
         value: InnerTestStruct(TestTypeA),
     };
-    let dst = src.map_struct(|_: TestTypeA| TestTypeB);
+    let dst = src.map_struct(|_| TestTypeB);
 
     assert_eq!(
         dst,
@@ -145,9 +145,55 @@ fn tuple_struct_gets_mapped() {
     struct TestStruct<T>(i32, T, Option<T>);
 
     let src = TestStruct(42, TestTypeA, Some(TestTypeA));
-    let dst = src.map_struct(|_: TestTypeA| TestTypeB);
+    let dst = src.map_struct(|_| TestTypeB);
 
     assert_eq!(dst, TestStruct(42, TestTypeB, Some(TestTypeB)));
+}
+
+#[test]
+fn struct_with_multiple_generics_gets_mapped() {
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct TestStruct<S, T>(S, T);
+
+    let src = TestStruct(TestTypeA, TestTypeA);
+    let dst = src.map_struct_over(TypeParam::<0>, |_| TestTypeB);
+    assert_eq!(dst, TestStruct(TestTypeB, TestTypeA));
+
+    let src = TestStruct(TestTypeA, TestTypeA);
+    let dst = src.map_struct_over(TypeParam::<1>, |_| TestTypeB);
+    assert_eq!(dst, TestStruct(TestTypeA, TestTypeB));
+}
+
+#[test]
+fn struct_with_non_type_generics_gets_mapped() {
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct TestStruct<'a, T, const N: usize> {
+        value: T,
+        phantom: PhantomData<&'a ()>,
+    }
+
+    let src = TestStruct::<'_, _, 0> {
+        value: TestTypeA,
+        phantom: PhantomData,
+    };
+    let dst = src.map_struct(|_| TestTypeB);
+
+    assert_eq!(dst.value, TestTypeB);
+}
+
+#[test]
+fn struct_with_nested_non_type_generics_gets_mapped() {
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct InnerTestStruct<'a, S, T, const N: usize> {
+        value: (S, T),
+        phantom: PhantomData<&'a ()>,
+    }
+
+    // TODO: use <'a, T, T, N> instead
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct TestStruct<'a, T, const N: usize> {
+        value: InnerTestStruct<'a, T, u8, N>,
+    }
 }
 
 #[cfg(feature = "alloc")]
@@ -164,7 +210,7 @@ mod alloc {
         let src = TestStruct {
             value: vec![TestTypeA, TestTypeA],
         };
-        let dst = src.map_struct(|_: TestTypeA| TestTypeB);
+        let dst = src.map_struct(|_| TestTypeB);
 
         assert_eq!(
             dst,
@@ -184,7 +230,7 @@ mod alloc {
         let src = TestStruct {
             value: vec![Some(vec![TestTypeA, TestTypeA]), None, Some(vec![])],
         };
-        let dst = src.map_struct(|_: TestTypeA| TestTypeB);
+        let dst = src.map_struct(|_| TestTypeB);
 
         assert_eq!(
             dst,
