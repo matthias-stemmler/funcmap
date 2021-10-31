@@ -22,6 +22,7 @@ mod subs_type_param;
 // TODO IdentCollector type-safe order: 1. visit, 2. reserve
 // TODO docs (deny missing docs)
 // TODO trybuild tests
+// TODO deny some lints (missing docs, missing debug)
 
 #[proc_macro_derive(MapStruct)]
 pub fn derive_map_struct(item: TokenStream) -> TokenStream {

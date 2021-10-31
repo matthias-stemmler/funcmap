@@ -52,6 +52,7 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
 
     let a = ident_collector.reserve_uppercase_letter('A');
     let b = ident_collector.reserve_uppercase_letter('B');
+    let f: TypeParam = ident_collector.reserve_uppercase_letter('F');
 
     let impls =
         type_params
@@ -102,9 +103,9 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
                     {
                         type Output = #ident<#(#dst_params),*>;
 
-                        fn map_struct<F>(self, mut f: F) -> Self::Output
+                        fn map_struct<#f>(self, mut f: #f) -> Self::Output
                         where
-                            F: FnMut(#a) -> #b
+                            #f: FnMut(#a) -> #b
                         {
                             Self::Output {
                                 #(#mappings,)*
