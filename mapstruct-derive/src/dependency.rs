@@ -2,7 +2,7 @@ use proc_macro2::Ident;
 use syn::visit::{self, Visit};
 use syn::{Path, PathSegment, Type, TypeParam};
 
-use crate::path::is_ident;
+use crate::path;
 
 pub trait DependencyOnExt {
     fn dependency_on<'a>(&'a self, type_param: &'a TypeParam) -> Option<&'a Path>;
@@ -45,7 +45,7 @@ impl<'a> DependencyVisitor<'a> {
 impl<'a> Visit<'a> for DependencyVisitor<'a> {
     fn visit_path(&mut self, path: &'a Path) {
         match self.dependency {
-            None if is_ident(path, self.ident) => self.dependency = Some(path),
+            None if path::is_ident(path, self.ident) => self.dependency = Some(path),
             None => visit::visit_path(self, path),
             _ => (),
         };

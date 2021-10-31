@@ -1,7 +1,7 @@
 use proc_macro2::Ident;
 use syn::Path;
 
-use crate::iter::single;
+use crate::iter;
 
 /// Determines if `path` consists solely of the identifier `ident`
 pub fn is_ident(path: &Path, ident: &Ident) -> bool {
@@ -9,7 +9,7 @@ pub fn is_ident(path: &Path, ident: &Ident) -> bool {
         return false;
     }
 
-    match single(&path.segments) {
+    match iter::single(&path.segments) {
         Some(segment) => &segment.ident == ident && segment.arguments.is_empty(),
         None => false,
     }

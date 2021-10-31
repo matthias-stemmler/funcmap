@@ -1,8 +1,8 @@
 use proc_macro2::Ident;
-use syn::fold::Fold;
-use syn::{fold, parse_quote, Type, TypeParam};
+use syn::fold::{self, Fold};
+use syn::{parse_quote, Type, TypeParam};
 
-use crate::path::is_ident;
+use crate::path;
 
 /// Substitutes `type_param` with `type_param_subs` within `ty`
 pub fn subs_type_param(ty: &Type, type_param: &TypeParam, type_param_subs: &TypeParam) -> Type {
@@ -22,7 +22,7 @@ struct SubsTypeParamFolder<'a> {
 impl Fold for SubsTypeParamFolder<'_> {
     fn fold_type(&mut self, ty: Type) -> Type {
         match &ty {
-            Type::Path(type_path) if is_ident(&type_path.path, self.ident) => {
+            Type::Path(type_path) if path::is_ident(&type_path.path, self.ident) => {
                 let type_param_subs = self.type_param_subs;
                 parse_quote!(#type_param_subs)
             }

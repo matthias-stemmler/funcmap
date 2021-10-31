@@ -13,6 +13,22 @@ fn field_of_array_type_is_mapped() {
 }
 
 #[test]
+fn field_of_cell_type_is_mapped() {
+    // TODO for #[derive(Debug)], we need T: Copy, but that isn't supported by #[derive(MapStruct)] yet
+}
+
+#[test]
+fn field_of_phantom_data_type_is_mapped() {
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct Test<T>(PhantomData<T>);
+
+    let src = Test(PhantomData::<T1>);
+    let dst = src.map_struct(|_| T2);
+
+    assert_eq!(dst, Test(PhantomData::<T2>));
+}
+
+#[test]
 fn field_of_option_type_is_mapped() {
     #[derive(MapStruct, Debug, PartialEq)]
     struct Test<T>(Option<T>);
@@ -45,20 +61,22 @@ fn field_of_result_type_is_mapped_over_error() {
     assert_eq!(dst, Test(Err(T2)));
 }
 
-#[test]
-fn field_of_phantom_data_type_is_mapped() {
-    #[derive(MapStruct, Debug, PartialEq)]
-    struct Test<T>(PhantomData<T>);
-
-    let src = Test(PhantomData::<T1>);
-    let dst = src.map_struct(|_| T2);
-
-    assert_eq!(dst, Test(PhantomData::<T2>));
-}
-
 #[cfg(feature = "alloc")]
 mod alloc {
+    use std::collections::{BTreeMap, BTreeSet, BinaryHeap};
+
     use super::*;
+
+    #[test]
+    fn field_of_binaryheap_type_is_mapped() {
+        #[derive(MapStruct, Debug)]
+        struct Test<T>(BinaryHeap<T>);
+
+        let src = Test([T1].into());
+        let dst = src.map_struct(|_| T2);
+
+        assert_eq!(dst.0.into_vec(), [T2]);
+    }
 
     #[test]
     fn field_of_box_type_is_mapped() {
@@ -69,6 +87,28 @@ mod alloc {
         let dst = src.map_struct(|_| T2);
 
         assert_eq!(dst, Test(Box::new(T2)));
+    }
+
+    #[test]
+    fn field_of_btreemap_type_is_mapped() {
+        #[derive(MapStruct, Debug, PartialEq)]
+        struct Test<T>(BTreeMap<T, T>);
+
+        let src = Test([(T1, T1)].into());
+        let dst = src.map_struct(|_| T2);
+
+        assert_eq!(dst, Test([(T2, T2)].into()));
+    }
+
+    #[test]
+    fn field_of_btreeset_type_is_mapped() {
+        #[derive(MapStruct, Debug, PartialEq)]
+        struct Test<T>(BTreeSet<T>);
+
+        let src = Test([T1].into());
+        let dst = src.map_struct(|_| T2);
+
+        assert_eq!(dst, Test([T2].into()));
     }
 
     #[test]
@@ -83,8 +123,8 @@ mod alloc {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
 struct T1;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
 struct T2;

@@ -10,7 +10,7 @@ use syn::{
 
 use crate::dependency::DependencyOnExt;
 use crate::macros::fail;
-use crate::subs_type_param::subs_type_param;
+use crate::subs_type_param;
 
 pub struct StructMapper<'a> {
     src_type_param: &'a TypeParam,
@@ -51,10 +51,14 @@ impl<'a> StructMapper<'a> {
                 let mapped = self.map_struct(inner_ident(), inner_ty, type_param);
                 let inner_ident = inner_ident();
 
-                let src_type = subs_type_param(ty, type_param, self.src_type_param);
-                let dst_type = subs_type_param(ty, type_param, self.dst_type_param);
-                let inner_src_type = subs_type_param(inner_ty, type_param, self.src_type_param);
-                let inner_dst_type = subs_type_param(inner_ty, type_param, self.dst_type_param);
+                let src_type =
+                    subs_type_param::subs_type_param(ty, type_param, self.src_type_param);
+                let dst_type =
+                    subs_type_param::subs_type_param(ty, type_param, self.dst_type_param);
+                let inner_src_type =
+                    subs_type_param::subs_type_param(inner_ty, type_param, self.src_type_param);
+                let inner_dst_type =
+                    subs_type_param::subs_type_param(inner_ty, type_param, self.dst_type_param);
 
                 self.where_predicates.insert(parse_quote! {
                     #src_type: ::mapstruct::MapStruct<#inner_src_type, #inner_dst_type, Output = #dst_type>
@@ -117,19 +121,23 @@ impl<'a> StructMapper<'a> {
                     .enumerate()
                     .filter(|(_, (_, arg_type))| arg_type.dependency_on(type_param).is_some())
                 {
-                    let inner_src_type = subs_type_param(arg_type, type_param, self.src_type_param);
-                    let inner_dst_type = subs_type_param(arg_type, type_param, self.dst_type_param);
+                    let inner_src_type =
+                        subs_type_param::subs_type_param(arg_type, type_param, self.src_type_param);
+                    let inner_dst_type =
+                        subs_type_param::subs_type_param(arg_type, type_param, self.dst_type_param);
                     let src_type: Type = {
                         let src_args = args.iter().enumerate().map(|(i, arg)| match arg {
-                            GenericArgument::Type(ty) => GenericArgument::Type(subs_type_param(
-                                ty,
-                                type_param,
-                                if i >= *idx {
-                                    self.src_type_param
-                                } else {
-                                    self.dst_type_param
-                                },
-                            )),
+                            GenericArgument::Type(ty) => {
+                                GenericArgument::Type(subs_type_param::subs_type_param(
+                                    ty,
+                                    type_param,
+                                    if i >= *idx {
+                                        self.src_type_param
+                                    } else {
+                                        self.dst_type_param
+                                    },
+                                ))
+                            }
                             _ => arg.clone(),
                         });
 
@@ -139,15 +147,17 @@ impl<'a> StructMapper<'a> {
                     };
                     let dst_type: Type = {
                         let dst_args = args.iter().enumerate().map(|(i, arg)| match arg {
-                            GenericArgument::Type(ty) => GenericArgument::Type(subs_type_param(
-                                ty,
-                                type_param,
-                                if i > *idx {
-                                    self.src_type_param
-                                } else {
-                                    self.dst_type_param
-                                },
-                            )),
+                            GenericArgument::Type(ty) => {
+                                GenericArgument::Type(subs_type_param::subs_type_param(
+                                    ty,
+                                    type_param,
+                                    if i > *idx {
+                                        self.src_type_param
+                                    } else {
+                                        self.dst_type_param
+                                    },
+                                ))
+                            }
                             _ => arg.clone(),
                         });
 

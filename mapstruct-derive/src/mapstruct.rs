@@ -5,7 +5,7 @@ use syn::{parse_quote, ConstParam, GenericArgument, GenericParam, LifetimeDef, M
 use syn::{spanned::Spanned, Data, DeriveInput, Fields};
 
 use crate::ident_collector::IdentCollector;
-use crate::iter::replace_at;
+use crate::iter;
 use crate::macros::fail;
 use crate::struct_mapper::StructMapper;
 
@@ -82,14 +82,14 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
 
                 let a: GenericParam = a.clone().into();
                 let b: GenericParam = b.clone().into();
-                let impl_params = replace_at(generics.params.iter(), param_idx, [&a, &b]);
+                let impl_params = iter::replace_at(generics.params.iter(), param_idx, [&a, &b]);
 
-                let src_params = replace_at(
+                let src_params = iter::replace_at(
                     generics.params.iter().map(param_to_argument),
                     param_idx,
                     Some(parse_quote!(#a)),
                 );
-                let dst_params = replace_at(
+                let dst_params = iter::replace_at(
                     generics.params.iter().map(param_to_argument),
                     param_idx,
                     Some(parse_quote!(#b)),

@@ -37,17 +37,11 @@ fn field_of_generic_type_is_mapped() {
 
     let src = Test::<'_, _, _, 42>(Inner(T1, T1, PhantomData));
     let dst = src.map_struct_over(TypeParam::<0>, |_| T2);
-    assert_eq!(
-        dst,
-        Test::<'_, _, _, 42>(Inner(T2, T1, PhantomData))
-    );
+    assert_eq!(dst, Test::<'_, _, _, 42>(Inner(T2, T1, PhantomData)));
 
     let src = Test::<'_, _, _, 42>(Inner(T1, T1, PhantomData));
     let dst = src.map_struct_over(TypeParam::<1>, |_| T2);
-    assert_eq!(
-        dst,
-        Test::<'_, _, _, 42>(Inner(T1, T2, PhantomData))
-    );
+    assert_eq!(dst, Test::<'_, _, _, 42>(Inner(T1, T2, PhantomData)));
 }
 
 #[test]
@@ -61,10 +55,7 @@ fn field_of_repeated_generic_type_is_mapped() {
     let src = Test::<'_, _, 42>(Inner(T1, T1, PhantomData));
     let dst = src.map_struct(|_| T2);
 
-    assert_eq!(
-        dst,
-        Test::<'_, _, 42>(Inner(T2, T2, PhantomData))
-    );
+    assert_eq!(dst, Test::<'_, _, 42>(Inner(T2, T2, PhantomData)));
 }
 
 #[derive(Debug, PartialEq)]

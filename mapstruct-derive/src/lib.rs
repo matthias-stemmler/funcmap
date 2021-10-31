@@ -19,10 +19,15 @@ mod subs_type_param;
 // TODO enums
 // TODO use fuzzing tests?
 // TODO rename fmap/func_map
-// TODO IdentCollector type-safe order: 1. visit, 2. reserve
 // TODO docs (deny missing docs)
 // TODO trybuild tests
 // TODO deny some lints (missing docs, missing debug)
+// TODO optimize `|value| f(value)`to `f`?
+// TODO impl more standard types (HashMap, ...)
+// TODO allow attributes on generated impl
+// TODO allow restricting which params should be mappable
+// TODO reduce usage of parse_quote!(..)
+// TODO merge where clauses with identical left-hand sides?
 
 #[proc_macro_derive(MapStruct)]
 pub fn derive_map_struct(item: TokenStream) -> TokenStream {

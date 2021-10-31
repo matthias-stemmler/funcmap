@@ -41,24 +41,18 @@ impl IdentCollector {
             'A'
         };
 
-        let mut iteration = 0;
-
-        loop {
-            let letter = (desired_letter..='Z')
-                .chain('A'..=desired_letter)
-                .map(|c| match iteration {
-                    0 => c.to_string(),
-                    1 => format!("__MAPSTRUCT_{}", c),
-                    _ => format!("__MAPSTRUCT_{}{}", c, iteration),
-                })
-                .find(|c| !self.idents.contains(c));
-
-            if let Some(letter) = letter {
-                return letter;
-            }
-
-            iteration += 1;
-        }
+        (0..)
+            .flat_map(|iteration| {
+                (desired_letter..='Z')
+                    .chain('A'..=desired_letter)
+                    .map(move |c| match iteration {
+                        0 => c.to_string(),
+                        1 => format!("__MAPSTRUCT_{}", c),
+                        _ => format!("__MAPSTRUCT_{}{}", c, iteration),
+                    })
+            })
+            .find(|c| !self.idents.contains(c))
+            .unwrap()
     }
 }
 
