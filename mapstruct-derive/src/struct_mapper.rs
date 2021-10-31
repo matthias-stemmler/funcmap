@@ -2,12 +2,15 @@ use std::collections::HashSet;
 
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
-use syn::{parse_quote, Index, Type, TypeParam, TypeTuple, WherePredicate};
+use syn::punctuated::Pair;
+use syn::{
+    parse_quote, AngleBracketedGenericArguments, GenericArgument, Index, PathArguments, QSelf,
+    Type, TypeArray, TypeParam, TypePath, TypeTuple, WherePredicate,
+};
 
-use crate::depends_on::depends_on;
+use crate::dependency::DependencyOnExt;
 use crate::macros::fail;
 use crate::subs_type_param::subs_type_param;
-use crate::type_nesting::{type_nesting, TypeNesting};
 
 pub struct StructMapper<'a> {
     src_type_param: &'a TypeParam,
@@ -39,62 +42,150 @@ impl<'a> StructMapper<'a> {
         ty: &Type,
         type_param: &TypeParam,
     ) -> TokenStream {
-        if !depends_on(ty, type_param) {
+        if ty.dependency_on(type_param).is_none() {
             return mappable;
         }
 
-        if let Type::Tuple(type_tuple) = ty {
-            return self.map_tuple(mappable, type_tuple, type_param);
-        }
+        match ty {
+            Type::Array(TypeArray { elem: inner_ty, .. }) => {
+                let mapped = self.map_struct(inner_ident(), inner_ty, type_param);
+                let inner_ident = inner_ident();
 
-        match type_nesting(ty) {
-            TypeNesting::Basic => quote!(f(#mappable)),
-            TypeNesting::Nested(inner_types) => {
+                let src_type = subs_type_param(ty, type_param, self.src_type_param);
+                let dst_type = subs_type_param(ty, type_param, self.dst_type_param);
+                let inner_src_type = subs_type_param(inner_ty, type_param, self.src_type_param);
+                let inner_dst_type = subs_type_param(inner_ty, type_param, self.dst_type_param);
+
+                self.where_predicates.insert(parse_quote! {
+                    #src_type: ::mapstruct::MapStruct<#inner_src_type, #inner_dst_type, Output = #dst_type>
+                });
+
+                quote! {
+                    #mappable.map_struct(|#inner_ident| #mapped)
+                }
+            }
+            Type::Path(TypePath { qself, path }) => {
+                if let Some(QSelf { ty, .. }) = qself {
+                    if let Some(dep_path) = ty.dependency_on(type_param) {
+                        fail!(dep_path, "mapping over self type is not supported");
+                    }
+                }
+
+                let (prefix, last) = {
+                    let mut segments = path.segments.clone();
+                    match segments.pop() {
+                        Some(Pair::End(last)) => (segments, last),
+                        Some(..) => fail!(
+                            path.segments,
+                            "mapping over type with trailing :: is not supported"
+                        ),
+                        None => fail!(path.segments, "mapping over empty type is not supported"),
+                    }
+                };
+
+                let prefix = if prefix.is_empty() {
+                    quote!()
+                } else {
+                    quote!(#prefix::)
+                };
+
+                let ident = last.ident;
+                let args = match last.arguments {
+                    PathArguments::None => return quote!(f(#mappable)),
+                    PathArguments::AngleBracketed(AngleBracketedGenericArguments {
+                        args, ..
+                    }) => args,
+                    PathArguments::Parenthesized(..) => fail!(
+                        last.arguments,
+                        "mapping over function types is not supported"
+                    ),
+                };
+
+                let arg_types: Vec<_> = args
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(idx, arg)| match arg {
+                        GenericArgument::Type(ty) => Some((idx, ty)),
+                        _ => None,
+                    })
+                    .collect();
+
                 let mut mappable = mappable;
 
-                for (idx, inner_ty) in inner_types
-                    .into_iter()
+                for (type_idx, (idx, arg_type)) in arg_types
+                    .iter()
                     .enumerate()
-                    .filter(|(_, ty)| depends_on(ty, type_param))
+                    .filter(|(_, (_, arg_type))| arg_type.dependency_on(type_param).is_some())
                 {
-                    // TODO: Do not substitute all at once, but one after another
-                    let src_type = subs_type_param(ty, type_param, self.src_type_param);
-                    let dst_type = subs_type_param(ty, type_param, self.dst_type_param);
-                    let inner_src_type = subs_type_param(inner_ty, type_param, self.src_type_param);
-                    let inner_dst_type = subs_type_param(inner_ty, type_param, self.dst_type_param);
+                    let inner_src_type = subs_type_param(arg_type, type_param, self.src_type_param);
+                    let inner_dst_type = subs_type_param(arg_type, type_param, self.dst_type_param);
+                    let src_type: Type = {
+                        let src_args = args.iter().enumerate().map(|(i, arg)| match arg {
+                            GenericArgument::Type(ty) => GenericArgument::Type(subs_type_param(
+                                ty,
+                                type_param,
+                                if i >= *idx {
+                                    self.src_type_param
+                                } else {
+                                    self.dst_type_param
+                                },
+                            )),
+                            _ => arg.clone(),
+                        });
+
+                        parse_quote! {
+                            #prefix #ident<#(#src_args),*>
+                        }
+                    };
+                    let dst_type: Type = {
+                        let dst_args = args.iter().enumerate().map(|(i, arg)| match arg {
+                            GenericArgument::Type(ty) => GenericArgument::Type(subs_type_param(
+                                ty,
+                                type_param,
+                                if i > *idx {
+                                    self.src_type_param
+                                } else {
+                                    self.dst_type_param
+                                },
+                            )),
+                            _ => arg.clone(),
+                        });
+
+                        parse_quote! {
+                            #prefix #ident<#(#dst_args),*>
+                        }
+                    };
 
                     self.where_predicates.insert(parse_quote! {
-                        #src_type: ::mapstruct::MapStruct<#inner_src_type, #inner_dst_type, ::mapstruct::TypeParam<#idx>, Output = #dst_type>
+                        #src_type: ::mapstruct::MapStruct<#inner_src_type, #inner_dst_type, ::mapstruct::TypeParam<#type_idx>, Output = #dst_type>
                     });
 
-                    let inner_ident = quote! { value };
-                    let mapped = self.map_struct(inner_ident.clone(), inner_ty, type_param);
+                    let mapped = self.map_struct(inner_ident(), arg_type, type_param);
+                    let inner_ident = inner_ident();
 
                     mappable = quote! {
-                        #mappable.map_struct_over(::mapstruct::TypeParam::<#idx>, |#inner_ident| #mapped)
-                    };
+                        #mappable.map_struct_over(::mapstruct::TypeParam::<#type_idx>, |#inner_ident| #mapped)
+                    }
                 }
 
                 mappable
             }
-            TypeNesting::NotNested => fail!(ty, "type not supported"),
+            Type::Tuple(TypeTuple { elems, .. }) => {
+                let mapped = elems.iter().enumerate().map(|(i, ty)| {
+                    let idx = Index::from(i);
+                    let mappable = quote!(#mappable.#idx);
+                    self.map_struct(mappable, ty, type_param)
+                });
+
+                quote! {
+                    (#(#mapped),*)
+                }
+            }
+            _ => fail!(ty, "type not supported"),
         }
     }
+}
 
-    fn map_tuple(
-        &mut self,
-        mappable: TokenStream,
-        type_tuple: &TypeTuple,
-        type_param: &TypeParam,
-    ) -> TokenStream {
-        let mapped = type_tuple.elems.iter().enumerate().map(|(i, ty)| {
-            let idx = Index::from(i);
-            let mappable = quote!(#mappable.#idx);
-            self.map_struct(mappable, ty, type_param)
-        });
-
-        quote! {
-            (#(#mapped),*)
-        }
-    }
+fn inner_ident() -> TokenStream {
+    quote!(value)
 }

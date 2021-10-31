@@ -182,18 +182,27 @@ fn struct_with_non_type_generics_gets_mapped() {
 }
 
 #[test]
-fn struct_with_nested_non_type_generics_gets_mapped() {
+fn struct_with_repeated_generics_gets_mapped() {
     #[derive(MapStruct, Debug, PartialEq)]
     struct InnerTestStruct<'a, S, T, const N: usize> {
         value: (S, T),
         phantom: PhantomData<&'a ()>,
     }
 
-    // TODO: use <'a, T, T, N> instead
     #[derive(MapStruct, Debug, PartialEq)]
     struct TestStruct<'a, T, const N: usize> {
-        value: InnerTestStruct<'a, T, u8, N>,
+        value: InnerTestStruct<'a, T, T, N>,
     }
+
+    let src = TestStruct::<'_, _, 0> {
+        value: InnerTestStruct {
+            value: (TestTypeA, TestTypeA),
+            phantom: PhantomData
+        }
+    };
+    let dst = src.map_struct(|_| TestTypeB);
+
+    assert_eq!(dst.value.value, (TestTypeB, TestTypeB));
 }
 
 #[cfg(feature = "alloc")]
