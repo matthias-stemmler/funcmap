@@ -5,15 +5,23 @@ use syn::parse::Parse;
 use syn::parse_quote;
 use syn::visit::Visit;
 
+#[derive(Debug)]
 pub struct IdentCollector {
     idents: HashSet<String>,
 }
+
+#[derive(Debug)]
+pub struct VisitingIdentCollector(IdentCollector);
 
 impl IdentCollector {
     pub fn new() -> Self {
         Self {
             idents: HashSet::new(),
         }
+    }
+
+    pub fn new_visiting() -> VisitingIdentCollector {
+        VisitingIdentCollector(Self::new())
     }
 
     pub fn reserve_uppercase_letter<T>(&mut self, desired_letter: char) -> T
@@ -54,9 +62,21 @@ impl IdentCollector {
     }
 }
 
-impl Visit<'_> for IdentCollector {
+impl Default for IdentCollector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl VisitingIdentCollector {
+    pub fn into_reserved(self) -> IdentCollector {
+        self.0
+    }
+}
+
+impl Visit<'_> for VisitingIdentCollector {
     fn visit_ident(&mut self, ident: &Ident) {
-        self.idents.insert(ident.to_string());
+        self.0.idents.insert(ident.to_string());
     }
 }
 
@@ -114,18 +134,6 @@ mod tests {
     }
 
     #[test]
-    fn test_visited() {
-        let mut collector = IdentCollector::new();
-        collector.visit_derive_input(&parse_quote! {
-           struct TestType<T, U, V>;
-        });
-
-        let ident: Ident = collector.reserve_uppercase_letter('T');
-
-        assert_eq!(ident, "W");
-    }
-
-    #[test]
     fn test_prefixed() {
         let mut collector = IdentCollector::new();
         for c in 'A'..='Z' {
@@ -173,5 +181,18 @@ mod tests {
         let ident: Ident = collector.reserve_uppercase_letter('T');
 
         assert_eq!(ident, "__MAPSTRUCT_U2");
+    }
+
+    #[test]
+    fn test_visiting() {
+        let mut collector = IdentCollector::new_visiting();
+        collector.visit_derive_input(&parse_quote! {
+           struct TestType<T, U, V>;
+        });
+        let mut collector = collector.into_reserved();
+
+        let ident: Ident = collector.reserve_uppercase_letter('T');
+
+        assert_eq!(ident, "W");
     }
 }

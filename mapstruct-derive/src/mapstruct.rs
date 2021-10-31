@@ -10,8 +10,9 @@ use crate::macros::fail;
 use crate::struct_mapper::StructMapper;
 
 pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
-    let mut ident_collector = IdentCollector::new();
+    let mut ident_collector = IdentCollector::new_visiting();
     ident_collector.visit_derive_input(&input);
+    let mut ident_collector = ident_collector.into_reserved();
 
     let input_span = input.span();
     let DeriveInput {
