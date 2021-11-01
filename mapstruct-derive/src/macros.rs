@@ -1,3 +1,9 @@
+macro_rules! debug_assert_parse {
+    ($token_stream:ident as $ty:ty) => {
+        debug_assert!(::syn::parse2::<$ty>($token_stream.clone()).is_ok());
+    };
+}
+
 macro_rules! fail {
     ($spanned:expr, $message:expr $(,$args:expr)*) => {
         {
@@ -13,3 +19,4 @@ macro_rules! fail {
 }
 
 pub(crate) use fail;
+pub(crate) use debug_assert_parse;

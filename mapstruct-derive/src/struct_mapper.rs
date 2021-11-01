@@ -3,13 +3,10 @@ use std::collections::HashSet;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 use syn::punctuated::Pair;
-use syn::{
-    parse_quote, AngleBracketedGenericArguments, GenericArgument, Index, PathArguments, QSelf,
-    Type, TypeArray, TypeParam, TypePath, TypeTuple, WherePredicate,
-};
+use syn::{AngleBracketedGenericArguments, Expr, GenericArgument, Index, PathArguments, QSelf, Type, TypeArray, TypeParam, TypePath, TypeTuple, WherePredicate, parse_quote};
 
 use crate::dependency::DependencyOnExt;
-use crate::macros::fail;
+use crate::macros::{debug_assert_parse, fail};
 use crate::subs_type_param;
 
 pub struct StructMapper<'a> {
@@ -42,6 +39,8 @@ impl<'a> StructMapper<'a> {
         ty: &Type,
         type_param: &TypeParam,
     ) -> TokenStream {
+        debug_assert_parse!(mappable as Expr);
+
         if ty.dependency_on(type_param).is_none() {
             return mappable;
         }
