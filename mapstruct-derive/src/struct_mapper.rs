@@ -1,13 +1,15 @@
-use std::collections::HashSet;
-
-use proc_macro2::{Ident, Span, TokenStream};
-use quote::{quote, ToTokens};
-use syn::punctuated::Pair;
-use syn::{AngleBracketedGenericArguments, Expr, GenericArgument, Index, PathArguments, QSelf, Type, TypeArray, TypeParam, TypePath, TypeTuple, WherePredicate, parse_quote};
-
 use crate::dependency::DependencyOnExt;
-use crate::macros::{debug_assert_parse, fail};
+use crate::macros::debug_assert_parse;
 use crate::subs_type_param;
+use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro_error::abort;
+use quote::{quote, ToTokens};
+use std::collections::HashSet;
+use syn::punctuated::Pair;
+use syn::{
+    parse_quote, AngleBracketedGenericArguments, Expr, GenericArgument, Index, PathArguments,
+    QSelf, Type, TypeArray, TypeParam, TypePath, TypeTuple, WherePredicate,
+};
 
 pub struct StructMapper<'a> {
     src_type_param: &'a TypeParam,
@@ -69,7 +71,7 @@ impl<'a> StructMapper<'a> {
             Type::Path(TypePath { qself, path }) => {
                 if let Some(QSelf { ty, .. }) = qself {
                     if let Some(dep_path) = ty.dependency_on(type_param) {
-                        fail!(dep_path, "mapping over self type is not supported");
+                        abort!(dep_path, "mapping over self type is not supported");
                     }
                 }
 
@@ -77,11 +79,11 @@ impl<'a> StructMapper<'a> {
                     let mut segments = path.segments.clone();
                     match segments.pop() {
                         Some(Pair::End(last)) => (segments, last),
-                        Some(..) => fail!(
+                        Some(..) => abort!(
                             path.segments,
                             "mapping over type with trailing :: is not supported"
                         ),
-                        None => fail!(path.segments, "mapping over empty type is not supported"),
+                        None => abort!(path.segments, "mapping over empty type is not supported"),
                     }
                 };
 
@@ -97,7 +99,7 @@ impl<'a> StructMapper<'a> {
                     PathArguments::AngleBracketed(AngleBracketedGenericArguments {
                         args, ..
                     }) => args,
-                    PathArguments::Parenthesized(..) => fail!(
+                    PathArguments::Parenthesized(..) => abort!(
                         last.arguments,
                         "mapping over function types is not supported"
                     ),
@@ -188,7 +190,7 @@ impl<'a> StructMapper<'a> {
                     (#(#mapped),*)
                 }
             }
-            _ => fail!(ty, "type not supported"),
+            _ => abort!(ty, "type not supported"),
         }
     }
 

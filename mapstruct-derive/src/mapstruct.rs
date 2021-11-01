@@ -1,26 +1,19 @@
+use crate::ident_collector::IdentCollector;
+use crate::iter;
+use crate::struct_mapper::StructMapper;
 use proc_macro2::TokenStream;
+use proc_macro_error::abort;
 use quote::quote;
 use syn::visit::Visit;
 use syn::{parse_quote, ConstParam, GenericArgument, GenericParam, LifetimeDef, Member, TypeParam};
-use syn::{spanned::Spanned, Data, DeriveInput, Fields};
-
-use crate::ident_collector::IdentCollector;
-use crate::iter;
-use crate::macros::fail;
-use crate::struct_mapper::StructMapper;
+use syn::{Data, DeriveInput, Fields};
 
 pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
     let mut ident_collector = IdentCollector::new_visiting();
     ident_collector.visit_derive_input(&input);
     let mut ident_collector = ident_collector.into_reserved();
 
-    let input_span = input.span();
-    let DeriveInput {
-        ident,
-        generics,
-        data,
-        ..
-    } = input;
+    let generics = &input.generics;
 
     let type_params: Vec<_> = generics
         .params
@@ -33,19 +26,19 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
         .collect();
 
     if type_params.is_empty() {
-        fail!(generics, "expected at least one type parameter, found none");
+        abort!(input, "expected at least one type parameter, found none");
     }
 
-    let data_struct = match data {
+    let data_struct = match input.data {
         Data::Struct(data_struct) => data_struct,
-        Data::Enum(..) => fail!(input_span, "expected a struct, found an enum"),
-        Data::Union(..) => fail!(input_span, "expected a struct, found a union"),
+        Data::Enum(..) => abort!(input, "expected a struct, found an enum"),
+        Data::Union(..) => abort!(input, "expected a struct, found a union"),
     };
 
     let fields = match data_struct.fields {
         Fields::Named(fields) => fields.named,
         Fields::Unnamed(fields) => fields.unnamed,
-        Fields::Unit => fail!(
+        Fields::Unit => abort!(
             data_struct.fields,
             "expected a struct with fields, found a unit struct"
         ),
@@ -54,6 +47,8 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
     let a = ident_collector.reserve_uppercase_letter('A');
     let b = ident_collector.reserve_uppercase_letter('B');
     let f: TypeParam = ident_collector.reserve_uppercase_letter('F');
+
+    let ident = input.ident;
 
     let impls =
         type_params
