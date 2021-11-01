@@ -7,9 +7,9 @@ mod ident_collector;
 mod iter;
 mod macros;
 mod mapstruct;
-mod path;
 mod struct_mapper;
-mod subs_type_param;
+mod template;
+mod type_param;
 
 // TODO detect crate name?
 // TODO check auto-impl

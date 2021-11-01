@@ -1,16 +1,3 @@
-/// If `into_iter` produces exactly one item, returns that item, otherwise returns `None`
-pub fn single<I>(into_iter: I) -> Option<I::Item>
-where
-    I: IntoIterator,
-{
-    let mut iter = into_iter.into_iter();
-
-    match iter.next() {
-        Some(item) if iter.next().is_none() => Some(item),
-        _ => None,
-    }
-}
-
 /// Replaces the item with index `idx` produced by `into_iter` with the items produced by `replacement_into_iter`
 /// If `idx` equals the count of `into_iter`, appends the items produced by `replacement_into_iter` at the end
 pub fn replace_at<I, J>(into_iter: I, idx: usize, replacement: J) -> impl Iterator<Item = I::Item>
@@ -62,33 +49,6 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn single_empty() {
-        let input: [(); 0] = [];
-
-        let result = single(input);
-
-        assert!(result.is_none());
-    }
-
-    #[test]
-    fn single_single() {
-        let input = ["a"];
-
-        let result = single(input);
-
-        assert_eq!(result, Some("a"));
-    }
-
-    #[test]
-    fn single_multiple() {
-        let input = ["a", "b"];
-
-        let result = single(input);
-
-        assert!(result.is_none());
-    }
 
     #[test]
     fn replace_at_iter_empty() {

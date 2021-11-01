@@ -55,7 +55,7 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
             .into_iter()
             .enumerate()
             .map(|(type_param_idx, (param_idx, type_param))| {
-                let mut struct_mapper = StructMapper::new(&a, &b);
+                let mut struct_mapper = StructMapper::new(type_param, &a, &b);
 
                 let mappings: Vec<_> = fields
                     .iter()
@@ -67,7 +67,7 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
                         };
 
                         let mappable = quote!(self.#member);
-                        let mapped = struct_mapper.map_struct(mappable, &field.ty, type_param);
+                        let mapped = struct_mapper.map_struct(mappable, &field.ty);
 
                         quote! {
                             #member: #mapped

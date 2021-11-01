@@ -1,15 +1,13 @@
-use proc_macro2::Ident;
+use crate::type_param::TypeExt;
 use syn::visit::{self, Visit};
-use syn::{Path, PathSegment, Type, TypeParam};
-
-use crate::path;
+use syn::{PathSegment, Type, TypeParam};
 
 pub trait DependencyOnExt {
-    fn dependency_on<'a>(&'a self, type_param: &'a TypeParam) -> Option<&'a Path>;
+    fn dependency_on<'a>(&'a self, type_param: &'a TypeParam) -> Option<&'a Type>;
 }
 
 impl DependencyOnExt for Type {
-    fn dependency_on<'a>(&'a self, type_param: &'a TypeParam) -> Option<&'a Path> {
+    fn dependency_on<'a>(&'a self, type_param: &'a TypeParam) -> Option<&'a Type> {
         let mut visitor = DependencyVisitor::new(type_param);
         visitor.visit_type(self);
         visitor.into_dependency()
@@ -17,7 +15,7 @@ impl DependencyOnExt for Type {
 }
 
 impl DependencyOnExt for PathSegment {
-    fn dependency_on<'a>(&'a self, type_param: &'a TypeParam) -> Option<&'a Path> {
+    fn dependency_on<'a>(&'a self, type_param: &'a TypeParam) -> Option<&'a Type> {
         let mut visitor = DependencyVisitor::new(type_param);
         visitor.visit_path_segment(self);
         visitor.into_dependency()
@@ -25,28 +23,28 @@ impl DependencyOnExt for PathSegment {
 }
 
 struct DependencyVisitor<'a> {
-    ident: &'a Ident,
-    dependency: Option<&'a Path>,
+    type_param: &'a TypeParam,
+    dependency: Option<&'a Type>,
 }
 
 impl<'a> DependencyVisitor<'a> {
     fn new(type_param: &'a TypeParam) -> Self {
         Self {
-            ident: &type_param.ident,
+            type_param,
             dependency: None,
         }
     }
 
-    fn into_dependency(self) -> Option<&'a Path> {
+    fn into_dependency(self) -> Option<&'a Type> {
         self.dependency
     }
 }
 
 impl<'a> Visit<'a> for DependencyVisitor<'a> {
-    fn visit_path(&mut self, path: &'a Path) {
+    fn visit_type(&mut self, ty: &'a Type) {
         match self.dependency {
-            None if path::is_ident(path, self.ident) => self.dependency = Some(path),
-            None => visit::visit_path(self, path),
+            None if ty.is_type_param(self.type_param) => self.dependency = Some(ty),
+            None => visit::visit_type(self, ty),
             _ => (),
         };
     }
