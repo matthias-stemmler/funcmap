@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use proc_macro2::TokenStream;
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 use syn::punctuated::Pair;
 use syn::{
@@ -48,9 +48,6 @@ impl<'a> StructMapper<'a> {
 
         match ty {
             Type::Array(TypeArray { elem: inner_ty, .. }) => {
-                let mapped = self.map_struct(inner_ident(), inner_ty, type_param);
-                let inner_ident = inner_ident();
-
                 let src_type =
                     subs_type_param::subs_type_param(ty, type_param, self.src_type_param);
                 let dst_type =
@@ -64,8 +61,10 @@ impl<'a> StructMapper<'a> {
                     #src_type: ::mapstruct::MapStruct<#inner_src_type, #inner_dst_type, Output = #dst_type>
                 });
 
+                let closure = self.map_struct_closure(inner_ty, type_param);
+
                 quote! {
-                    #mappable.map_struct(|#inner_ident| #mapped)
+                    #mappable.map_struct(#closure)
                 }
             }
             Type::Path(TypePath { qself, path }) => {
@@ -170,11 +169,10 @@ impl<'a> StructMapper<'a> {
                         #src_type: ::mapstruct::MapStruct<#inner_src_type, #inner_dst_type, ::mapstruct::TypeParam<#type_idx>, Output = #dst_type>
                     });
 
-                    let mapped = self.map_struct(inner_ident(), arg_type, type_param);
-                    let inner_ident = inner_ident();
+                    let closure = self.map_struct_closure(arg_type, type_param);
 
                     mappable = quote! {
-                        #mappable.map_struct_over(::mapstruct::TypeParam::<#type_idx>, |#inner_ident| #mapped)
+                        #mappable.map_struct_over(::mapstruct::TypeParam::<#type_idx>, #closure)
                     }
                 }
 
@@ -194,8 +192,10 @@ impl<'a> StructMapper<'a> {
             _ => fail!(ty, "type not supported"),
         }
     }
-}
 
-fn inner_ident() -> TokenStream {
-    quote!(value)
+    fn map_struct_closure(&mut self, ty: &Type, type_param: &TypeParam) -> TokenStream {
+        let closure_arg = Ident::new("value", Span::mixed_site());
+        let mapped = self.map_struct(closure_arg.clone().into_token_stream(), ty, type_param);
+        quote!(|#closure_arg| #mapped)
+    }
 }

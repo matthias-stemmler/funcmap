@@ -22,7 +22,6 @@ mod subs_type_param;
 // TODO docs (deny missing docs)
 // TODO trybuild tests
 // TODO deny some lints (missing docs, missing debug)
-// TODO optimize `|value| f(value)`to `f`?
 // TODO impl more standard types (HashMap, ...)
 // TODO allow attributes on generated impl
 // TODO allow restricting which params should be mappable
