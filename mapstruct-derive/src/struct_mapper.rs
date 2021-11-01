@@ -71,8 +71,8 @@ impl<'a> StructMapper<'a> {
             }
             Type::Path(TypePath { qself, path }) => {
                 if let Some(QSelf { ty, .. }) = qself {
-                    if let Some(dep_path) = ty.dependency_on(self.type_param) {
-                        abort!(dep_path, "mapping over self type is not supported");
+                    if let Some(dep_ty) = ty.dependency_on(self.type_param) {
+                        abort!(dep_ty, "mapping over self type is not supported");
                     }
                 }
 
@@ -87,6 +87,16 @@ impl<'a> StructMapper<'a> {
                         None => abort!(path.segments, "mapping over empty type is not supported"),
                     }
                 };
+
+                if let Some(dep_ty) = prefix
+                    .iter()
+                    .find_map(|ty| ty.dependency_on(self.type_param))
+                {
+                    abort!(
+                        dep_ty,
+                        "mapping over types with associated items is not supported"
+                    );
+                }
 
                 let prefix = if prefix.is_empty() {
                     quote!()
