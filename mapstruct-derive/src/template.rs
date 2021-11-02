@@ -4,6 +4,7 @@ use syn::{
     Type, TypeParam,
 };
 
+#[derive(Debug)]
 pub struct TypeTemplate<'a> {
     template_type: &'a Type,
     type_param: &'a TypeParam,

@@ -5,11 +5,10 @@ use crate::type_param::TypeParamExt;
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
 use quote::{quote, ToTokens};
-use std::collections::HashSet;
-use syn::punctuated::Pair;
+use std::{collections::HashSet, iter};
 use syn::{
-    parse_quote, AngleBracketedGenericArguments, Expr, GenericArgument, Index, PathArguments,
-    QSelf, Type, TypeArray, TypeParam, TypePath, TypeTuple, WherePredicate,
+    parse_quote, AngleBracketedGenericArguments, Expr, GenericArgument, Index, Path, PathArguments,
+    PathSegment, QSelf, Type, TypeArray, TypeParam, TypePath, TypeTuple, WherePredicate,
 };
 
 pub struct StructMapper<'a> {
@@ -69,51 +68,51 @@ impl<'a> StructMapper<'a> {
                     #mappable.map_struct(#closure)
                 }
             }
-            Type::Path(TypePath { qself, path }) => {
-                if let Some(QSelf { ty, .. }) = qself {
+            Type::Path(TypePath {
+                qself,
+                path:
+                    Path {
+                        leading_colon,
+                        segments,
+                    },
+            }) => {
+                if let Some(QSelf { ty, .. }) = &qself {
                     if let Some(dep_ty) = ty.dependency_on(self.type_param) {
                         abort!(dep_ty, "mapping over self type is not supported");
                     }
                 }
 
-                let (prefix, last) = {
-                    let mut segments = path.segments.clone();
-                    match segments.pop() {
-                        Some(Pair::End(last)) => (segments, last),
-                        Some(..) => abort!(
-                            path.segments,
-                            "mapping over type with trailing :: is not supported"
-                        ),
-                        None => abort!(path.segments, "mapping over empty type is not supported"),
-                    }
+                if segments.is_empty() {
+                    abort!(segments, "mapping over empty type is not supported");
+                }
+
+                let (prefix, PathSegment { ident, arguments }) = {
+                    let mut segments: Vec<_> = segments.into_iter().collect();
+                    let last = segments.pop().unwrap();
+                    (segments, last)
                 };
 
-                if let Some(dep_ty) = prefix
+                if let Some(prefix_dep) = prefix
                     .iter()
-                    .find_map(|ty| ty.dependency_on(self.type_param))
+                    .find_map(|segment| segment.dependency_on(self.type_param))
                 {
                     abort!(
-                        dep_ty,
+                        prefix_dep,
                         "mapping over types with associated items is not supported"
                     );
                 }
 
-                let prefix = if prefix.is_empty() {
-                    quote!()
-                } else {
-                    quote!(#prefix::)
-                };
-
-                let ident = last.ident;
-                let args = match last.arguments {
+                let AngleBracketedGenericArguments {
+                    args,
+                    colon2_token,
+                    lt_token,
+                    gt_token,
+                } = match arguments {
                     PathArguments::None => return quote!(f(#mappable)),
-                    PathArguments::AngleBracketed(AngleBracketedGenericArguments {
-                        args, ..
-                    }) => args,
-                    PathArguments::Parenthesized(..) => abort!(
-                        last.arguments,
-                        "mapping over function types is not supported"
-                    ),
+                    PathArguments::AngleBracketed(angle_bracketed) => angle_bracketed,
+                    PathArguments::Parenthesized(..) => {
+                        abort!(arguments, "mapping over function types is not supported")
+                    }
                 };
 
                 let arg_types: Vec<_> = args
@@ -136,12 +135,12 @@ impl<'a> StructMapper<'a> {
                     let inner_src_type = inner_template.apply(self.src_type_param.to_type());
                     let inner_dst_type = inner_template.apply(self.dst_type_param.to_type());
 
-                    let src_type: Type = {
+                    let make_type = |idx: usize| {
                         let src_args = args.iter().enumerate().map(|(i, arg)| match arg {
                             GenericArgument::Type(ty) => {
                                 let template = TypeTemplate::new(ty, self.type_param);
 
-                                GenericArgument::Type(template.apply(if i >= *idx {
+                                GenericArgument::Type(template.apply(if i >= idx {
                                     self.src_type_param.to_type()
                                 } else {
                                     self.dst_type_param.to_type()
@@ -150,28 +149,31 @@ impl<'a> StructMapper<'a> {
                             _ => arg.clone(),
                         });
 
-                        parse_quote! {
-                            #prefix #ident<#(#src_args),*>
-                        }
+                        Type::Path(TypePath {
+                            qself: qself.clone(),
+                            path: Path {
+                                leading_colon: leading_colon.clone(),
+                                segments: prefix
+                                    .iter()
+                                    .map(|segment| PathSegment::clone(segment))
+                                    .chain(iter::once(PathSegment {
+                                        ident: ident.clone(),
+                                        arguments: PathArguments::AngleBracketed(
+                                            AngleBracketedGenericArguments {
+                                                colon2_token: colon2_token.clone(),
+                                                lt_token: lt_token.clone(),
+                                                gt_token: gt_token.clone(),
+                                                args: src_args.collect(),
+                                            },
+                                        ),
+                                    }))
+                                    .collect(),
+                            },
+                        })
                     };
-                    let dst_type: Type = {
-                        let dst_args = args.iter().enumerate().map(|(i, arg)| match arg {
-                            GenericArgument::Type(ty) => {
-                                let template = TypeTemplate::new(ty, self.type_param);
 
-                                GenericArgument::Type(template.apply(if i > *idx {
-                                    self.src_type_param.to_type()
-                                } else {
-                                    self.dst_type_param.to_type()
-                                }))
-                            }
-                            _ => arg.clone(),
-                        });
-
-                        parse_quote! {
-                            #prefix #ident<#(#dst_args),*>
-                        }
-                    };
+                    let src_type = make_type(*idx);
+                    let dst_type = make_type(*idx + 1);
 
                     self.where_predicates.insert(parse_quote! {
                         #src_type: ::mapstruct::MapStruct<#inner_src_type, #inner_dst_type, ::mapstruct::TypeParam<#type_idx>, Output = #dst_type>
