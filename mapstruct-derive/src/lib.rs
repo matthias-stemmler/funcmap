@@ -5,10 +5,8 @@ use syn::{parse_macro_input, DeriveInput};
 mod dependency;
 mod ident_collector;
 mod iter;
-mod macros;
 mod mapstruct;
 mod struct_mapper;
-mod template;
 mod type_param;
 
 // TODO detect crate name?
@@ -26,7 +24,6 @@ mod type_param;
 // TODO allow restricting which params should be mappable
 // TODO reduce usage of parse_quote!(..)
 // TODO merge where clauses with identical left-hand sides?
-// TODO error using Vec<Diagnostic>?
 
 #[proc_macro_error]
 #[proc_macro_derive(MapStruct)]
