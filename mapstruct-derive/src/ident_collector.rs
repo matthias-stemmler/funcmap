@@ -1,8 +1,5 @@
-use std::collections::HashSet;
-
 use proc_macro2::{Ident, Span};
-use syn::parse::Parse;
-use syn::parse_quote;
+use std::collections::HashSet;
 use syn::visit::Visit;
 
 #[derive(Debug)]
@@ -26,12 +23,12 @@ impl IdentCollector {
 
     pub fn reserve_uppercase_letter<T>(&mut self, desired_letter: char) -> T
     where
-        T: Parse,
+        Ident: Into<T>,
     {
         let letter = self.find_uppercase_letter(desired_letter);
         let ident = Ident::new(&letter, Span::call_site());
         self.idents.insert(letter);
-        parse_quote!(#ident)
+        ident.into()
     }
 
     fn find_uppercase_letter(&self, desired_letter: char) -> String {
@@ -43,13 +40,13 @@ impl IdentCollector {
 
         (0..)
             .flat_map(|iteration| {
-                (desired_letter..='Z')
-                    .chain('A'..=desired_letter)
-                    .map(move |c| match iteration {
-                        0 => c.to_string(),
-                        1 => format!("__MAPSTRUCT_{}", c),
-                        _ => format!("__MAPSTRUCT_{}{}", c, iteration),
-                    })
+                (desired_letter..='Z').chain('A'..=desired_letter).map(
+                    move |letter| match iteration {
+                        0 => letter.to_string(),
+                        1 => format!("__MAPSTRUCT_{}", letter),
+                        _ => format!("__MAPSTRUCT_{}{}", letter, iteration),
+                    },
+                )
             })
             .find(|c| !self.idents.contains(c))
             .unwrap()

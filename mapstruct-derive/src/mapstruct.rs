@@ -1,11 +1,12 @@
 use crate::ident_collector::IdentCollector;
 use crate::iter;
 use crate::struct_mapper::StructMapper;
-use proc_macro2::TokenStream;
+use crate::type_ext::{TypeExt, TypeParamExt};
+use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
-use quote::quote;
+use quote::quote_spanned;
 use syn::visit::Visit;
-use syn::{parse_quote, ConstParam, GenericArgument, GenericParam, LifetimeDef, Member, TypeParam};
+use syn::{ConstParam, GenericArgument, GenericParam, LifetimeDef, Member, Type, TypeParam};
 use syn::{Data, DeriveInput, Fields};
 
 pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
@@ -13,10 +14,9 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
     ident_collector.visit_derive_input(&input);
     let mut ident_collector = ident_collector.into_reserved();
 
-    let generics = &input.generics;
+    let params = &input.generics.params;
 
-    let type_params: Vec<_> = generics
-        .params
+    let type_params: Vec<_> = params
         .iter()
         .enumerate()
         .filter_map(|(param_idx, param)| match param {
@@ -44,9 +44,10 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
         ),
     };
 
-    let a = ident_collector.reserve_uppercase_letter('A');
-    let b = ident_collector.reserve_uppercase_letter('B');
-    let f: TypeParam = ident_collector.reserve_uppercase_letter('F');
+    let type_a: TypeParam = ident_collector.reserve_uppercase_letter('A');
+    let type_b: TypeParam = ident_collector.reserve_uppercase_letter('B');
+    let type_f: TypeParam = ident_collector.reserve_uppercase_letter('F');
+    let var_f = Ident::new("f", Span::mixed_site());
 
     let ident = input.ident;
 
@@ -55,7 +56,7 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
             .into_iter()
             .enumerate()
             .map(|(type_param_idx, (param_idx, type_param))| {
-                let mut struct_mapper = StructMapper::new(type_param, &a, &b);
+                let mut struct_mapper = StructMapper::new(type_param, &type_a, &type_b, &var_f);
 
                 let mappings: Vec<_> = fields
                     .iter()
@@ -66,42 +67,40 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
                             None => idx.into(),
                         };
 
-                        let mappable = quote!(self.#member);
+                        let mappable = quote_spanned!(Span::mixed_site() => self.#member);
                         let mapped = struct_mapper.map_struct(mappable, &field.ty);
 
-                        quote! {
-                            #member: #mapped
-                        }
+                        quote_spanned!(Span::mixed_site() => #member: #mapped)
                     })
                     .collect();
 
-                let a: GenericParam = a.clone().into();
-                let b: GenericParam = b.clone().into();
-                let impl_params = iter::replace_at(generics.params.iter(), param_idx, [&a, &b]);
+                let type_a: GenericParam = type_a.clone().into();
+                let type_b: GenericParam = type_b.clone().into();
+                let impl_params = iter::replace_at(params.iter(), param_idx, [&type_a, &type_b]);
 
                 let src_params = iter::replace_at(
-                    generics.params.iter().map(param_to_argument),
+                    params.iter().map(param_to_argument),
                     param_idx,
-                    Some(parse_quote!(#a)),
+                    [param_to_argument(&type_a)],
                 );
                 let dst_params = iter::replace_at(
-                    generics.params.iter().map(param_to_argument),
+                    params.iter().map(param_to_argument),
                     param_idx,
-                    Some(parse_quote!(#b)),
+                    [param_to_argument(&type_b)],
                 );
                 let where_clause = struct_mapper.where_clause();
 
-                quote! {
+                quote_spanned! { Span::mixed_site() =>
                     impl<#(#impl_params),*>
-                        ::mapstruct::MapStruct<#a, #b, ::mapstruct::TypeParam<#type_param_idx>>
+                        ::mapstruct::MapStruct<#type_a, #type_b, ::mapstruct::TypeParam<#type_param_idx>>
                         for #ident<#(#src_params),*>
                         #where_clause
                     {
                         type Output = #ident<#(#dst_params),*>;
 
-                        fn map_struct<#f>(self, mut f: #f) -> Self::Output
+                        fn map_struct<#type_f>(self, mut #var_f: #type_f) -> Self::Output
                         where
-                            #f: FnMut(#a) -> #b
+                            #type_f: FnMut(#type_a) -> #type_b
                         {
                             Self::Output {
                                 #(#mappings,)*
@@ -111,15 +110,17 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
                 }
             });
 
-    quote! {
-        #(#impls)*
-    }
+    quote_spanned!(Span::mixed_site() => #(#impls)*)
 }
 
 fn param_to_argument(param: &GenericParam) -> GenericArgument {
     match param {
-        GenericParam::Type(TypeParam { ident, .. }) => parse_quote!(#ident),
-        GenericParam::Lifetime(LifetimeDef { lifetime, .. }) => parse_quote!(#lifetime),
-        GenericParam::Const(ConstParam { ident, .. }) => parse_quote!(#ident),
+        GenericParam::Type(type_param) => GenericArgument::Type(type_param.to_type()),
+        GenericParam::Lifetime(LifetimeDef { lifetime, .. }) => {
+            GenericArgument::Lifetime(lifetime.clone())
+        }
+        GenericParam::Const(ConstParam { ident, .. }) => {
+            GenericArgument::Type(Type::from_ident(ident.clone()))
+        }
     }
 }

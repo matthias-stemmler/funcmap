@@ -7,7 +7,7 @@ mod ident_collector;
 mod iter;
 mod mapstruct;
 mod struct_mapper;
-mod type_param;
+mod type_ext;
 
 // TODO detect crate name?
 // TODO check auto-impl

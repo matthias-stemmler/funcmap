@@ -8,6 +8,7 @@ where
     ReplaceAt::new(into_iter.into_iter(), idx, replacement.into_iter())
 }
 
+#[derive(Debug)]
 struct ReplaceAt<I, J> {
     iter: I,
     replacement: Option<(usize, J)>,

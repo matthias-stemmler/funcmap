@@ -1,13 +1,13 @@
-use crate::type_param::TypeExt;
+use crate::type_ext::TypeExt;
 use syn::visit::{self, Visit};
 use syn::{PathSegment, Type, TypeParam};
 
 pub trait DependencyOnExt {
-    fn dependency_on<'a>(&'a self, type_param: &'a TypeParam) -> Option<&'a Type>;
+    fn dependency_on<'ast>(&'ast self, type_param: &'ast TypeParam) -> Option<&'ast Type>;
 }
 
 impl DependencyOnExt for Type {
-    fn dependency_on<'a>(&'a self, type_param: &'a TypeParam) -> Option<&'a Type> {
+    fn dependency_on<'ast>(&'ast self, type_param: &'ast TypeParam) -> Option<&'ast Type> {
         let mut visitor = DependencyVisitor::new(type_param);
         visitor.visit_type(self);
         visitor.into_dependency()
@@ -15,33 +15,34 @@ impl DependencyOnExt for Type {
 }
 
 impl DependencyOnExt for PathSegment {
-    fn dependency_on<'a>(&'a self, type_param: &'a TypeParam) -> Option<&'a Type> {
+    fn dependency_on<'ast>(&'ast self, type_param: &'ast TypeParam) -> Option<&'ast Type> {
         let mut visitor = DependencyVisitor::new(type_param);
         visitor.visit_path_segment(self);
         visitor.into_dependency()
     }
 }
 
-struct DependencyVisitor<'a> {
-    type_param: &'a TypeParam,
-    dependency: Option<&'a Type>,
+#[derive(Debug)]
+struct DependencyVisitor<'ast> {
+    type_param: &'ast TypeParam,
+    dependency: Option<&'ast Type>,
 }
 
-impl<'a> DependencyVisitor<'a> {
-    fn new(type_param: &'a TypeParam) -> Self {
+impl<'ast> DependencyVisitor<'ast> {
+    fn new(type_param: &'ast TypeParam) -> Self {
         Self {
             type_param,
             dependency: None,
         }
     }
 
-    fn into_dependency(self) -> Option<&'a Type> {
+    fn into_dependency(self) -> Option<&'ast Type> {
         self.dependency
     }
 }
 
-impl<'a> Visit<'a> for DependencyVisitor<'a> {
-    fn visit_type(&mut self, ty: &'a Type) {
+impl<'ast> Visit<'ast> for DependencyVisitor<'ast> {
+    fn visit_type(&mut self, ty: &'ast Type) {
         match self.dependency {
             None if ty.is_type_param(self.type_param) => self.dependency = Some(ty),
             None => visit::visit_type(self, ty),
