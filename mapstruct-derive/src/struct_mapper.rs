@@ -1,5 +1,5 @@
 use crate::dependency::DependencyOnExt;
-use crate::type_ext::{TypeExt, TypeParamExt};
+use crate::type_ext::{IdentExt, TypeExt};
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
 use quote::{quote_spanned, ToTokens};
@@ -21,8 +21,8 @@ pub struct StructMapper<'ast> {
 impl<'ast> StructMapper<'ast> {
     pub fn new(
         type_param: &'ast TypeParam,
-        src_type_param: &'ast TypeParam,
-        dst_type_param: &'ast TypeParam,
+        src_type_param: &'ast Ident,
+        dst_type_param: &'ast Ident,
         mapping_fn_ident: &'ast Ident,
     ) -> Self {
         Self {
@@ -194,15 +194,15 @@ impl<'ast> StructMapper<'ast> {
 #[derive(Debug)]
 struct TypeMapping<'ast> {
     type_param: &'ast TypeParam,
-    src_type_param: &'ast TypeParam,
-    dst_type_param: &'ast TypeParam,
+    src_type_param: &'ast Ident,
+    dst_type_param: &'ast Ident,
 }
 
-impl<'a> TypeMapping<'a> {
+impl<'ast> TypeMapping<'ast> {
     fn new(
-        type_param: &'a TypeParam,
-        src_type_param: &'a TypeParam,
-        dst_type_param: &'a TypeParam,
+        type_param: &'ast TypeParam,
+        src_type_param: &'ast Ident,
+        dst_type_param: &'ast Ident,
     ) -> Self {
         Self {
             type_param,
@@ -212,11 +212,11 @@ impl<'a> TypeMapping<'a> {
     }
 
     fn apply_src(&self, ty: &Type) -> Type {
-        ty.subs_type_param(self.type_param, &self.src_type_param.to_type())
+        ty.subs_type_param(self.type_param, &self.src_type_param.clone().into_type())
     }
 
     fn apply_dst(&self, ty: &Type) -> Type {
-        ty.subs_type_param(self.type_param, &self.dst_type_param.to_type())
+        ty.subs_type_param(self.type_param, &self.dst_type_param.clone().into_type())
     }
 
     fn apply(&self, ty: &Type) -> (Type, Type) {

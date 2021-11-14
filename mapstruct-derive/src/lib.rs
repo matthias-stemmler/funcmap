@@ -12,7 +12,7 @@ mod type_ext;
 // TODO detect crate name?
 // TODO check auto-impl
 // TODO use tinyvec etc.?
-// TODO trait bounds on mappable type
+// TODO where clauses  on original type
 // TODO enums
 // TODO use fuzzing tests?
 // TODO rename fmap/func_map

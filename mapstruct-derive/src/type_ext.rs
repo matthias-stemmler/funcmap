@@ -1,35 +1,62 @@
 use proc_macro2::Ident;
 use syn::fold::{self, Fold};
-use syn::{Type, TypeParam, TypePath};
+use syn::{Path, PathArguments, PathSegment, Type, TypeParam, TypePath};
 
 pub trait TypeParamExt {
-    fn to_type(&self) -> Type;
+    fn into_type(self) -> Type;
+
+    fn with_ident(self, ident: Ident) -> Self;
+
+    fn without_default(self) -> Self;
 }
 
 impl TypeParamExt for TypeParam {
-    fn to_type(&self) -> Type {
-        Type::from_ident(self.ident.clone())
+    fn into_type(self) -> Type {
+        self.ident.into_type()
+    }
+
+    fn with_ident(self, ident: Ident) -> Self {
+        Self { ident, ..self }
+    }
+
+    fn without_default(self) -> Self {
+        Self {
+            eq_token: None,
+            default: None,
+            ..self
+        }
     }
 }
 
 pub trait TypeExt {
-    fn from_ident(ident: Ident) -> Self;
-
     fn is_type_param(&self, type_param: &TypeParam) -> bool;
 
     fn subs_type_param(&self, type_param: &TypeParam, subs_type: &Type) -> Type;
 }
 
 impl TypeExt for Type {
-    fn from_ident(ident: Ident) -> Self {
-        Self::Path(TypePath {
-            qself: None,
-            path: ident.into(),
-        })
-    }
-
     fn is_type_param(&self, type_param: &TypeParam) -> bool {
-        self == &type_param.to_type()
+        match self {
+            Type::Path(TypePath {
+                qself: None,
+                path:
+                    Path {
+                        leading_colon: None,
+                        segments,
+                    },
+            }) => {
+                let mut segments = segments.iter();
+
+                match segments.next() {
+                    Some(PathSegment {
+                        ident,
+                        arguments: PathArguments::None,
+                    }) => ident == &type_param.ident && segments.next().is_none(),
+                    _ => false,
+                }
+            }
+            _ => false,
+        }
     }
 
     fn subs_type_param(&self, type_param: &TypeParam, subs_type: &Type) -> Type {
@@ -54,5 +81,18 @@ impl Fold for SubsTypeParam<'_> {
         } else {
             fold::fold_type(self, ty)
         }
+    }
+}
+
+pub trait IdentExt {
+    fn into_type(self) -> Type;
+}
+
+impl IdentExt for Ident {
+    fn into_type(self) -> Type {
+        Type::Path(TypePath {
+            qself: None,
+            path: self.into(),
+        })
     }
 }

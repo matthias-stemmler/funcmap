@@ -21,22 +21,17 @@ impl IdentCollector {
         VisitingIdentCollector(Self::new())
     }
 
-    pub fn reserve_uppercase_letter<T>(&mut self, desired_letter: char) -> T
-    where
-        Ident: Into<T>,
-    {
+    pub fn reserve_uppercase_letter(&mut self, desired_letter: char) -> Ident {
         let letter = self.find_uppercase_letter(desired_letter);
         let ident = Ident::new(&letter, Span::call_site());
         self.idents.insert(letter);
-        ident.into()
+        ident
     }
 
     fn find_uppercase_letter(&self, desired_letter: char) -> String {
-        let desired_letter = if desired_letter.is_alphabetic() && desired_letter.is_uppercase() {
-            desired_letter
-        } else {
-            'A'
-        };
+        if !desired_letter.is_alphabetic() || !desired_letter.is_uppercase() {
+            panic!("{} is not an uppercase letter", desired_letter);
+        }
 
         (0..)
             .flat_map(|iteration| {
@@ -84,24 +79,6 @@ mod tests {
         let ident: Ident = collector.reserve_uppercase_letter('T');
 
         assert_eq!(ident, "T");
-    }
-
-    #[test]
-    fn test_free_lowercase() {
-        let mut collector = IdentCollector::new();
-
-        let ident: Ident = collector.reserve_uppercase_letter('t');
-
-        assert_eq!(ident, "A");
-    }
-
-    #[test]
-    fn test_free_nonalphabetic() {
-        let mut collector = IdentCollector::new();
-
-        let ident: Ident = collector.reserve_uppercase_letter('1');
-
-        assert_eq!(ident, "A");
     }
 
     #[test]
@@ -185,5 +162,19 @@ mod tests {
         let ident: Ident = collector.reserve_uppercase_letter('T');
 
         assert_eq!(ident, "W");
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_lowercase() {
+        let mut collector = IdentCollector::new();
+        collector.reserve_uppercase_letter('t');
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_nonalphabetic() {
+        let mut collector = IdentCollector::new();
+        collector.reserve_uppercase_letter('1');
     }
 }

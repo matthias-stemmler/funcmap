@@ -1,7 +1,23 @@
 use mapstruct::MapStruct;
 
 #[test]
-fn impl_is_restricted_to_generics_allowing_mapping_of_inner_type() {
+fn impl_is_restricted_to_bounds_on_original_type() {
+    trait TestTrait {}
+
+    impl TestTrait for T1 {}
+    impl TestTrait for T2 {}
+
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct Test<#[cfg(test)] T: TestTrait = T1>(T);
+
+    let src = Test(T1);
+    let dst = src.map_struct(|_| T2);
+
+    assert_eq!(dst, Test(T2));
+}
+
+#[test]
+fn impl_is_restricted_to_allow_mapping_of_inner_type() {
     #[derive(Debug, PartialEq)]
     struct Inner<T>(T);
 
@@ -27,8 +43,6 @@ fn impl_is_restricted_to_generics_allowing_mapping_of_inner_type() {
 
     assert_eq!(dst, Test(Inner(T2)));
 }
-
-// TODO case where generics of original type have bounds
 
 #[derive(Debug, PartialEq)]
 struct T1;

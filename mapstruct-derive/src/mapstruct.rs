@@ -1,12 +1,12 @@
 use crate::ident_collector::IdentCollector;
 use crate::iter;
 use crate::struct_mapper::StructMapper;
-use crate::type_ext::{TypeExt, TypeParamExt};
+use crate::type_ext::{IdentExt, TypeParamExt};
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
 use quote::quote_spanned;
 use syn::visit::Visit;
-use syn::{ConstParam, GenericArgument, GenericParam, LifetimeDef, Member, Type, TypeParam};
+use syn::{ConstParam, GenericArgument, GenericParam, LifetimeDef, Member};
 use syn::{Data, DeriveInput, Fields};
 
 pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
@@ -44,9 +44,9 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
         ),
     };
 
-    let type_a: TypeParam = ident_collector.reserve_uppercase_letter('A');
-    let type_b: TypeParam = ident_collector.reserve_uppercase_letter('B');
-    let type_f: TypeParam = ident_collector.reserve_uppercase_letter('F');
+    let type_a = ident_collector.reserve_uppercase_letter('A');
+    let type_b = ident_collector.reserve_uppercase_letter('B');
+    let type_f = ident_collector.reserve_uppercase_letter('F');
     let var_f = Ident::new("f", Span::mixed_site());
 
     let ident = input.ident;
@@ -74,23 +74,28 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
                     })
                     .collect();
 
-                let type_a: GenericParam = type_a.clone().into();
-                let type_b: GenericParam = type_b.clone().into();
-                let impl_params = iter::replace_at(params.iter(), param_idx, [&type_a, &type_b]);
+                let type_a = type_a.clone();
+                let type_b = type_b.clone();
+
+                let type_param_a = type_param.clone().with_ident(type_a.clone()).without_default().into();
+                let type_param_b = type_param.clone().with_ident(type_b.clone()).without_default().into();
+
+                let impl_params = iter::replace_at(params.iter(), param_idx, [&type_param_a, &type_param_b]);
 
                 let src_params = iter::replace_at(
-                    params.iter().map(param_to_argument),
+                    params.iter().cloned().map(param_into_argument),
                     param_idx,
-                    [param_to_argument(&type_a)],
+                    [GenericArgument::Type(type_a.clone().into_type())],
                 );
                 let dst_params = iter::replace_at(
-                    params.iter().map(param_to_argument),
+                    params.iter().cloned().map(param_into_argument),
                     param_idx,
-                    [param_to_argument(&type_b)],
+                    [GenericArgument::Type(type_b.clone().into_type())],
                 );
                 let where_clause = struct_mapper.where_clause();
 
                 quote_spanned! { Span::mixed_site() =>
+                    #[automatically_derived]
                     impl<#(#impl_params),*>
                         ::mapstruct::MapStruct<#type_a, #type_b, ::mapstruct::TypeParam<#type_param_idx>>
                         for #ident<#(#src_params),*>
@@ -113,14 +118,10 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
     quote_spanned!(Span::mixed_site() => #(#impls)*)
 }
 
-fn param_to_argument(param: &GenericParam) -> GenericArgument {
+fn param_into_argument(param: GenericParam) -> GenericArgument {
     match param {
-        GenericParam::Type(type_param) => GenericArgument::Type(type_param.to_type()),
-        GenericParam::Lifetime(LifetimeDef { lifetime, .. }) => {
-            GenericArgument::Lifetime(lifetime.clone())
-        }
-        GenericParam::Const(ConstParam { ident, .. }) => {
-            GenericArgument::Type(Type::from_ident(ident.clone()))
-        }
+        GenericParam::Type(type_param) => GenericArgument::Type(type_param.into_type()),
+        GenericParam::Lifetime(LifetimeDef { lifetime, .. }) => GenericArgument::Lifetime(lifetime),
+        GenericParam::Const(ConstParam { ident, .. }) => GenericArgument::Type(ident.into_type()),
     }
 }
