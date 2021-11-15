@@ -1,13 +1,14 @@
+use crate::bound_collector::BoundCollector;
 use crate::ident_collector::IdentCollector;
 use crate::iter;
 use crate::struct_mapper::StructMapper;
-use crate::type_ext::{IdentExt, TypeParamExt, WithoutDefaultExt};
+use crate::syn_ext::{IntoGenericArgument, IntoType, SubsTypeParam, WithIdent, WithoutDefault};
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
 use quote::quote_spanned;
 use syn::visit::Visit;
-use syn::{ConstParam, GenericArgument, GenericParam, LifetimeDef, Member};
 use syn::{Data, DeriveInput, Fields};
+use syn::{GenericArgument, GenericParam, Member, TypeParam, TypeParamBound};
 
 pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
     let mut ident_collector = IdentCollector::new_visiting();
@@ -77,18 +78,74 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
                 let type_a = type_a.clone();
                 let type_b = type_b.clone();
 
-                let type_param_a = type_param.clone().with_ident(type_a.clone()).without_default().into();
-                let type_param_b = type_param.clone().with_ident(type_b.clone()).without_default().into();
+                let type_param_a = type_param.clone().with_ident(type_a.clone()).without_default();
+                let type_param_b = type_param.clone().with_ident(type_b.clone()).without_default();
 
-                let impl_params = iter::replace_at(params.iter().map(|param| param.clone().without_default()), param_idx, [type_param_a, type_param_b]);
+                let impl_params = iter::replace_at(params.iter().map(|param| {
+                    match param.clone().without_default() {
+                        GenericParam::Type(impl_type_param) => {
+                            let mut collector = BoundCollector::new();
+
+                            for bound in impl_type_param.bounds {
+                                match bound {
+                                    TypeParamBound::Trait(trait_bound) => {
+                                        collector.insert(TypeParamBound::Trait(trait_bound.clone().subs_type_param(type_param, &type_a)));
+                                        collector.insert(TypeParamBound::Trait(trait_bound.subs_type_param(type_param, &type_b)));
+                                    },
+                                    bound => collector.insert(bound.clone()),
+                                };
+                            }
+
+                            GenericParam::Type(TypeParam {
+                                bounds: collector.into_bounds(),
+                                ..impl_type_param
+                            })
+                        },
+                        param => param,
+                    }
+                }), param_idx, [{
+                    let mut collector = BoundCollector::new();
+                    let param = type_param_a.clone();
+
+                    for bound in type_param_a.bounds {
+                        match bound {
+                            TypeParamBound::Trait(trait_bound) => {
+                                collector.insert(TypeParamBound::Trait(trait_bound.subs_type_param(type_param, &param.ident)));
+                            },
+                            bound => collector.insert(bound.clone()),
+                        };
+                    }
+
+                    GenericParam::Type(TypeParam {
+                        bounds: collector.into_bounds(),
+                        ..param
+                    })
+                }, {
+                    let mut collector = BoundCollector::new();
+                    let param = type_param_b.clone();
+
+                    for bound in type_param_b.bounds {
+                        match bound {
+                            TypeParamBound::Trait(trait_bound) => {
+                                collector.insert(TypeParamBound::Trait(trait_bound.subs_type_param(type_param, &param.ident)));
+                            },
+                            bound => collector.insert(bound.clone()),
+                        };
+                    }
+
+                    GenericParam::Type(TypeParam {
+                        bounds: collector.into_bounds(),
+                        ..param
+                    })
+                }]);
 
                 let src_args = iter::replace_at(
-                    params.iter().cloned().map(param_into_argument),
+                    params.iter().cloned().map(IntoGenericArgument::into_generic_argument),
                     param_idx,
                     [GenericArgument::Type(type_a.clone().into_type())],
                 );
                 let dst_args = iter::replace_at(
-                    params.iter().cloned().map(param_into_argument),
+                    params.iter().cloned().map(IntoGenericArgument::into_generic_argument),
                     param_idx,
                     [GenericArgument::Type(type_b.clone().into_type())],
                 );
@@ -116,12 +173,4 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
             });
 
     quote_spanned!(Span::mixed_site() => #(#impls)*)
-}
-
-fn param_into_argument(param: GenericParam) -> GenericArgument {
-    match param {
-        GenericParam::Type(type_param) => GenericArgument::Type(type_param.into_type()),
-        GenericParam::Lifetime(LifetimeDef { lifetime, .. }) => GenericArgument::Lifetime(lifetime),
-        GenericParam::Const(ConstParam { ident, .. }) => GenericArgument::Type(ident.into_type()),
-    }
 }

@@ -2,23 +2,17 @@ use proc_macro2::{Ident, Span};
 use std::collections::HashSet;
 use syn::visit::Visit;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct IdentCollector {
     idents: HashSet<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct VisitingIdentCollector(IdentCollector);
 
 impl IdentCollector {
-    pub fn new() -> Self {
-        Self {
-            idents: HashSet::new(),
-        }
-    }
-
     pub fn new_visiting() -> VisitingIdentCollector {
-        VisitingIdentCollector(Self::new())
+        VisitingIdentCollector::default()
     }
 
     pub fn reserve_uppercase_letter(&mut self, desired_letter: char) -> Ident {
@@ -43,14 +37,8 @@ impl IdentCollector {
                     },
                 )
             })
-            .find(|c| !self.idents.contains(c))
+            .find(|letter| !self.idents.contains(letter))
             .unwrap()
-    }
-}
-
-impl Default for IdentCollector {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -74,7 +62,7 @@ mod tests {
 
     #[test]
     fn test_free_valid() {
-        let mut collector = IdentCollector::new();
+        let mut collector = IdentCollector::default();
 
         let ident: Ident = collector.reserve_uppercase_letter('T');
 
@@ -83,7 +71,7 @@ mod tests {
 
     #[test]
     fn test_reserved() {
-        let mut collector = IdentCollector::new();
+        let mut collector = IdentCollector::default();
         let _: Ident = collector.reserve_uppercase_letter('T');
 
         let ident: Ident = collector.reserve_uppercase_letter('T');
@@ -93,7 +81,7 @@ mod tests {
 
     #[test]
     fn test_reserved_wraparound() {
-        let mut collector = IdentCollector::new();
+        let mut collector = IdentCollector::default();
         let _: Ident = collector.reserve_uppercase_letter('Z');
 
         let ident: Ident = collector.reserve_uppercase_letter('Z');
@@ -103,7 +91,7 @@ mod tests {
 
     #[test]
     fn test_prefixed() {
-        let mut collector = IdentCollector::new();
+        let mut collector = IdentCollector::default();
         for c in 'A'..='Z' {
             let _: Ident = collector.reserve_uppercase_letter(c);
         }
@@ -115,7 +103,7 @@ mod tests {
 
     #[test]
     fn test_prefixed_reserved() {
-        let mut collector = IdentCollector::new();
+        let mut collector = IdentCollector::default();
         for c in 'A'..='Z' {
             let _: Ident = collector.reserve_uppercase_letter(c);
         }
@@ -128,7 +116,7 @@ mod tests {
 
     #[test]
     fn test_numbered() {
-        let mut collector = IdentCollector::new();
+        let mut collector = IdentCollector::default();
         for c in ('A'..='Z').chain('A'..='Z') {
             let _: Ident = collector.reserve_uppercase_letter(c);
         }
@@ -140,7 +128,7 @@ mod tests {
 
     #[test]
     fn test_numbered_reserved() {
-        let mut collector = IdentCollector::new();
+        let mut collector = IdentCollector::default();
         for c in ('A'..='Z').chain('A'..='Z') {
             let _: Ident = collector.reserve_uppercase_letter(c);
         }
@@ -167,14 +155,14 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_lowercase() {
-        let mut collector = IdentCollector::new();
+        let mut collector = IdentCollector::default();
         collector.reserve_uppercase_letter('t');
     }
 
     #[test]
     #[should_panic]
     fn test_nonalphabetic() {
-        let mut collector = IdentCollector::new();
+        let mut collector = IdentCollector::default();
         collector.reserve_uppercase_letter('1');
     }
 }

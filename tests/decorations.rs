@@ -23,7 +23,7 @@ fn defaults_on_generics_are_supported() {
 }
 
 #[test]
-fn impl_is_restricted_to_bounds_on_original_type() {
+fn impl_is_restricted_to_trait_bounds_on_generics_of_original_type() {
     trait TestTrait {}
 
     impl TestTrait for T1 {}
@@ -31,6 +31,44 @@ fn impl_is_restricted_to_bounds_on_original_type() {
 
     #[derive(MapStruct, Debug, PartialEq)]
     struct Test<S: TestTrait, T: TestTrait>(S, T);
+
+    let src = Test(T1, T1);
+    let dst = src.map_struct_over(TypeParam::<0>, |_| T2);
+
+    assert_eq!(dst, Test(T2, T1));
+}
+
+#[test]
+fn impl_is_restricted_to_self_dependent_trait_bounds_on_generics_of_original_type() {
+    trait TestTrait<T> {
+        type Assoc;
+    }
+
+    impl<S, T> TestTrait<T> for S {
+        type Assoc = T;
+    }
+
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct Test<S: TestTrait<S, Assoc = S>, T: TestTrait<T, Assoc = T>>(S, T);
+
+    let src = Test(T1, T1);
+    let dst = src.map_struct_over(TypeParam::<0>, |_| T2);
+
+    assert_eq!(dst, Test(T2, T1));
+}
+
+#[test]
+fn impl_is_restricted_to_cross_dependent_trait_bounds_on_generics_of_original_type() {
+    trait TestTrait<T> {
+        type Assoc;
+    }
+
+    impl<S, T> TestTrait<T> for S {
+        type Assoc = T;
+    }
+
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct Test<S: TestTrait<T, Assoc = T>, T: TestTrait<S, Assoc = S>>(S, T);
 
     let src = Test(T1, T1);
     let dst = src.map_struct_over(TypeParam::<0>, |_| T2);

@@ -1,5 +1,4 @@
-use crate::dependency::DependencyOnExt;
-use crate::type_ext::{IdentExt, TypeExt};
+use crate::syn_ext::{DependencyOn, SubsTypeParam};
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
 use quote::{quote_spanned, ToTokens};
@@ -47,8 +46,9 @@ impl<'ast> StructMapper<'ast> {
 
         match ty {
             Type::Array(TypeArray { elem: inner_ty, .. }) => {
-                let (src_type, dst_type) = self.type_mapping.apply(ty);
-                let (inner_src_type, inner_dst_type) = self.type_mapping.apply(inner_ty);
+                let (src_type, dst_type) = self.type_mapping.apply(ty.clone());
+                let (inner_src_type, inner_dst_type) =
+                    self.type_mapping.apply(Type::clone(inner_ty));
 
                 self.where_predicates.insert(parse_quote! {
                     #src_type: ::mapstruct::MapStruct<#inner_src_type, #inner_dst_type, Output = #dst_type>
@@ -123,14 +123,15 @@ impl<'ast> StructMapper<'ast> {
                         continue;
                     }
 
-                    let (inner_src_type, inner_dst_type) = self.type_mapping.apply(arg_type);
+                    let (inner_src_type, inner_dst_type) =
+                        self.type_mapping.apply(arg_type.clone());
 
                     let make_type = |mapped_until_idx: usize| {
-                        let mapped_args = map_type_args(args.iter(), |type_arg_idx, ty| {
+                        let mapped_args = map_type_args(args.iter(), |type_arg_idx, ty: &Type| {
                             if type_arg_idx >= mapped_until_idx {
-                                self.type_mapping.apply_src(ty)
+                                self.type_mapping.apply_src(ty.clone())
                             } else {
-                                self.type_mapping.apply_dst(ty)
+                                self.type_mapping.apply_dst(ty.clone())
                             }
                         });
 
@@ -211,16 +212,16 @@ impl<'ast> TypeMapping<'ast> {
         }
     }
 
-    fn apply_src(&self, ty: &Type) -> Type {
-        ty.subs_type_param(self.type_param, &self.src_type_param.clone().into_type())
+    fn apply_src(&self, ty: Type) -> Type {
+        ty.subs_type_param(self.type_param, self.src_type_param)
     }
 
-    fn apply_dst(&self, ty: &Type) -> Type {
-        ty.subs_type_param(self.type_param, &self.dst_type_param.clone().into_type())
+    fn apply_dst(&self, ty: Type) -> Type {
+        ty.subs_type_param(self.type_param, self.dst_type_param)
     }
 
-    fn apply(&self, ty: &Type) -> (Type, Type) {
-        (self.apply_src(ty), self.apply_dst(ty))
+    fn apply(&self, ty: Type) -> (Type, Type) {
+        (self.apply_src(ty.clone()), self.apply_dst(ty))
     }
 }
 
