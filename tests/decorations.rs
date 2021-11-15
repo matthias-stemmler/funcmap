@@ -1,4 +1,26 @@
-use mapstruct::MapStruct;
+use mapstruct::{MapStruct, TypeParam};
+
+#[test]
+fn attributes_on_generics_are_supported() {
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct Test<#[cfg(test)] S, #[cfg(test)] T>(S, T);
+
+    let src = Test(T1, T1);
+    let dst = src.map_struct_over(TypeParam::<0>, |_| T2);
+
+    assert_eq!(dst, Test(T2, T1));
+}
+
+#[test]
+fn defaults_on_generics_are_supported() {
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct Test<S, T = T1>(S, T);
+
+    let src = Test(T1, T1);
+    let dst = src.map_struct_over(TypeParam::<0>, |_| T2);
+
+    assert_eq!(dst, Test(T2, T1));
+}
 
 #[test]
 fn impl_is_restricted_to_bounds_on_original_type() {
@@ -8,12 +30,12 @@ fn impl_is_restricted_to_bounds_on_original_type() {
     impl TestTrait for T2 {}
 
     #[derive(MapStruct, Debug, PartialEq)]
-    struct Test<#[cfg(test)] T: TestTrait = T1>(T);
+    struct Test<S: TestTrait, T: TestTrait>(S, T);
 
-    let src = Test(T1);
-    let dst = src.map_struct(|_| T2);
+    let src = Test(T1, T1);
+    let dst = src.map_struct_over(TypeParam::<0>, |_| T2);
 
-    assert_eq!(dst, Test(T2));
+    assert_eq!(dst, Test(T2, T1));
 }
 
 #[test]

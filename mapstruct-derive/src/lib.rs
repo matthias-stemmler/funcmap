@@ -12,7 +12,9 @@ mod type_ext;
 // TODO detect crate name?
 // TODO check auto-impl
 // TODO use tinyvec etc.?
-// TODO where clauses  on original type
+// TODO bounds on original type
+//   --> take care of mapped param on rhs of bound: Foo<T: Into<T>>, Foo<T, S: Into<T>>
+//   --> take care of where clauses
 // TODO enums
 // TODO use fuzzing tests?
 // TODO rename fmap/func_map

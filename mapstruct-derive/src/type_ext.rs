@@ -1,13 +1,45 @@
 use proc_macro2::Ident;
 use syn::fold::{self, Fold};
-use syn::{Path, PathArguments, PathSegment, Type, TypeParam, TypePath};
+use syn::{ConstParam, GenericParam, Path, PathArguments, PathSegment, Type, TypeParam, TypePath};
+
+pub trait WithoutDefaultExt {
+    fn without_default(self) -> Self;
+}
+
+impl WithoutDefaultExt for GenericParam {
+    fn without_default(self) -> Self {
+        match self {
+            GenericParam::Type(type_param) => GenericParam::Type(type_param.without_default()),
+            GenericParam::Const(const_param) => GenericParam::Const(const_param.without_default()),
+            _ => self,
+        }
+    }
+}
+
+impl WithoutDefaultExt for TypeParam {
+    fn without_default(self) -> Self {
+        Self {
+            eq_token: None,
+            default: None,
+            ..self
+        }
+    }
+}
+
+impl WithoutDefaultExt for ConstParam {
+    fn without_default(self) -> Self {
+        Self {
+            eq_token: None,
+            default: None,
+            ..self
+        }
+    }
+}
 
 pub trait TypeParamExt {
     fn into_type(self) -> Type;
 
     fn with_ident(self, ident: Ident) -> Self;
-
-    fn without_default(self) -> Self;
 }
 
 impl TypeParamExt for TypeParam {
@@ -17,14 +49,6 @@ impl TypeParamExt for TypeParam {
 
     fn with_ident(self, ident: Ident) -> Self {
         Self { ident, ..self }
-    }
-
-    fn without_default(self) -> Self {
-        Self {
-            eq_token: None,
-            default: None,
-            ..self
-        }
     }
 }
 

@@ -1,5 +1,6 @@
 use core::marker::PhantomData;
 use mapstruct::MapStruct;
+use std::cell::Cell;
 
 #[test]
 fn field_of_array_type_is_mapped() {
@@ -14,7 +15,13 @@ fn field_of_array_type_is_mapped() {
 
 #[test]
 fn field_of_cell_type_is_mapped() {
-    // TODO for #[derive(Debug)], we need T: Copy, but that isn't supported by #[derive(MapStruct)] yet
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct Test<T: Copy>(Cell<T>);
+
+    let src = Test(Cell::new(T1));
+    let dst = src.map_struct(|_| T2);
+
+    assert_eq!(dst, Test(Cell::new(T2)));
 }
 
 #[test]
@@ -123,8 +130,8 @@ mod alloc {
     }
 }
 
-#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 struct T1;
 
-#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 struct T2;
