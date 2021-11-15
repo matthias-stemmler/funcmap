@@ -1,3 +1,5 @@
+#![deny(missing_debug_implementations)]
+
 use proc_macro::TokenStream;
 use proc_macro_error::proc_macro_error;
 use syn::{parse_macro_input, DeriveInput};
@@ -18,7 +20,7 @@ mod syn_ext;
 // TODO rename fmap/func_map
 // TODO docs (deny missing docs)
 // TODO trybuild tests
-// TODO deny some lints (missing docs, missing debug)
+// TODO deny some lints (missing docs)
 // TODO impl more standard types (HashMap, ...)
 // TODO allow attributes on generated impl
 // TODO allow restricting which params should be mappable

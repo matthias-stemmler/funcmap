@@ -1,4 +1,5 @@
 #![no_std]
+#![deny(missing_debug_implementations)]
 
 use core::cell::Cell;
 use core::marker::PhantomData;
@@ -6,6 +7,7 @@ use core::marker::PhantomData;
 #[doc(hidden)]
 pub use mapstruct_derive::*;
 
+#[derive(Debug)]
 pub struct TypeParam<const N: usize>;
 
 pub trait MapStruct<A, B, P = TypeParam<0>>: Sized {
