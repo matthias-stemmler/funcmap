@@ -4,11 +4,10 @@ use proc_macro::TokenStream;
 use proc_macro_error::proc_macro_error;
 use syn::{parse_macro_input, DeriveInput};
 
-mod bound_collector;
 mod ident_collector;
-mod iter;
+mod map_expr;
 mod mapstruct;
-mod struct_mapper;
+mod predicates;
 mod syn_ext;
 
 // TODO detect crate name?
@@ -25,6 +24,7 @@ mod syn_ext;
 // TODO allow attributes on generated impl
 // TODO allow restricting which params should be mappable
 // TODO reduce usage of parse_quote!(..)
+// TODO newtype?
 
 #[proc_macro_error]
 #[proc_macro_derive(MapStruct)]

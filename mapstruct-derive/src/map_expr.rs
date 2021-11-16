@@ -1,60 +1,62 @@
-use crate::syn_ext::{DependencyOn, SubsTypeParam};
+use crate::predicates::UniquePredicates;
+use crate::syn_ext::{DependencyOn, SubsType};
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
 use quote::{quote_spanned, ToTokens};
-use std::collections::HashSet;
-use syn::WhereClause;
 use syn::{
     parse_quote, punctuated::Pair, AngleBracketedGenericArguments, GenericArgument, Index, Path,
-    PathArguments, PathSegment, QSelf, Type, TypeArray, TypeParam, TypePath, WherePredicate,
+    PathArguments, PathSegment, QSelf, Type, TypeArray, TypeParam, TypePath,
 };
 
-#[derive(Debug)]
-pub struct StructMapper<'ast> {
-    type_param: &'ast TypeParam,
-    type_mapping: TypeMapping<'ast>,
-    mapping_fn_ident: &'ast Ident,
-    where_predicates: HashSet<WherePredicate>,
+pub fn map_expr(
+    mappable: TokenStream,
+    ty: &Type,
+    type_param: &TypeParam,
+    src_type_ident: &Ident,
+    dst_type_ident: &Ident,
+    mapping_fn_ident: &Ident,
+) -> (TokenStream, UniquePredicates) {
+    let mut mapper = Mapper {
+        type_param,
+        src_type_ident,
+        dst_type_ident,
+        mapping_fn_ident,
+        unique_predicates: UniquePredicates::new(),
+    };
+
+    let mapped = mapper.map(mappable, ty);
+    (mapped, mapper.unique_predicates)
 }
 
-impl<'ast> StructMapper<'ast> {
-    pub fn new(
-        type_param: &'ast TypeParam,
-        src_type_param: &'ast Ident,
-        dst_type_param: &'ast Ident,
-        mapping_fn_ident: &'ast Ident,
-    ) -> Self {
-        Self {
-            type_param,
-            type_mapping: TypeMapping::new(type_param, src_type_param, dst_type_param),
-            mapping_fn_ident,
-            where_predicates: HashSet::new(),
-        }
-    }
+#[derive(Debug)]
+struct Mapper<'ast> {
+    type_param: &'ast TypeParam,
+    src_type_ident: &'ast Ident,
+    dst_type_ident: &'ast Ident,
+    mapping_fn_ident: &'ast Ident,
+    unique_predicates: UniquePredicates,
+}
 
-    pub fn where_clause(self) -> WhereClause {
-        WhereClause {
-            where_token: Default::default(),
-            predicates: self.where_predicates.into_iter().collect(),
-        }
-    }
-
-    pub fn map_struct(&mut self, mappable: TokenStream, ty: &Type) -> TokenStream {
+impl<'ast> Mapper<'ast> {
+    fn map(&mut self, mappable: TokenStream, ty: &Type) -> TokenStream {
         if ty.dependency_on(self.type_param).is_none() {
             return mappable;
         }
 
         match ty {
             Type::Array(TypeArray { elem: inner_ty, .. }) => {
-                let (src_type, dst_type) = self.type_mapping.apply(ty.clone());
-                let (inner_src_type, inner_dst_type) =
-                    self.type_mapping.apply(Type::clone(inner_ty));
+                let (src_type, dst_type) = self.subs_types(ty.clone());
+                let (inner_src_type, inner_dst_type) = self.subs_types(Type::clone(inner_ty));
 
-                self.where_predicates.insert(parse_quote! {
-                    #src_type: ::mapstruct::MapStruct<#inner_src_type, #inner_dst_type, Output = #dst_type>
+                self.unique_predicates.add(parse_quote! {
+                    #src_type: ::mapstruct::MapStruct<
+                        #inner_src_type,
+                        #inner_dst_type,
+                        Output = #dst_type
+                    >
                 });
 
-                let closure = self.map_struct_closure(inner_ty);
+                let closure = self.map_closure(inner_ty);
 
                 quote_spanned!(Span::mixed_site() => #mappable.map_struct(#closure))
             }
@@ -123,15 +125,14 @@ impl<'ast> StructMapper<'ast> {
                         continue;
                     }
 
-                    let (inner_src_type, inner_dst_type) =
-                        self.type_mapping.apply(arg_type.clone());
+                    let (inner_src_type, inner_dst_type) = self.subs_types(arg_type.clone());
 
                     let make_type = |mapped_until_idx: usize| {
                         let mapped_args = map_type_args(args.iter(), |type_arg_idx, ty: &Type| {
                             if type_arg_idx >= mapped_until_idx {
-                                self.type_mapping.apply_src(ty.clone())
+                                self.subs_src_type(ty.clone())
                             } else {
-                                self.type_mapping.apply_dst(ty.clone())
+                                self.subs_dst_type(ty.clone())
                             }
                         });
 
@@ -159,11 +160,15 @@ impl<'ast> StructMapper<'ast> {
                     let src_type = make_type(type_idx);
                     let dst_type = make_type(type_idx + 1);
 
-                    self.where_predicates.insert(parse_quote! {
-                        #src_type: ::mapstruct::MapStruct<#inner_src_type, #inner_dst_type, ::mapstruct::TypeParam<#type_idx>, Output = #dst_type>
+                    self.unique_predicates.add(parse_quote! {
+                        #src_type: ::mapstruct::MapStruct<
+                            #inner_src_type,
+                            #inner_dst_type,
+                            ::mapstruct::TypeParam<#type_idx>, Output = #dst_type
+                        >
                     });
 
-                    let closure = self.map_struct_closure(arg_type);
+                    let closure = self.map_closure(arg_type);
 
                     mappable = quote_spanned! { Span::mixed_site() =>
                         #mappable.map_struct_over(::mapstruct::TypeParam::<#type_idx>, #closure)
@@ -176,7 +181,7 @@ impl<'ast> StructMapper<'ast> {
                 let mapped = type_tuple.elems.iter().enumerate().map(|(i, ty)| {
                     let idx = Index::from(i);
                     let mappable = quote_spanned!(Span::mixed_site() => #mappable.#idx);
-                    self.map_struct(mappable, ty)
+                    self.map(mappable, ty)
                 });
 
                 quote_spanned!(Span::mixed_site() => (#(#mapped),*))
@@ -185,43 +190,22 @@ impl<'ast> StructMapper<'ast> {
         }
     }
 
-    fn map_struct_closure(&mut self, ty: &Type) -> TokenStream {
+    fn map_closure(&mut self, ty: &Type) -> TokenStream {
         let closure_arg = Ident::new("value", Span::mixed_site());
-        let mapped = self.map_struct(closure_arg.clone().into_token_stream(), ty);
+        let mapped = self.map(closure_arg.clone().into_token_stream(), ty);
         quote_spanned!(Span::mixed_site() => |#closure_arg| #mapped)
     }
-}
 
-#[derive(Debug)]
-struct TypeMapping<'ast> {
-    type_param: &'ast TypeParam,
-    src_type_param: &'ast Ident,
-    dst_type_param: &'ast Ident,
-}
-
-impl<'ast> TypeMapping<'ast> {
-    fn new(
-        type_param: &'ast TypeParam,
-        src_type_param: &'ast Ident,
-        dst_type_param: &'ast Ident,
-    ) -> Self {
-        Self {
-            type_param,
-            src_type_param,
-            dst_type_param,
-        }
+    fn subs_src_type(&self, ty: Type) -> Type {
+        ty.subs_type(&self.type_param.ident, self.src_type_ident)
     }
 
-    fn apply_src(&self, ty: Type) -> Type {
-        ty.subs_type_param(self.type_param, self.src_type_param)
+    fn subs_dst_type(&self, ty: Type) -> Type {
+        ty.subs_type(&self.type_param.ident, self.dst_type_ident)
     }
 
-    fn apply_dst(&self, ty: Type) -> Type {
-        ty.subs_type_param(self.type_param, self.dst_type_param)
-    }
-
-    fn apply(&self, ty: Type) -> (Type, Type) {
-        (self.apply_src(ty.clone()), self.apply_dst(ty))
+    fn subs_types(&self, ty: Type) -> (Type, Type) {
+        (self.subs_src_type(ty.clone()), self.subs_dst_type(ty))
     }
 }
 

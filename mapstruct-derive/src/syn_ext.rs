@@ -48,7 +48,7 @@ impl<'ast> DependencyVisitor<'ast> {
 impl<'ast> Visit<'ast> for DependencyVisitor<'ast> {
     fn visit_type(&mut self, ty: &'ast Type) {
         match self.dependency {
-            None if ty.is_type_param(self.type_param) => self.dependency = Some(ty),
+            None if ty.is_ident(&self.type_param.ident) => self.dependency = Some(ty),
             None => visit::visit_type(self, ty),
             _ => (),
         };
@@ -62,7 +62,7 @@ pub trait IntoGenericArgument {
 impl IntoGenericArgument for GenericParam {
     fn into_generic_argument(self) -> GenericArgument {
         match self {
-            GenericParam::Type(type_param) => GenericArgument::Type(type_param.ident.into_type()),
+            GenericParam::Type(TypeParam { ident, .. }) => GenericArgument::Type(ident.into_type()),
             GenericParam::Lifetime(LifetimeDef { lifetime, .. }) => {
                 GenericArgument::Lifetime(lifetime)
             }
@@ -86,12 +86,12 @@ impl IntoType for Ident {
     }
 }
 
-pub trait IsTypeParam {
-    fn is_type_param(&self, type_param: &TypeParam) -> bool;
+pub trait IsIdent {
+    fn is_ident(&self, ident: &Ident) -> bool;
 }
 
-impl IsTypeParam for Type {
-    fn is_type_param(&self, type_param: &TypeParam) -> bool {
+impl IsIdent for Type {
+    fn is_ident(&self, ident: &Ident) -> bool {
         match self {
             Type::Path(TypePath {
                 qself: None,
@@ -105,9 +105,9 @@ impl IsTypeParam for Type {
 
                 match segments.next() {
                     Some(PathSegment {
-                        ident,
+                        ident: segment_ident,
                         arguments: PathArguments::None,
-                    }) => ident == &type_param.ident && segments.next().is_none(),
+                    }) => segment_ident == ident && segments.next().is_none(),
                     _ => false,
                 }
             }
@@ -116,52 +116,33 @@ impl IsTypeParam for Type {
     }
 }
 
-pub trait SubsTypeParam {
-    fn subs_type_param<T>(self, type_param: &TypeParam, subs_type: &T) -> Self
-    where
-        T: Clone + IntoType;
+pub trait SubsType {
+    fn subs_type(self, ident: &Ident, subs_ident: &Ident) -> Self;
 }
 
-impl SubsTypeParam for Type {
-    fn subs_type_param<T>(self, type_param: &TypeParam, subs_type: &T) -> Self
-    where
-        T: Clone + IntoType,
-    {
-        let mut folder = SubsTypeParamFolder {
-            type_param,
-            subs_type,
-        };
-
+impl SubsType for Type {
+    fn subs_type(self, ident: &Ident, subs_ident: &Ident) -> Self {
+        let mut folder = SubsTypeFolder { ident, subs_ident };
         folder.fold_type(self)
     }
 }
 
-impl SubsTypeParam for TraitBound {
-    fn subs_type_param<T>(self, type_param: &TypeParam, subs_type: &T) -> Self
-    where
-        T: Clone + IntoType,
-    {
-        let mut fold = SubsTypeParamFolder {
-            type_param,
-            subs_type,
-        };
-
+impl SubsType for TraitBound {
+    fn subs_type(self, ident: &Ident, subs_ident: &Ident) -> Self {
+        let mut fold = SubsTypeFolder { ident, subs_ident };
         fold.fold_trait_bound(self)
     }
 }
 
-struct SubsTypeParamFolder<'ast, T> {
-    type_param: &'ast TypeParam,
-    subs_type: &'ast T,
+struct SubsTypeFolder<'ast> {
+    ident: &'ast Ident,
+    subs_ident: &'ast Ident,
 }
 
-impl<T> Fold for SubsTypeParamFolder<'_, T>
-where
-    T: Clone + IntoType,
-{
+impl Fold for SubsTypeFolder<'_> {
     fn fold_type(&mut self, ty: Type) -> Type {
-        if ty.is_type_param(self.type_param) {
-            self.subs_type.clone().into_type()
+        if ty.is_ident(self.ident) {
+            self.subs_ident.clone().into_type()
         } else {
             fold::fold_type(self, ty)
         }
@@ -180,16 +161,6 @@ impl WithIdent for TypeParam {
 
 pub trait WithoutDefault {
     fn without_default(self) -> Self;
-}
-
-impl WithoutDefault for GenericParam {
-    fn without_default(self) -> Self {
-        match self {
-            Self::Type(type_param) => Self::Type(type_param.without_default()),
-            Self::Const(const_param) => Self::Const(const_param.without_default()),
-            _ => self,
-        }
-    }
 }
 
 impl WithoutDefault for TypeParam {
