@@ -33,7 +33,7 @@ impl IdentCollector {
                     move |letter| match iteration {
                         0 => letter.to_string(),
                         1 => format!("__MAPSTRUCT_{}", letter),
-                        _ => format!("__MAPSTRUCT_{}{}", letter, iteration),
+                        i => format!("__MAPSTRUCT_{}{}", letter, i),
                     },
                 )
             })

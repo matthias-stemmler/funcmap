@@ -107,8 +107,28 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
                 }
             });
 
-            let mut mappings = Vec::new();
             let mut unique_predicates = UniquePredicates::new();
+
+            for predicate in input
+                .generics
+                .where_clause
+                .iter()
+                .flat_map(|clause| clause.predicates.iter())
+            {
+                unique_predicates.add(
+                    predicate
+                        .clone()
+                        .subs_type(&mapped_type_param.ident, &src_type_ident),
+                );
+
+                unique_predicates.add(
+                    predicate
+                        .clone()
+                        .subs_type(&mapped_type_param.ident, &dst_type_ident),
+                );
+            }
+
+            let mut mappings = Vec::new();
 
             for (field_idx, field) in fields.iter().enumerate() {
                 let member: Member = match &field.ident {

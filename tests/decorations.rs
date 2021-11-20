@@ -44,8 +44,12 @@ fn impl_is_restricted_to_self_dependent_trait_bounds_on_generics_of_original_typ
         type Assoc;
     }
 
-    impl<S, T> TestTrait<T> for S {
-        type Assoc = T;
+    impl<S> TestTrait<S> for T1 {
+        type Assoc = S;
+    }
+
+    impl<S> TestTrait<S> for T2 {
+        type Assoc = S;
     }
 
     #[derive(MapStruct, Debug, PartialEq)]
@@ -63,12 +67,132 @@ fn impl_is_restricted_to_cross_dependent_trait_bounds_on_generics_of_original_ty
         type Assoc;
     }
 
-    impl<S, T> TestTrait<T> for S {
-        type Assoc = T;
+    impl<S> TestTrait<S> for T1 {
+        type Assoc = S;
+    }
+
+    impl<S> TestTrait<S> for T2 {
+        type Assoc = S;
     }
 
     #[derive(MapStruct, Debug, PartialEq)]
     struct Test<S: TestTrait<T, Assoc = T>, T: TestTrait<S, Assoc = S>>(S, T);
+
+    let src = Test(T1, T1);
+    let dst = src.map_struct_over(TypeParam::<0>, |_| T2);
+
+    assert_eq!(dst, Test(T2, T1));
+}
+
+#[test]
+fn impl_is_restricted_to_trait_bounds_in_where_clause_on_original_type() {
+    trait TestTrait {}
+
+    impl TestTrait for T1 {}
+    impl TestTrait for T2 {}
+
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct Test<S, T>(S, T)
+    where
+        S: TestTrait,
+        T: TestTrait;
+
+    let src = Test(T1, T1);
+    let dst = src.map_struct_over(TypeParam::<0>, |_| T2);
+
+    assert_eq!(dst, Test(T2, T1));
+}
+
+#[test]
+fn impl_is_restricted_to_self_dependent_trait_bounds_in_where_clause_on_original_type() {
+    trait TestTrait<T> {
+        type Assoc;
+    }
+
+    impl<S> TestTrait<S> for T1 {
+        type Assoc = S;
+    }
+
+    impl<S> TestTrait<S> for T2 {
+        type Assoc = S;
+    }
+
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct Test<S, T>(S, T)
+    where
+        S: TestTrait<S, Assoc = S>,
+        T: TestTrait<T, Assoc = T>;
+
+    let src = Test(T1, T1);
+    let dst = src.map_struct_over(TypeParam::<0>, |_| T2);
+
+    assert_eq!(dst, Test(T2, T1));
+}
+
+#[test]
+fn impl_is_restricted_to_cross_dependent_trait_bounds_in_where_clause_on_original_type() {
+    trait TestTrait<T> {
+        type Assoc;
+    }
+
+    impl<S> TestTrait<S> for T1 {
+        type Assoc = S;
+    }
+
+    impl<S> TestTrait<S> for T2 {
+        type Assoc = S;
+    }
+
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct Test<S, T>(S, T)
+    where
+        S: TestTrait<T, Assoc = T>,
+        T: TestTrait<S, Assoc = S>;
+
+    let src = Test(T1, T1);
+    let dst = src.map_struct_over(TypeParam::<0>, |_| T2);
+
+    assert_eq!(dst, Test(T2, T1));
+}
+
+#[test]
+fn impl_is_restricted_to_arbitrary_trait_bounds_in_where_clause_on_original_type() {
+    trait TestTrait<T> {
+        type Assoc;
+    }
+
+    impl<S> TestTrait<S> for T1 {
+        type Assoc = S;
+    }
+
+    impl<S> TestTrait<S> for T2 {
+        type Assoc = S;
+    }
+
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct Test<S, T>(S, T)
+    where
+        S: TestTrait<T>,
+        <S as TestTrait<T>>::Assoc: TestTrait<S>,
+        <<S as TestTrait<T>>::Assoc as TestTrait<S>>::Assoc: TestTrait<T>;
+
+    let src = Test(T1, T1);
+    let dst = src.map_struct_over(TypeParam::<0>, |_| T2);
+
+    assert_eq!(dst, Test(T2, T1));
+}
+
+#[test]
+fn impl_is_restricted_to_trait_bounds_with_bound_lifetimes_in_where_clause_on_original_type() {
+    trait TestTrait<'a> {}
+
+    impl<'a> TestTrait<'a> for T1 {}
+    impl<'a> TestTrait<'a> for T2 {}
+
+    #[derive(MapStruct, Debug, PartialEq)]
+    struct Test<S, T>(S, T)
+    where
+        for<'a> T: TestTrait<'a>;
 
     let src = Test(T1, T1);
     let dst = src.map_struct_over(TypeParam::<0>, |_| T2);

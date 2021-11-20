@@ -1,5 +1,5 @@
 use crate::predicates::UniquePredicates;
-use crate::syn_ext::{DependencyOn, SubsType};
+use crate::syn_ext::{DependencyOnType, SubsType};
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
 use quote::{quote_spanned, ToTokens};
@@ -39,7 +39,7 @@ struct Mapper<'ast> {
 
 impl<'ast> Mapper<'ast> {
     fn map(&mut self, mappable: TokenStream, ty: &Type) -> TokenStream {
-        if ty.dependency_on(self.type_param).is_none() {
+        if ty.dependency_on_type(&self.type_param.ident).is_none() {
             return mappable;
         }
 
@@ -71,7 +71,7 @@ impl<'ast> Mapper<'ast> {
                 } = type_path;
 
                 if let Some(QSelf { ty, .. }) = &qself {
-                    if let Some(dep_ty) = ty.dependency_on(self.type_param) {
+                    if let Some(dep_ty) = ty.dependency_on_type(&self.type_param.ident) {
                         abort!(dep_ty, "mapping over self type is not supported");
                     }
                 }
@@ -92,7 +92,7 @@ impl<'ast> Mapper<'ast> {
 
                 if let Some(prefix_dep) = prefix
                     .iter()
-                    .find_map(|segment| segment.dependency_on(self.type_param))
+                    .find_map(|segment| segment.dependency_on_type(&self.type_param.ident))
                 {
                     abort!(
                         prefix_dep,
@@ -121,7 +121,10 @@ impl<'ast> Mapper<'ast> {
                 let mut mappable = mappable;
 
                 for (type_idx, arg_type) in arg_types.enumerate() {
-                    if arg_type.dependency_on(self.type_param).is_none() {
+                    if arg_type
+                        .dependency_on_type(&self.type_param.ident)
+                        .is_none()
+                    {
                         continue;
                     }
 

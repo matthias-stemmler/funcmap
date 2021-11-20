@@ -12,12 +12,10 @@ mod syn_ext;
 
 // TODO detect crate name?
 // TODO check auto-impl
-// TODO use tinyvec etc.?
-// TODO where clauses on original type (merge where clauses with identical left-hand sides?)
 // TODO enums
 // TODO use fuzzing tests?
 // TODO rename fmap/func_map
-// TODO docs (deny missing docs)
+// TODO docs
 // TODO trybuild tests
 // TODO deny some lints (missing docs)
 // TODO impl more standard types (HashMap, ...)

@@ -3,39 +3,39 @@ use syn::fold::{self, Fold};
 use syn::visit::{self, Visit};
 use syn::{
     ConstParam, GenericArgument, GenericParam, LifetimeDef, Path, PathArguments, PathSegment,
-    TraitBound, Type, TypeParam, TypePath,
+    TraitBound, Type, TypeParam, TypePath, WherePredicate,
 };
 
-pub trait DependencyOn {
-    fn dependency_on<'ast>(&'ast self, type_param: &'ast TypeParam) -> Option<&'ast Type>;
+pub trait DependencyOnType {
+    fn dependency_on_type<'ast>(&'ast self, type_ident: &'ast Ident) -> Option<&'ast Type>;
 }
 
-impl DependencyOn for Type {
-    fn dependency_on<'ast>(&'ast self, type_param: &'ast TypeParam) -> Option<&'ast Type> {
-        let mut visitor = DependencyVisitor::new(type_param);
+impl DependencyOnType for Type {
+    fn dependency_on_type<'ast>(&'ast self, type_ident: &'ast Ident) -> Option<&'ast Type> {
+        let mut visitor = DependencyOnTypeVisitor::new(type_ident);
         visitor.visit_type(self);
         visitor.into_dependency()
     }
 }
 
-impl DependencyOn for PathSegment {
-    fn dependency_on<'ast>(&'ast self, type_param: &'ast TypeParam) -> Option<&'ast Type> {
-        let mut visitor = DependencyVisitor::new(type_param);
+impl DependencyOnType for PathSegment {
+    fn dependency_on_type<'ast>(&'ast self, type_ident: &'ast Ident) -> Option<&'ast Type> {
+        let mut visitor = DependencyOnTypeVisitor::new(type_ident);
         visitor.visit_path_segment(self);
         visitor.into_dependency()
     }
 }
 
 #[derive(Debug)]
-struct DependencyVisitor<'ast> {
-    type_param: &'ast TypeParam,
+struct DependencyOnTypeVisitor<'ast> {
+    type_ident: &'ast Ident,
     dependency: Option<&'ast Type>,
 }
 
-impl<'ast> DependencyVisitor<'ast> {
-    fn new(type_param: &'ast TypeParam) -> Self {
+impl<'ast> DependencyOnTypeVisitor<'ast> {
+    fn new(type_ident: &'ast Ident) -> Self {
         Self {
-            type_param,
+            type_ident,
             dependency: None,
         }
     }
@@ -45,10 +45,10 @@ impl<'ast> DependencyVisitor<'ast> {
     }
 }
 
-impl<'ast> Visit<'ast> for DependencyVisitor<'ast> {
+impl<'ast> Visit<'ast> for DependencyOnTypeVisitor<'ast> {
     fn visit_type(&mut self, ty: &'ast Type) {
         match self.dependency {
-            None if ty.is_ident(&self.type_param.ident) => self.dependency = Some(ty),
+            None if ty.is_ident(self.type_ident) => self.dependency = Some(ty),
             None => visit::visit_type(self, ty),
             _ => (),
         };
@@ -129,8 +129,15 @@ impl SubsType for Type {
 
 impl SubsType for TraitBound {
     fn subs_type(self, ident: &Ident, subs_ident: &Ident) -> Self {
-        let mut fold = SubsTypeFolder { ident, subs_ident };
-        fold.fold_trait_bound(self)
+        let mut folder = SubsTypeFolder { ident, subs_ident };
+        folder.fold_trait_bound(self)
+    }
+}
+
+impl SubsType for WherePredicate {
+    fn subs_type(self, ident: &Ident, subs_ident: &Ident) -> Self {
+        let mut folder = SubsTypeFolder { ident, subs_ident };
+        folder.fold_where_predicate(self)
     }
 }
 
@@ -185,6 +192,7 @@ impl WithoutDefault for ConstParam {
 
 #[cfg(test)]
 mod tests {
+    use proc_macro2::Span;
     use rstest::rstest;
     use syn::parse_quote;
 
@@ -213,8 +221,11 @@ mod tests {
     #[case(parse_quote ! (Foo < Bar, T >), true)]
     #[case(parse_quote ! (Foo < 'T >), false)]
     fn test_depends_on(#[case] ty: Type, #[case] expected_result: bool) {
-        let type_param: TypeParam = parse_quote!(T);
+        let type_ident = Ident::new("T", Span::call_site());
 
-        assert_eq!(ty.dependency_on(&type_param).is_some(), expected_result);
+        assert_eq!(
+            ty.dependency_on_type(&type_ident).is_some(),
+            expected_result
+        );
     }
 }
