@@ -4,16 +4,14 @@ use crate::predicates::{UniquePredicates, UniqueTypeBounds};
 use crate::syn_ext::{IntoGenericArgument, IntoType, SubsType, WithIdent, WithoutDefault};
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
-use quote::quote_spanned;
+use quote::{format_ident, quote_spanned, ToTokens};
 use syn::visit::Visit;
-use syn::{Data, DeriveInput, Fields};
-use syn::{GenericArgument, GenericParam, Member, TypeParam, TypeParamBound};
+use syn::{
+    Data, DataEnum, DataStruct, DeriveInput, Fields, GenericArgument, GenericParam, Member,
+    TypeParam, TypeParamBound, Variant,
+};
 
 pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
-    let mut ident_collector = IdentCollector::new_visiting();
-    ident_collector.visit_derive_input(&input);
-    let mut ident_collector = ident_collector.into_reserved();
-
     let all_params = &input.generics.params;
 
     let type_params: Vec<_> = all_params
@@ -29,22 +27,10 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
         abort!(input, "expected at least one type parameter, found none");
     }
 
-    let data_struct = match input.data {
-        Data::Struct(data_struct) => data_struct,
-        Data::Enum(..) => abort!(input, "expected a struct, found an enum"),
-        Data::Union(..) => abort!(input, "expected a struct, found a union"),
-    };
-
-    
-    // TODO support Fields::Unit and use `match` syntax to make logic reusable for enums
-
-    let fields = match data_struct.fields {
-        Fields::Named(fields) => fields.named,
-        Fields::Unnamed(fields) => fields.unnamed,
-        Fields::Unit => abort!(
-            data_struct.fields,
-            "expected a struct with fields, found a unit struct"
-        ),
+    let mut ident_collector = {
+        let mut ident_collector = IdentCollector::new_visiting();
+        ident_collector.visit_derive_input(&input);
+        ident_collector.into_reserved()
     };
 
     let src_type_ident = ident_collector.reserve_uppercase_letter('A');
@@ -131,26 +117,60 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
                 );
             }
 
-            let mut mappings = Vec::new();
+            let mut arms = Vec::new();
 
-            for (field_idx, field) in fields.iter().enumerate() {
-                let member: Member = match &field.ident {
-                    Some(field_ident) => field_ident.clone().into(),
-                    None => field_idx.into(),
+            for StructLike { ident, fields } in struct_likes(&input) {
+                let mut mappings = Vec::new();
+                let mut patterns = Vec::new();
+
+                for (field_idx, field) in fields.into_iter().enumerate() {
+                    let (ident, member, pattern) = match field.ident {
+                        Some(field_ident) => {
+                            let mut ident = field_ident;
+                            ident.set_span(Span::mixed_site());
+                            let member: Member = ident.clone().into();
+                            (ident, member.clone(), member.into_token_stream())
+                        }
+                        None => {
+                            let ident =
+                                format_ident!("field_{}", field_idx, span = Span::mixed_site());
+                            let member: Member = field_idx.into();
+                            (
+                                ident.clone(),
+                                member.clone(),
+                                quote_spanned!(Span::mixed_site() => #member: #ident),
+                            )
+                        }
+                    };
+
+                    let (mapped, predicates) = map_expr(
+                        ident,
+                        &field.ty,
+                        mapped_type_param,
+                        &src_type_ident,
+                        &dst_type_ident,
+                        &fn_var_ident,
+                    );
+
+                    unique_predicates.extend(predicates.into_iter());
+                    patterns.push(pattern);
+                    mappings.push(quote_spanned!(Span::mixed_site() => #member: #mapped));
+                }
+
+                let (pat_path, output_path) = match ident {
+                    Some(ident) => (
+                        quote_spanned!(Span::mixed_site() => Self::#ident),
+                        quote_spanned!(Span::mixed_site() => Self::Output::#ident),
+                    ),
+                    None => (
+                        quote_spanned!(Span::mixed_site() => Self),
+                        quote_spanned!(Span::mixed_site() => Self::Output),
+                    ),
                 };
-                let mappable = quote_spanned!(Span::mixed_site() => self.#member);
 
-                let (mapped, predicates) = map_expr(
-                    mappable,
-                    &field.ty,
-                    mapped_type_param,
-                    &src_type_ident,
-                    &dst_type_ident,
-                    &fn_var_ident,
-                );
-
-                unique_predicates.extend(predicates.into_iter());
-                mappings.push(quote_spanned!(Span::mixed_site() => #member: #mapped));
+                arms.push(quote_spanned!(Span::mixed_site() =>
+                    #pat_path { #(#patterns,)* } => #output_path { #(#mappings,)* }
+                ));
             }
 
             let ident = &input.ident;
@@ -176,8 +196,8 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
                     where
                         #fn_type_ident: FnMut(#src_type_ident) -> #dst_type_ident
                     {
-                        Self::Output {
-                            #(#mappings,)*
+                        match self {
+                            #(#arms,)*
                         }
                     }
                 }
@@ -207,5 +227,27 @@ fn subs_type_in_bounds(type_param: TypeParam, ident: &Ident, new_idents: &[&Iden
     TypeParam {
         bounds: unique_type_bounds.into_bounds(),
         ..type_param
+    }
+}
+
+struct StructLike {
+    ident: Option<Ident>,
+    fields: Fields,
+}
+
+fn struct_likes(input: &DeriveInput) -> Vec<StructLike> {
+    match &input.data {
+        Data::Struct(DataStruct { fields, .. }) => vec![StructLike {
+            ident: None,
+            fields: fields.clone(),
+        }],
+        Data::Enum(DataEnum { variants, .. }) => variants
+            .iter()
+            .map(|Variant { ident, fields, .. }| StructLike {
+                ident: Some(ident.clone()),
+                fields: fields.clone(),
+            })
+            .collect(),
+        Data::Union(..) => abort!(input, "expected a struct or an enum, found a union"),
     }
 }

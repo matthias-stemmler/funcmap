@@ -9,7 +9,7 @@ use syn::{
 };
 
 pub fn map_expr(
-    mappable: TokenStream,
+    mappable: impl ToTokens,
     ty: &Type,
     type_param: &TypeParam,
     src_type_ident: &Ident,
@@ -24,7 +24,7 @@ pub fn map_expr(
         unique_predicates: UniquePredicates::new(),
     };
 
-    let mapped = mapper.map(mappable, ty);
+    let mapped = mapper.map(mappable.into_token_stream(), ty);
     (mapped, mapper.unique_predicates)
 }
 
@@ -172,7 +172,8 @@ impl<'ast> Mapper<'ast> {
                         #src_type: ::mapstruct::MapStruct<
                             #inner_src_type,
                             #inner_dst_type,
-                            ::mapstruct::TypeParam<#type_idx>, Output = #dst_type
+                            ::mapstruct::TypeParam<#type_idx>,
+                            Output = #dst_type
                         >
                     });
 

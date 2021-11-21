@@ -37,7 +37,73 @@ fn struct_with_named_fields_is_mapped() {
     );
 }
 
-// TODO enum case
+#[test]
+fn enum_unit_variant_is_mapped() {
+    #[derive(MapStruct, Debug, PartialEq)]
+    enum Test<T> {
+        Unit,
+        Tuple(T, i32, T),
+        Named {
+            value_0: T,
+            value_1: i32,
+            value_2: T,
+        },
+    }
+
+    let src: Test<T1> = Test::Unit;
+    let dst = src.map_struct(|_| T2);
+
+    assert_eq!(dst, Test::Unit);
+}
+
+#[test]
+fn enum_tuple_variant_is_mapped() {
+    #[derive(MapStruct, Debug, PartialEq)]
+    enum Test<T> {
+        Unit,
+        Tuple(T, i32, T),
+        Named {
+            value_0: T,
+            value_1: i32,
+            value_2: T,
+        },
+    }
+
+    let src = Test::Tuple(T1, 42, T1);
+    let dst = src.map_struct(|_| T2);
+
+    assert_eq!(dst, Test::Tuple(T2, 42, T2));
+}
+
+#[test]
+fn enum_variant_with_named_fields_is_mapped() {
+    #[derive(MapStruct, Debug, PartialEq)]
+    enum Test<T> {
+        Unit,
+        Tuple(T, i32, T),
+        Named {
+            value_0: T,
+            value_1: i32,
+            value_2: T,
+        },
+    }
+
+    let src = Test::Named {
+        value_0: T1,
+        value_1: 42,
+        value_2: T1,
+    };
+    let dst = src.map_struct(|_| T2);
+
+    assert_eq!(
+        dst,
+        Test::Named {
+            value_0: T2,
+            value_1: 42,
+            value_2: T2
+        }
+    );
+}
 
 #[derive(Debug, PartialEq)]
 struct T1;

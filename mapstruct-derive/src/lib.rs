@@ -10,9 +10,10 @@ mod mapstruct;
 mod predicates;
 mod syn_ext;
 
+// TODO check hygiene
+// TODO check if attributes need to be carried over
 // TODO detect crate name?
 // TODO check auto-impl
-// TODO enums
 // TODO use fuzzing tests?
 // TODO rename fmap/func_map
 // TODO docs
