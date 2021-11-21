@@ -90,10 +90,15 @@ impl<'ast> Mapper<'ast> {
                     }
                 };
 
-                if let Some(prefix_dep) = prefix
-                    .iter()
-                    .find_map(|segment| segment.dependency_on_type(&self.type_param.ident))
-                {
+                let prefix_type = Type::Path(TypePath {
+                    qself: qself.clone(),
+                    path: Path {
+                        leading_colon: *leading_colon,
+                        segments: prefix.clone(),
+                    },
+                });
+
+                if let Some(prefix_dep) = prefix_type.dependency_on_type(&self.type_param.ident) {
                     abort!(
                         prefix_dep,
                         "mapping over types with associated items is not supported"

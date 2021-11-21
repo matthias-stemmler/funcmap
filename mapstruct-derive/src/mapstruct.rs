@@ -35,6 +35,9 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
         Data::Union(..) => abort!(input, "expected a struct, found a union"),
     };
 
+    
+    // TODO support Fields::Unit and use `match` syntax to make logic reusable for enums
+
     let fields = match data_struct.fields {
         Fields::Named(fields) => fields.named,
         Fields::Unnamed(fields) => fields.unnamed,

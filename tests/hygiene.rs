@@ -9,3 +9,13 @@ fn conflicting_idents_are_avoided() {
         F: F,
     }
 }
+
+#[test]
+fn nested_items_are_not_mistaken_for_generics() {
+    mod test {
+        pub struct T;
+    }
+
+    #[derive(MapStruct)]
+    struct Test<T>(T, test::T);
+}
