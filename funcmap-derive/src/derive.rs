@@ -11,7 +11,7 @@ use syn::{
     TypeParam, TypeParamBound, Variant,
 };
 
-pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
+pub fn derive_func_map(input: DeriveInput) -> TokenStream {
     let all_params = &input.generics.params;
 
     let type_params: Vec<_> = all_params
@@ -179,17 +179,17 @@ pub fn derive_map_struct(input: DeriveInput) -> TokenStream {
             quote_spanned! { Span::mixed_site() =>
                 #[automatically_derived]
                 impl<#(#impl_params),*>
-                    ::mapstruct::MapStruct<
+                    ::funcmap::FuncMap<
                         #src_type_ident,
                         #dst_type_ident,
-                        ::mapstruct::TypeParam<#mapped_type_param_idx>
+                        ::funcmap::TypeParam<#mapped_type_param_idx>
                     >
                     for #ident<#(#src_args),*>
                     #where_clause
                 {
                     type Output = #ident<#(#dst_args),*>;
 
-                    fn map_struct<#fn_type_ident>(
+                    fn func_map<#fn_type_ident>(
                         self,
                         mut #fn_var_ident: #fn_type_ident
                     ) -> Self::Output

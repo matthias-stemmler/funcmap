@@ -1,19 +1,19 @@
-use mapstruct::MapStruct;
+use funcmap::FuncMap;
 
 #[test]
 fn tuple_struct_is_mapped() {
-    #[derive(MapStruct, Debug, PartialEq)]
+    #[derive(FuncMap, Debug, PartialEq)]
     struct Test<T>(T, i32, T);
 
     let src = Test(T1, 42, T1);
-    let dst = src.map_struct(|_| T2);
+    let dst = src.func_map(|_| T2);
 
     assert_eq!(dst, Test(T2, 42, T2));
 }
 
 #[test]
 fn struct_with_named_fields_is_mapped() {
-    #[derive(MapStruct, Debug, PartialEq)]
+    #[derive(FuncMap, Debug, PartialEq)]
     struct Test<T> {
         value0: T,
         value1: i32,
@@ -25,7 +25,7 @@ fn struct_with_named_fields_is_mapped() {
         value1: 42,
         value2: T1,
     };
-    let dst = src.map_struct(|_| T2);
+    let dst = src.func_map(|_| T2);
 
     assert_eq!(
         dst,
@@ -39,7 +39,7 @@ fn struct_with_named_fields_is_mapped() {
 
 #[test]
 fn enum_unit_variant_is_mapped() {
-    #[derive(MapStruct, Debug, PartialEq)]
+    #[derive(FuncMap, Debug, PartialEq)]
     enum Test<T> {
         Unit,
         Tuple(T, i32, T),
@@ -51,14 +51,14 @@ fn enum_unit_variant_is_mapped() {
     }
 
     let src: Test<T1> = Test::Unit;
-    let dst = src.map_struct(|_| T2);
+    let dst = src.func_map(|_| T2);
 
     assert_eq!(dst, Test::Unit);
 }
 
 #[test]
 fn enum_tuple_variant_is_mapped() {
-    #[derive(MapStruct, Debug, PartialEq)]
+    #[derive(FuncMap, Debug, PartialEq)]
     enum Test<T> {
         Unit,
         Tuple(T, i32, T),
@@ -70,14 +70,14 @@ fn enum_tuple_variant_is_mapped() {
     }
 
     let src = Test::Tuple(T1, 42, T1);
-    let dst = src.map_struct(|_| T2);
+    let dst = src.func_map(|_| T2);
 
     assert_eq!(dst, Test::Tuple(T2, 42, T2));
 }
 
 #[test]
 fn enum_variant_with_named_fields_is_mapped() {
-    #[derive(MapStruct, Debug, PartialEq)]
+    #[derive(FuncMap, Debug, PartialEq)]
     enum Test<T> {
         Unit,
         Tuple(T, i32, T),
@@ -93,7 +93,7 @@ fn enum_variant_with_named_fields_is_mapped() {
         value_1: 42,
         value_2: T1,
     };
-    let dst = src.map_struct(|_| T2);
+    let dst = src.func_map(|_| T2);
 
     assert_eq!(
         dst,

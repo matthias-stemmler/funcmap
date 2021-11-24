@@ -5,30 +5,30 @@ use core::cell::Cell;
 use core::marker::PhantomData;
 
 #[doc(hidden)]
-pub use mapstruct_derive::*;
+pub use funcmap_derive::*;
 
 #[derive(Debug)]
 pub struct TypeParam<const N: usize>;
 
-pub trait MapStruct<A, B, P = TypeParam<0>>: Sized {
+pub trait FuncMap<A, B, P = TypeParam<0>>: Sized {
     type Output;
 
-    fn map_struct<F>(self, f: F) -> Self::Output
+    fn func_map<F>(self, f: F) -> Self::Output
     where
         F: FnMut(A) -> B;
 
-    fn map_struct_over<F>(self, _: P, f: F) -> Self::Output
+    fn func_map_over<F>(self, _: P, f: F) -> Self::Output
     where
         F: FnMut(A) -> B,
     {
-        self.map_struct(f)
+        self.func_map(f)
     }
 }
 
-impl<A, B, const N: usize> MapStruct<A, B> for [A; N] {
+impl<A, B, const N: usize> FuncMap<A, B> for [A; N] {
     type Output = [B; N];
 
-    fn map_struct<F>(self, f: F) -> Self::Output
+    fn func_map<F>(self, f: F) -> Self::Output
     where
         F: FnMut(A) -> B,
     {
@@ -36,10 +36,10 @@ impl<A, B, const N: usize> MapStruct<A, B> for [A; N] {
     }
 }
 
-impl<A, B> MapStruct<A, B> for Cell<A> {
+impl<A, B> FuncMap<A, B> for Cell<A> {
     type Output = Cell<B>;
 
-    fn map_struct<F>(self, mut f: F) -> Self::Output
+    fn func_map<F>(self, mut f: F) -> Self::Output
     where
         F: FnMut(A) -> B,
     {
@@ -47,10 +47,10 @@ impl<A, B> MapStruct<A, B> for Cell<A> {
     }
 }
 
-impl<A, B> MapStruct<A, B> for Option<A> {
+impl<A, B> FuncMap<A, B> for Option<A> {
     type Output = Option<B>;
 
-    fn map_struct<F>(self, f: F) -> Self::Output
+    fn func_map<F>(self, f: F) -> Self::Output
     where
         F: FnMut(A) -> B,
     {
@@ -58,10 +58,10 @@ impl<A, B> MapStruct<A, B> for Option<A> {
     }
 }
 
-impl<A, B> MapStruct<A, B> for PhantomData<A> {
+impl<A, B> FuncMap<A, B> for PhantomData<A> {
     type Output = PhantomData<B>;
 
-    fn map_struct<F>(self, _: F) -> Self::Output
+    fn func_map<F>(self, _: F) -> Self::Output
     where
         F: FnMut(A) -> B,
     {
@@ -69,10 +69,10 @@ impl<A, B> MapStruct<A, B> for PhantomData<A> {
     }
 }
 
-impl<A, B, E> MapStruct<A, B> for Result<A, E> {
+impl<A, B, E> FuncMap<A, B> for Result<A, E> {
     type Output = Result<B, E>;
 
-    fn map_struct<F>(self, f: F) -> Self::Output
+    fn func_map<F>(self, f: F) -> Self::Output
     where
         F: FnMut(A) -> B,
     {
@@ -80,10 +80,10 @@ impl<A, B, E> MapStruct<A, B> for Result<A, E> {
     }
 }
 
-impl<T, A, B> MapStruct<A, B, TypeParam<1>> for Result<T, A> {
+impl<T, A, B> FuncMap<A, B, TypeParam<1>> for Result<T, A> {
     type Output = Result<T, B>;
 
-    fn map_struct<F>(self, f: F) -> Self::Output
+    fn func_map<F>(self, f: F) -> Self::Output
     where
         F: FnMut(A) -> B,
     {
@@ -101,13 +101,13 @@ mod alloc {
 
     use super::*;
 
-    impl<A, B> MapStruct<A, B> for BinaryHeap<A>
+    impl<A, B> FuncMap<A, B> for BinaryHeap<A>
     where
         B: Ord,
     {
         type Output = BinaryHeap<B>;
 
-        fn map_struct<F>(self, f: F) -> Self::Output
+        fn func_map<F>(self, f: F) -> Self::Output
         where
             F: FnMut(A) -> B,
         {
@@ -115,10 +115,10 @@ mod alloc {
         }
     }
 
-    impl<A, B> MapStruct<A, B> for Box<A> {
+    impl<A, B> FuncMap<A, B> for Box<A> {
         type Output = Box<B>;
 
-        fn map_struct<F>(self, mut f: F) -> Self::Output
+        fn func_map<F>(self, mut f: F) -> Self::Output
         where
             F: FnMut(A) -> B,
         {
@@ -126,13 +126,13 @@ mod alloc {
         }
     }
 
-    impl<A, B, V> MapStruct<A, B, TypeParam<0>> for BTreeMap<A, V>
+    impl<A, B, V> FuncMap<A, B, TypeParam<0>> for BTreeMap<A, V>
     where
         B: Ord,
     {
         type Output = BTreeMap<B, V>;
 
-        fn map_struct<F>(self, mut f: F) -> Self::Output
+        fn func_map<F>(self, mut f: F) -> Self::Output
         where
             F: FnMut(A) -> B,
         {
@@ -140,13 +140,13 @@ mod alloc {
         }
     }
 
-    impl<K, A, B> MapStruct<A, B, TypeParam<1>> for BTreeMap<K, A>
+    impl<K, A, B> FuncMap<A, B, TypeParam<1>> for BTreeMap<K, A>
     where
         K: Ord,
     {
         type Output = BTreeMap<K, B>;
 
-        fn map_struct<F>(self, mut f: F) -> Self::Output
+        fn func_map<F>(self, mut f: F) -> Self::Output
         where
             F: FnMut(A) -> B,
         {
@@ -154,13 +154,13 @@ mod alloc {
         }
     }
 
-    impl<A, B> MapStruct<A, B> for BTreeSet<A>
+    impl<A, B> FuncMap<A, B> for BTreeSet<A>
     where
         B: Ord,
     {
         type Output = BTreeSet<B>;
 
-        fn map_struct<F>(self, f: F) -> Self::Output
+        fn func_map<F>(self, f: F) -> Self::Output
         where
             F: FnMut(A) -> B,
         {
@@ -168,10 +168,10 @@ mod alloc {
         }
     }
 
-    impl<A, B> MapStruct<A, B> for Vec<A> {
+    impl<A, B> FuncMap<A, B> for Vec<A> {
         type Output = Vec<B>;
 
-        fn map_struct<F>(self, f: F) -> Self::Output
+        fn func_map<F>(self, f: F) -> Self::Output
         where
             F: FnMut(A) -> B,
         {

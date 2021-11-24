@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "mapstruct"
+name = "funcmap"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.56"
@@ -9,7 +9,7 @@ rust-version = "1.56"
 [features]
 default = ["alloc", "debug"] # TODO: remove debug
 alloc = []
-debug = ["mapstruct-derive/debug"]
+debug = ["funcmap-derive/debug"]
 
 [dependencies]
-"mapstruct-derive" = { path = "mapstruct-derive" }
+"funcmap-derive" = { path = "funcmap-derive" }

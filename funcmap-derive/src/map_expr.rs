@@ -49,7 +49,7 @@ impl<'ast> Mapper<'ast> {
                 let (inner_src_type, inner_dst_type) = self.subs_types(Type::clone(inner_ty));
 
                 self.unique_predicates.add(parse_quote! {
-                    #src_type: ::mapstruct::MapStruct<
+                    #src_type: ::funcmap::FuncMap<
                         #inner_src_type,
                         #inner_dst_type,
                         Output = #dst_type
@@ -58,7 +58,7 @@ impl<'ast> Mapper<'ast> {
 
                 let closure = self.map_closure(inner_ty);
 
-                quote_spanned!(Span::mixed_site() => #mappable.map_struct(#closure))
+                quote_spanned!(Span::mixed_site() => #mappable.func_map(#closure))
             }
             Type::Path(type_path) => {
                 let TypePath {
@@ -169,10 +169,10 @@ impl<'ast> Mapper<'ast> {
                     let dst_type = make_type(type_idx + 1);
 
                     self.unique_predicates.add(parse_quote! {
-                        #src_type: ::mapstruct::MapStruct<
+                        #src_type: ::funcmap::FuncMap<
                             #inner_src_type,
                             #inner_dst_type,
-                            ::mapstruct::TypeParam<#type_idx>,
+                            ::funcmap::TypeParam<#type_idx>,
                             Output = #dst_type
                         >
                     });
@@ -180,7 +180,7 @@ impl<'ast> Mapper<'ast> {
                     let closure = self.map_closure(arg_type);
 
                     mappable = quote_spanned! { Span::mixed_site() =>
-                        #mappable.map_struct_over(::mapstruct::TypeParam::<#type_idx>, #closure)
+                        #mappable.func_map_over(::funcmap::TypeParam::<#type_idx>, #closure)
                     }
                 }
 

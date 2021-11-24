@@ -32,8 +32,8 @@ impl IdentCollector {
                 (desired_letter..='Z').chain('A'..=desired_letter).map(
                     move |letter| match iteration {
                         0 => letter.to_string(),
-                        1 => format!("__MAPSTRUCT_{}", letter),
-                        i => format!("__MAPSTRUCT_{}{}", letter, i),
+                        1 => format!("__FUNCMAP_{}", letter),
+                        i => format!("__FUNCMAP_{}{}", letter, i),
                     },
                 )
             })
@@ -98,7 +98,7 @@ mod tests {
 
         let ident: Ident = collector.reserve_uppercase_letter('T');
 
-        assert_eq!(ident, "__MAPSTRUCT_T");
+        assert_eq!(ident, "__FUNCMAP_T");
     }
 
     #[test]
@@ -111,7 +111,7 @@ mod tests {
 
         let ident: Ident = collector.reserve_uppercase_letter('T');
 
-        assert_eq!(ident, "__MAPSTRUCT_U");
+        assert_eq!(ident, "__FUNCMAP_U");
     }
 
     #[test]
@@ -123,7 +123,7 @@ mod tests {
 
         let ident: Ident = collector.reserve_uppercase_letter('T');
 
-        assert_eq!(ident, "__MAPSTRUCT_T2");
+        assert_eq!(ident, "__FUNCMAP_T2");
     }
 
     #[test]
@@ -136,7 +136,7 @@ mod tests {
 
         let ident: Ident = collector.reserve_uppercase_letter('T');
 
-        assert_eq!(ident, "__MAPSTRUCT_U2");
+        assert_eq!(ident, "__FUNCMAP_U2");
     }
 
     #[test]

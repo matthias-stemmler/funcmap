@@ -1,9 +1,9 @@
-use mapstruct::MapStruct;
+use funcmap::FuncMap;
 
 #[test]
 fn conflicting_idents_are_avoided() {
     #[allow(non_snake_case)]
-    #[derive(MapStruct)]
+    #[derive(FuncMap)]
     struct A<B, F, const C: usize> {
         B: B,
         F: F,
@@ -16,6 +16,6 @@ fn nested_items_are_not_mistaken_for_generics() {
         pub struct T;
     }
 
-    #[derive(MapStruct)]
+    #[derive(FuncMap)]
     struct Test<T>(T, test::T);
 }

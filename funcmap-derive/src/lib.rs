@@ -4,9 +4,9 @@ use proc_macro::TokenStream;
 use proc_macro_error::proc_macro_error;
 use syn::{parse_macro_input, DeriveInput};
 
+mod derive;
 mod ident_collector;
 mod map_expr;
-mod mapstruct;
 mod predicates;
 mod syn_ext;
 
@@ -15,7 +15,6 @@ mod syn_ext;
 // TODO detect crate name?
 // TODO check auto-impl
 // TODO use fuzzing tests?
-// TODO rename fmap/func_map
 // TODO docs
 // TODO trybuild tests
 // TODO deny some lints (missing docs)
@@ -24,12 +23,13 @@ mod syn_ext;
 // TODO allow restricting which params should be mappable
 // TODO reduce usage of parse_quote!(..)
 // TODO newtype?
+// TODO central place for idents
 
 #[proc_macro_error]
-#[proc_macro_derive(MapStruct)]
-pub fn derive_map_struct(item: TokenStream) -> TokenStream {
+#[proc_macro_derive(FuncMap)]
+pub fn derive_func_map(item: TokenStream) -> TokenStream {
     let derive_input = parse_macro_input!(item as DeriveInput);
-    let output = mapstruct::derive_map_struct(derive_input);
+    let output = derive::derive_func_map(derive_input);
     diagnostic::print(&output);
     output.into()
 }
