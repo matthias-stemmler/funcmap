@@ -17,7 +17,7 @@ impl IdentCollector {
 
     pub fn reserve_uppercase_letter(&mut self, desired_letter: char) -> Ident {
         let letter = self.find_uppercase_letter(desired_letter);
-        let ident = Ident::new(&letter, Span::call_site());
+        let ident = Ident::new(&letter, Span::mixed_site());
         self.idents.insert(letter);
         ident
     }

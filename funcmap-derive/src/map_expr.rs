@@ -3,7 +3,7 @@ use crate::predicates::UniquePredicates;
 use crate::syn_ext::{DependencyOnType, SubsType};
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
-use quote::{quote_spanned, ToTokens};
+use quote::{quote, ToTokens};
 use syn::{
     parse_quote, punctuated::Pair, AngleBracketedGenericArguments, GenericArgument, Index, Path,
     PathArguments, PathSegment, QSelf, Type, TypeArray, TypeParam, TypePath,
@@ -59,7 +59,7 @@ impl<'ast> Mapper<'ast> {
 
                 let closure = self.map_closure(inner_ty);
 
-                quote_spanned!(Span::mixed_site() => #mappable.#FN_IDENT(#closure))
+                quote!(#mappable.#FN_IDENT(#closure))
             }
             Type::Path(type_path) => {
                 let TypePath {
@@ -109,7 +109,7 @@ impl<'ast> Mapper<'ast> {
                 let angle_bracketed = match arguments {
                     PathArguments::None => {
                         let mapping_fn_ident = self.mapping_fn_ident;
-                        return quote_spanned!(Span::mixed_site() => #mapping_fn_ident(#mappable));
+                        return quote!(#mapping_fn_ident(#mappable));
                     }
                     PathArguments::AngleBracketed(angle_bracketed) => angle_bracketed,
                     PathArguments::Parenthesized(..) => {
@@ -180,7 +180,7 @@ impl<'ast> Mapper<'ast> {
 
                     let closure = self.map_closure(arg_type);
 
-                    mappable = quote_spanned! { Span::mixed_site() =>
+                    mappable = quote! {
                         #mappable.#FN_IDENT_WITH_MARKER(::#CRATE_IDENT::#MARKER_TYPE_IDENT::<#type_idx>, #closure)
                     }
                 }
@@ -190,11 +190,11 @@ impl<'ast> Mapper<'ast> {
             Type::Tuple(type_tuple) => {
                 let mapped = type_tuple.elems.iter().enumerate().map(|(i, ty)| {
                     let idx = Index::from(i);
-                    let mappable = quote_spanned!(Span::mixed_site() => #mappable.#idx);
+                    let mappable = quote!(#mappable.#idx);
                     self.map(mappable, ty)
                 });
 
-                quote_spanned!(Span::mixed_site() => (#(#mapped),*))
+                quote!((#(#mapped),*))
             }
             _ => abort!(ty, "type not supported"),
         }
@@ -203,7 +203,7 @@ impl<'ast> Mapper<'ast> {
     fn map_closure(&mut self, ty: &Type) -> TokenStream {
         let closure_arg = Ident::new("value", Span::mixed_site());
         let mapped = self.map(closure_arg.clone().into_token_stream(), ty);
-        quote_spanned!(Span::mixed_site() => |#closure_arg| #mapped)
+        quote!(|#closure_arg| #mapped)
     }
 
     fn subs_src_type(&self, ty: Type) -> Type {

@@ -5,7 +5,7 @@ use crate::predicates::{UniquePredicates, UniqueTypeBounds};
 use crate::syn_ext::{IntoGenericArgument, IntoType, SubsType, WithIdent, WithoutDefault};
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
-use quote::{format_ident, quote_spanned};
+use quote::{format_ident, quote};
 use syn::visit::Visit;
 use syn::{
     Data, DataEnum, DataStruct, DeriveInput, Fields, GenericArgument, GenericParam, Member,
@@ -131,7 +131,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                     };
 
                     let ident = format_ident!("field_{}", member, span = Span::mixed_site());
-                    let pattern = quote_spanned!(Span::mixed_site() => #member: #ident);
+                    let pattern = quote!(#member: #ident);
 
                     let (mapped, predicates) = map_expr(
                         ident,
@@ -144,29 +144,26 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
 
                     unique_predicates.extend(predicates.into_iter());
                     patterns.push(pattern);
-                    mappings.push(quote_spanned!(Span::mixed_site() => #member: #mapped));
+                    mappings.push(quote!(#member: #mapped));
                 }
 
                 let (pat_path, output_path) = match ident {
                     Some(ident) => (
-                        quote_spanned!(Span::mixed_site() => Self::#ident),
-                        quote_spanned!(Span::mixed_site() => Self::#OUTPUT_TYPE_IDENT:#ident),
+                        quote!(Self::#ident),
+                        quote!(Self::#OUTPUT_TYPE_IDENT::#ident),
                     ),
-                    None => (
-                        quote_spanned!(Span::mixed_site() => Self),
-                        quote_spanned!(Span::mixed_site() => Self::#OUTPUT_TYPE_IDENT),
-                    ),
+                    None => (quote!(Self), quote!(Self::#OUTPUT_TYPE_IDENT)),
                 };
 
-                arms.push(quote_spanned!(Span::mixed_site() =>
+                arms.push(quote! {
                     #pat_path { #(#patterns,)* } => #output_path { #(#mappings,)* }
-                ));
+                });
             }
 
             let ident = &input.ident;
             let where_clause = unique_predicates.into_where_clause();
 
-            quote_spanned! { Span::mixed_site() =>
+            quote! {
                 #[automatically_derived]
                 impl<#(#impl_params),*>
                     ::#CRATE_IDENT::#TRAIT_IDENT<
@@ -195,7 +192,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
         },
     );
 
-    quote_spanned!(Span::mixed_site() => #(#impls)*)
+    quote!(#(#impls)*)
 }
 
 fn subs_type_in_bounds(type_param: TypeParam, ident: &Ident, new_idents: &[&Ident]) -> TypeParam {
