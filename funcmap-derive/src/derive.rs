@@ -4,7 +4,7 @@ use crate::predicates::{UniquePredicates, UniqueTypeBounds};
 use crate::syn_ext::{IntoGenericArgument, IntoType, SubsType, WithIdent, WithoutDefault};
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
-use quote::{format_ident, quote_spanned, ToTokens};
+use quote::{format_ident, quote_spanned};
 use syn::visit::Visit;
 use syn::{
     Data, DataEnum, DataStruct, DeriveInput, Fields, GenericArgument, GenericParam, Member,
@@ -124,24 +124,13 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                 let mut patterns = Vec::new();
 
                 for (field_idx, field) in fields.into_iter().enumerate() {
-                    let (ident, member, pattern) = match field.ident {
-                        Some(field_ident) => {
-                            let mut ident = field_ident;
-                            ident.set_span(Span::mixed_site());
-                            let member: Member = ident.clone().into();
-                            (ident, member.clone(), member.into_token_stream())
-                        }
-                        None => {
-                            let ident =
-                                format_ident!("field_{}", field_idx, span = Span::mixed_site());
-                            let member: Member = field_idx.into();
-                            (
-                                ident.clone(),
-                                member.clone(),
-                                quote_spanned!(Span::mixed_site() => #member: #ident),
-                            )
-                        }
+                    let member: Member = match field.ident {
+                        Some(field_ident) => field_ident.into(),
+                        None => field_idx.into(),
                     };
+
+                    let ident = format_ident!("field_{}", member, span = Span::mixed_site());
+                    let pattern = quote_spanned!(Span::mixed_site() => #member: #ident);
 
                     let (mapped, predicates) = map_expr(
                         ident,

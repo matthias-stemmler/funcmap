@@ -1,12 +1,27 @@
 use funcmap::FuncMap;
 
 #[test]
-fn conflicting_idents_are_avoided() {
+fn conflicting_type_params_are_avoided() {
     #[allow(non_snake_case)]
     #[derive(FuncMap)]
     struct A<B, F, const C: usize> {
+        D: (),
         B: B,
         F: F,
+    }
+}
+
+#[test]
+fn fields_conflicting_with_items_are_supported() {
+    #[allow(non_snake_case)]
+    #[derive(FuncMap)]
+    struct Test<T> {
+        funcmap: T,
+        FuncMap: T,
+        TypeParam: T,
+        Output: T,
+        func_map: T,
+        f: T,
     }
 }
 
