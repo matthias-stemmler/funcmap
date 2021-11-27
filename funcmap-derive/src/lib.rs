@@ -5,16 +5,15 @@ use proc_macro_error::proc_macro_error;
 use syn::{parse_macro_input, DeriveInput};
 
 mod derive;
-mod idents;
 mod ident_collector;
+mod idents;
 mod map_expr;
 mod predicates;
 mod syn_ext;
 
-// TODO check hygiene
-// TODO check if attributes need to be carried over
+// TODO check if attributes need to be carried over (within block)
 // TODO detect crate name?
-// TODO check auto-impl
+// TODO check auto-impl/structopt/serde
 // TODO use fuzzing tests?
 // TODO docs
 // TODO trybuild tests
@@ -22,9 +21,10 @@ mod syn_ext;
 // TODO impl more standard types (HashMap, ...)
 // TODO allow attributes on generated impl
 // TODO allow restricting which params should be mappable
-// TODO reduce usage of parse_quote!(..)
-// TODO newtype?
-// TODO central place for idents
+
+// TODO set span to call_site on idents (and other tokens?) taken from input
+// TODO check unsized types
+// TODO for<'a> T: 'a
 
 #[proc_macro_error]
 #[proc_macro_derive(FuncMap)]

@@ -171,28 +171,30 @@ impl IntoType for Ident {
     }
 }
 
-pub trait WithIdent {
-    fn with_ident(self, ident: Ident) -> Self;
+pub trait WithoutAttrs {
+    fn without_attrs(self) -> Self;
 }
 
-impl WithIdent for TypeParam {
-    fn with_ident(self, ident: Ident) -> Self {
-        Self { ident, ..self }
+impl WithoutAttrs for ConstParam {
+    fn without_attrs(self) -> Self {
+        Self {
+            attrs: Vec::new(),
+            ..self
+        }
+    }
+}
+
+impl WithoutAttrs for LifetimeDef {
+    fn without_attrs(self) -> Self {
+        Self {
+            attrs: Vec::new(),
+            ..self
+        }
     }
 }
 
 pub trait WithoutDefault {
     fn without_default(self) -> Self;
-}
-
-impl WithoutDefault for TypeParam {
-    fn without_default(self) -> Self {
-        Self {
-            eq_token: None,
-            default: None,
-            ..self
-        }
-    }
 }
 
 impl WithoutDefault for ConstParam {

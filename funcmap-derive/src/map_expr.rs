@@ -174,7 +174,7 @@ impl<'ast> Mapper<'ast> {
                             #inner_src_type,
                             #inner_dst_type,
                             ::#CRATE_IDENT::#MARKER_TYPE_IDENT<#type_idx>,
-                            #OUTPUT_TYPE_IDENT= #dst_type
+                            #OUTPUT_TYPE_IDENT = #dst_type
                         >
                     });
 
