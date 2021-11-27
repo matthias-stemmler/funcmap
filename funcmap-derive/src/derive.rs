@@ -1,4 +1,5 @@
 use crate::ident_collector::IdentCollector;
+use crate::idents::*;
 use crate::map_expr::map_expr;
 use crate::predicates::{UniquePredicates, UniqueTypeBounds};
 use crate::syn_ext::{IntoGenericArgument, IntoType, SubsType, WithIdent, WithoutDefault};
@@ -149,11 +150,11 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                 let (pat_path, output_path) = match ident {
                     Some(ident) => (
                         quote_spanned!(Span::mixed_site() => Self::#ident),
-                        quote_spanned!(Span::mixed_site() => Self::Output::#ident),
+                        quote_spanned!(Span::mixed_site() => Self::#OUTPUT_TYPE_IDENT:#ident),
                     ),
                     None => (
                         quote_spanned!(Span::mixed_site() => Self),
-                        quote_spanned!(Span::mixed_site() => Self::Output),
+                        quote_spanned!(Span::mixed_site() => Self::#OUTPUT_TYPE_IDENT),
                     ),
                 };
 
@@ -168,20 +169,20 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
             quote_spanned! { Span::mixed_site() =>
                 #[automatically_derived]
                 impl<#(#impl_params),*>
-                    ::funcmap::FuncMap<
+                    ::#CRATE_IDENT::#TRAIT_IDENT<
                         #src_type_ident,
                         #dst_type_ident,
-                        ::funcmap::TypeParam<#mapped_type_param_idx>
+                        ::#CRATE_IDENT::#MARKER_TYPE_IDENT<#mapped_type_param_idx>
                     >
                     for #ident<#(#src_args),*>
                     #where_clause
                 {
-                    type Output = #ident<#(#dst_args),*>;
+                    type #OUTPUT_TYPE_IDENT= #ident<#(#dst_args),*>;
 
-                    fn func_map<#fn_type_ident>(
+                    fn #FN_IDENT<#fn_type_ident>(
                         self,
                         mut #fn_var_ident: #fn_type_ident
-                    ) -> Self::Output
+                    ) -> Self::#OUTPUT_TYPE_IDENT
                     where
                         #fn_type_ident: FnMut(#src_type_ident) -> #dst_type_ident
                     {

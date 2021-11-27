@@ -1,3 +1,4 @@
+use crate::idents::*;
 use crate::predicates::UniquePredicates;
 use crate::syn_ext::{DependencyOnType, SubsType};
 use proc_macro2::{Ident, Span, TokenStream};
@@ -49,16 +50,16 @@ impl<'ast> Mapper<'ast> {
                 let (inner_src_type, inner_dst_type) = self.subs_types(Type::clone(inner_ty));
 
                 self.unique_predicates.add(parse_quote! {
-                    #src_type: ::funcmap::FuncMap<
+                    #src_type: ::#CRATE_IDENT::#TRAIT_IDENT<
                         #inner_src_type,
                         #inner_dst_type,
-                        Output = #dst_type
+                        #OUTPUT_TYPE_IDENT = #dst_type
                     >
                 });
 
                 let closure = self.map_closure(inner_ty);
 
-                quote_spanned!(Span::mixed_site() => #mappable.func_map(#closure))
+                quote_spanned!(Span::mixed_site() => #mappable.#FN_IDENT(#closure))
             }
             Type::Path(type_path) => {
                 let TypePath {
@@ -169,18 +170,18 @@ impl<'ast> Mapper<'ast> {
                     let dst_type = make_type(type_idx + 1);
 
                     self.unique_predicates.add(parse_quote! {
-                        #src_type: ::funcmap::FuncMap<
+                        #src_type: ::#CRATE_IDENT::#TRAIT_IDENT<
                             #inner_src_type,
                             #inner_dst_type,
-                            ::funcmap::TypeParam<#type_idx>,
-                            Output = #dst_type
+                            ::#CRATE_IDENT::#MARKER_TYPE_IDENT<#type_idx>,
+                            #OUTPUT_TYPE_IDENT= #dst_type
                         >
                     });
 
                     let closure = self.map_closure(arg_type);
 
                     mappable = quote_spanned! { Span::mixed_site() =>
-                        #mappable.func_map_over(::funcmap::TypeParam::<#type_idx>, #closure)
+                        #mappable.#FN_IDENT_WITH_MARKER(::#CRATE_IDENT::#MARKER_TYPE_IDENT::<#type_idx>, #closure)
                     }
                 }
 

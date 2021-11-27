@@ -5,6 +5,7 @@ use proc_macro_error::proc_macro_error;
 use syn::{parse_macro_input, DeriveInput};
 
 mod derive;
+mod idents;
 mod ident_collector;
 mod map_expr;
 mod predicates;
