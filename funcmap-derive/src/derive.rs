@@ -2,7 +2,9 @@ use crate::ident_collector::IdentCollector;
 use crate::idents::*;
 use crate::map_expr::map_expr;
 use crate::predicates::{UniquePredicates, UniqueTypeBounds};
-use crate::syn_ext::{IntoGenericArgument, IntoType, SubsType, WithoutAttrs, WithoutDefault};
+use crate::syn_ext::{
+    IntoGenericArgument, IntoType, SubsType, WithoutAttrs, WithoutDefault, WithoutMaybeBounds,
+};
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
 use quote::{format_ident, quote};
@@ -11,7 +13,7 @@ use syn::token::Add;
 use syn::visit::Visit;
 use syn::{
     Data, DataEnum, DataStruct, DeriveInput, Fields, GenericArgument, GenericParam, Member,
-    TypeParam, TypeParamBound, Variant,
+    PredicateType, TypeParam, TypeParamBound, Variant, WherePredicate,
 };
 
 pub fn derive_func_map(input: DeriveInput) -> TokenStream {
@@ -54,7 +56,8 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                                     &mapped_type_param.bounds,
                                     &mapped_type_param.ident,
                                     &[&src_type_ident],
-                                ),
+                                )
+                                .without_maybe_bounds(),
                                 ..src_type_ident.clone().into()
                             }),
                             GenericParam::Type(TypeParam {
@@ -62,7 +65,8 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                                     &mapped_type_param.bounds,
                                     &mapped_type_param.ident,
                                     &[&dst_type_ident],
-                                ),
+                                )
+                                .without_maybe_bounds(),
                                 ..dst_type_ident.clone().into()
                             }),
                         ]
@@ -110,17 +114,23 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                 .iter()
                 .flat_map(|clause| clause.predicates.iter())
             {
+                let predicate = match predicate {
+                    WherePredicate::Type(PredicateType { bounded_ty, .. })
+                        if bounded_ty == &mapped_type_param.ident.clone().into_type() =>
+                    {
+                        predicate.clone().without_maybe_bounds()
+                    }
+                    predicate => predicate.clone(),
+                };
+
                 unique_predicates.add(
                     predicate
                         .clone()
                         .subs_type(&mapped_type_param.ident, &src_type_ident),
                 );
 
-                unique_predicates.add(
-                    predicate
-                        .clone()
-                        .subs_type(&mapped_type_param.ident, &dst_type_ident),
-                );
+                unique_predicates
+                    .add(predicate.subs_type(&mapped_type_param.ident, &dst_type_ident));
             }
 
             let mut arms = Vec::new();

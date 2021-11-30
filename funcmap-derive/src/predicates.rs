@@ -91,21 +91,31 @@ impl UniquePredicates {
     }
 
     pub fn into_iter(self) -> impl Iterator<Item = WherePredicate> {
-        let for_types = self.for_types.into_iter().map(|(lhs, rhs)| {
-            WherePredicate::Type(PredicateType {
-                lifetimes: lhs.lifetimes,
-                bounded_ty: lhs.bounded_ty,
-                colon_token: Default::default(),
-                bounds: rhs.into_bounds(),
-            })
+        let for_types = self.for_types.into_iter().filter_map(|(lhs, rhs)| {
+            let bounds = rhs.into_bounds();
+
+            match bounds.is_empty() {
+                true => None,
+                false => Some(WherePredicate::Type(PredicateType {
+                    lifetimes: lhs.lifetimes,
+                    bounded_ty: lhs.bounded_ty,
+                    colon_token: Default::default(),
+                    bounds,
+                })),
+            }
         });
 
-        let for_lifetimes = self.for_lifetimes.into_iter().map(|(lhs, rhs)| {
-            WherePredicate::Lifetime(PredicateLifetime {
-                lifetime: lhs,
-                colon_token: Default::default(),
-                bounds: rhs.into_bounds(),
-            })
+        let for_lifetimes = self.for_lifetimes.into_iter().filter_map(|(lhs, rhs)| {
+            let bounds = rhs.into_bounds();
+
+            match bounds.is_empty() {
+                true => None,
+                false => Some(WherePredicate::Lifetime(PredicateLifetime {
+                    lifetime: lhs,
+                    colon_token: Default::default(),
+                    bounds,
+                })),
+            }
         });
 
         for_types.chain(for_lifetimes)

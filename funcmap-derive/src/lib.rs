@@ -23,8 +23,6 @@ mod syn_ext;
 // TODO allow restricting which params should be mappable
 
 // TODO set span to call_site on idents (and other tokens?) taken from input
-// TODO check unsized types
-// TODO for<'a> T: 'a
 
 #[proc_macro_error]
 #[proc_macro_derive(FuncMap)]
