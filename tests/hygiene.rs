@@ -34,3 +34,12 @@ fn nested_items_are_not_mistaken_for_generics() {
     #[derive(FuncMap)]
     struct Test<T>(T, test::T);
 }
+
+#[test]
+fn lints_are_not_denied_in_emitted_code() {
+    #![deny(non_camel_case_types)]
+
+    #[allow(non_camel_case_types)]
+    #[derive(FuncMap)]
+    struct Test<s, t>(s, t);
+}

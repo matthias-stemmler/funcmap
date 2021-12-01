@@ -1,12 +1,12 @@
-use proc_macro2::Ident;
+use proc_macro2::{Ident, Span};
 use syn::fold::{self, Fold};
 use syn::punctuated::Punctuated;
 use syn::token::Add;
 use syn::visit::{self, Visit};
 use syn::{
-    ConstParam, GenericArgument, GenericParam, LifetimeDef, Path, PathArguments, PathSegment,
-    PredicateType, TraitBound, TraitBoundModifier, Type, TypeParam, TypeParamBound, TypePath,
-    WherePredicate,
+    AngleBracketedGenericArguments, ConstParam, GenericArgument, GenericParam, LifetimeDef, Path,
+    PathArguments, PathSegment, PredicateType, QSelf, TraitBound, TraitBoundModifier, Type,
+    TypeParam, TypeParamBound, TypePath, WherePredicate,
 };
 
 pub trait DependencyOnType {
@@ -239,6 +239,103 @@ impl WithoutMaybeBounds for WherePredicate {
             }),
             predicate => predicate,
         }
+    }
+}
+
+pub trait WithSpan {
+    fn with_span(self, span: Span) -> Self;
+}
+
+impl WithSpan for AngleBracketedGenericArguments {
+    fn with_span(self, span: Span) -> Self {
+        let mut folder = WithSpanFolder::new(span);
+        folder.fold_angle_bracketed_generic_arguments(self)
+    }
+}
+
+impl WithSpan for ConstParam {
+    fn with_span(self, span: Span) -> Self {
+        let mut folder = WithSpanFolder::new(span);
+        folder.fold_const_param(self)
+    }
+}
+
+impl WithSpan for GenericArgument {
+    fn with_span(self, span: Span) -> Self {
+        let mut folder = WithSpanFolder::new(span);
+        folder.fold_generic_argument(self)
+    }
+}
+
+impl WithSpan for GenericParam {
+    fn with_span(self, span: Span) -> Self {
+        let mut folder = WithSpanFolder::new(span);
+        folder.fold_generic_param(self)
+    }
+}
+
+impl WithSpan for Ident {
+    fn with_span(self, span: Span) -> Self {
+        let mut folder = WithSpanFolder::new(span);
+        folder.fold_ident(self)
+    }
+}
+
+impl WithSpan for LifetimeDef {
+    fn with_span(self, span: Span) -> Self {
+        let mut folder = WithSpanFolder::new(span);
+        folder.fold_lifetime_def(self)
+    }
+}
+
+impl WithSpan for QSelf {
+    fn with_span(self, span: Span) -> Self {
+        let mut folder = WithSpanFolder::new(span);
+        folder.fold_qself(self)
+    }
+}
+
+impl WithSpan for TraitBound {
+    fn with_span(self, span: Span) -> Self {
+        let mut folder = WithSpanFolder::new(span);
+        folder.fold_trait_bound(self)
+    }
+}
+
+impl WithSpan for Type {
+    fn with_span(self, span: Span) -> Self {
+        let mut folder = WithSpanFolder::new(span);
+        folder.fold_type(self)
+    }
+}
+
+impl WithSpan for TypeParamBound {
+    fn with_span(self, span: Span) -> Self {
+        let mut folder = WithSpanFolder::new(span);
+        folder.fold_type_param_bound(self)
+    }
+}
+
+impl WithSpan for WherePredicate {
+    fn with_span(self, span: Span) -> Self {
+        let mut folder = WithSpanFolder::new(span);
+        folder.fold_where_predicate(self)
+    }
+}
+
+struct WithSpanFolder {
+    span: Span,
+}
+
+impl WithSpanFolder {
+    fn new(span: Span) -> Self {
+        Self { span }
+    }
+}
+
+impl Fold for WithSpanFolder {
+    fn fold_span(&mut self, _: Span) -> Span {
+        self.span
     }
 }
 

@@ -15,9 +15,9 @@ impl IdentCollector {
         VisitingIdentCollector::default()
     }
 
-    pub fn reserve_uppercase_letter(&mut self, desired_letter: char) -> Ident {
+    pub fn reserve_uppercase_letter(&mut self, desired_letter: char, span: Span) -> Ident {
         let letter = self.find_uppercase_letter(desired_letter);
-        let ident = Ident::new(&letter, Span::mixed_site());
+        let ident = Ident::new(&letter, span);
         self.idents.insert(letter);
         ident
     }
@@ -64,7 +64,7 @@ mod tests {
     fn test_free_valid() {
         let mut collector = IdentCollector::default();
 
-        let ident: Ident = collector.reserve_uppercase_letter('T');
+        let ident: Ident = collector.reserve_uppercase_letter('T', Span::mixed_site());
 
         assert_eq!(ident, "T");
     }
@@ -72,9 +72,9 @@ mod tests {
     #[test]
     fn test_reserved() {
         let mut collector = IdentCollector::default();
-        let _: Ident = collector.reserve_uppercase_letter('T');
+        let _: Ident = collector.reserve_uppercase_letter('T', Span::mixed_site());
 
-        let ident: Ident = collector.reserve_uppercase_letter('T');
+        let ident: Ident = collector.reserve_uppercase_letter('T', Span::mixed_site());
 
         assert_eq!(ident, "U");
     }
@@ -82,9 +82,9 @@ mod tests {
     #[test]
     fn test_reserved_wraparound() {
         let mut collector = IdentCollector::default();
-        let _: Ident = collector.reserve_uppercase_letter('Z');
+        let _: Ident = collector.reserve_uppercase_letter('Z', Span::mixed_site());
 
-        let ident: Ident = collector.reserve_uppercase_letter('Z');
+        let ident: Ident = collector.reserve_uppercase_letter('Z', Span::mixed_site());
 
         assert_eq!(ident, "A");
     }
@@ -93,10 +93,10 @@ mod tests {
     fn test_prefixed() {
         let mut collector = IdentCollector::default();
         for c in 'A'..='Z' {
-            let _: Ident = collector.reserve_uppercase_letter(c);
+            let _: Ident = collector.reserve_uppercase_letter(c, Span::mixed_site());
         }
 
-        let ident: Ident = collector.reserve_uppercase_letter('T');
+        let ident: Ident = collector.reserve_uppercase_letter('T', Span::mixed_site());
 
         assert_eq!(ident, "__FUNCMAP_T");
     }
@@ -105,11 +105,11 @@ mod tests {
     fn test_prefixed_reserved() {
         let mut collector = IdentCollector::default();
         for c in 'A'..='Z' {
-            let _: Ident = collector.reserve_uppercase_letter(c);
+            let _: Ident = collector.reserve_uppercase_letter(c, Span::mixed_site());
         }
-        let _: Ident = collector.reserve_uppercase_letter('T');
+        let _: Ident = collector.reserve_uppercase_letter('T', Span::mixed_site());
 
-        let ident: Ident = collector.reserve_uppercase_letter('T');
+        let ident: Ident = collector.reserve_uppercase_letter('T', Span::mixed_site());
 
         assert_eq!(ident, "__FUNCMAP_U");
     }
@@ -118,10 +118,10 @@ mod tests {
     fn test_numbered() {
         let mut collector = IdentCollector::default();
         for c in ('A'..='Z').chain('A'..='Z') {
-            let _: Ident = collector.reserve_uppercase_letter(c);
+            let _: Ident = collector.reserve_uppercase_letter(c, Span::mixed_site());
         }
 
-        let ident: Ident = collector.reserve_uppercase_letter('T');
+        let ident: Ident = collector.reserve_uppercase_letter('T', Span::mixed_site());
 
         assert_eq!(ident, "__FUNCMAP_T2");
     }
@@ -130,11 +130,11 @@ mod tests {
     fn test_numbered_reserved() {
         let mut collector = IdentCollector::default();
         for c in ('A'..='Z').chain('A'..='Z') {
-            let _: Ident = collector.reserve_uppercase_letter(c);
+            let _: Ident = collector.reserve_uppercase_letter(c, Span::mixed_site());
         }
-        let _: Ident = collector.reserve_uppercase_letter('T');
+        let _: Ident = collector.reserve_uppercase_letter('T', Span::mixed_site());
 
-        let ident: Ident = collector.reserve_uppercase_letter('T');
+        let ident: Ident = collector.reserve_uppercase_letter('T', Span::mixed_site());
 
         assert_eq!(ident, "__FUNCMAP_U2");
     }
@@ -147,7 +147,7 @@ mod tests {
         });
         let mut collector = collector.into_reserved();
 
-        let ident: Ident = collector.reserve_uppercase_letter('T');
+        let ident: Ident = collector.reserve_uppercase_letter('T', Span::mixed_site());
 
         assert_eq!(ident, "W");
     }
@@ -156,13 +156,13 @@ mod tests {
     #[should_panic]
     fn test_lowercase() {
         let mut collector = IdentCollector::default();
-        collector.reserve_uppercase_letter('t');
+        collector.reserve_uppercase_letter('t', Span::mixed_site());
     }
 
     #[test]
     #[should_panic]
     fn test_nonalphabetic() {
         let mut collector = IdentCollector::default();
-        collector.reserve_uppercase_letter('1');
+        collector.reserve_uppercase_letter('1', Span::mixed_site());
     }
 }

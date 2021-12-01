@@ -1,9 +1,10 @@
 use crate::idents::*;
 use crate::predicates::UniquePredicates;
-use crate::syn_ext::{DependencyOnType, SubsType};
+use crate::syn_ext::{DependencyOnType, SubsType, WithSpan};
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
 use quote::{quote, ToTokens};
+use syn::Token;
 use syn::{
     parse_quote, punctuated::Pair, AngleBracketedGenericArguments, GenericArgument, Index, Path,
     PathArguments, PathSegment, QSelf, Type, TypeArray, TypeParam, TypePath,
@@ -46,8 +47,9 @@ impl<'ast> Mapper<'ast> {
 
         match ty {
             Type::Array(TypeArray { elem: inner_ty, .. }) => {
-                let (src_type, dst_type) = self.subs_types(ty.clone());
-                let (inner_src_type, inner_dst_type) = self.subs_types(Type::clone(inner_ty));
+                let (src_type, dst_type) = self.subs_types(ty.clone().with_span(Span::call_site()));
+                let (inner_src_type, inner_dst_type) =
+                    self.subs_types((*inner_ty).clone().with_span(Span::call_site()));
 
                 self.unique_predicates.add(parse_quote! {
                     #src_type: ::#CRATE_IDENT::#TRAIT_IDENT<
@@ -134,30 +136,42 @@ impl<'ast> Mapper<'ast> {
                         continue;
                     }
 
-                    let (inner_src_type, inner_dst_type) = self.subs_types(arg_type.clone());
+                    let (inner_src_type, inner_dst_type) =
+                        self.subs_types(arg_type.clone().with_span(Span::call_site()));
 
                     let make_type = |mapped_until_idx: usize| {
-                        let mapped_args = map_type_args(args.iter(), |type_arg_idx, ty: &Type| {
-                            if type_arg_idx >= mapped_until_idx {
-                                self.subs_src_type(ty.clone())
-                            } else {
-                                self.subs_dst_type(ty.clone())
-                            }
-                        });
+                        let mapped_args = map_type_args(
+                            args.iter()
+                                .cloned()
+                                .map(|arg| arg.with_span(Span::call_site())),
+                            |type_arg_idx, ty: Type| {
+                                if type_arg_idx >= mapped_until_idx {
+                                    self.subs_src_type(ty)
+                                } else {
+                                    self.subs_dst_type(ty)
+                                }
+                            },
+                        );
 
                         Type::Path(TypePath {
-                            qself: qself.clone(),
+                            qself: qself
+                                .clone()
+                                .map(|qself| qself.with_span(Span::call_site())),
                             path: Path {
-                                leading_colon: *leading_colon,
+                                leading_colon: leading_colon.map(|_| Token![::](Span::call_site())),
                                 segments: prefix
                                     .iter()
                                     .cloned()
                                     .chain([PathSegment {
-                                        ident: ident.clone(),
+                                        ident: ident.clone().with_span(Span::call_site()),
                                         arguments: PathArguments::AngleBracketed(
                                             AngleBracketedGenericArguments {
+                                                colon2_token: angle_bracketed
+                                                    .colon2_token
+                                                    .map(|_| Token![::](Span::call_site())),
+                                                lt_token: Token![<](Span::call_site()),
                                                 args: mapped_args.collect(),
-                                                ..angle_bracketed
+                                                gt_token: Token![>](Span::call_site()),
                                             },
                                         ),
                                     }])
@@ -240,10 +254,10 @@ impl<I, F> MapTypeArgs<I, F> {
     }
 }
 
-impl<'ast, I, F> Iterator for MapTypeArgs<I, F>
+impl<I, F> Iterator for MapTypeArgs<I, F>
 where
-    I: Iterator<Item = &'ast GenericArgument>,
-    F: FnMut(usize, &'ast Type) -> Type,
+    I: Iterator<Item = GenericArgument>,
+    F: FnMut(usize, Type) -> Type,
 {
     type Item = GenericArgument;
 
@@ -254,7 +268,7 @@ where
                 self.type_idx += 1;
                 arg
             }
-            arg => arg.clone(),
+            arg => arg,
         })
     }
 }

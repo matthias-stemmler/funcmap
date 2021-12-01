@@ -12,17 +12,17 @@ mod predicates;
 mod syn_ext;
 
 // TODO check if attributes need to be carried over (within block)
-// TODO detect crate name?
+// TODO #[funcmap(crate = "...")]
+// TODO Edition 2015/2018 compatibility
 // TODO check auto-impl/structopt/serde
 // TODO use fuzzing tests?
 // TODO docs
 // TODO trybuild tests
+// TODO unit tests
 // TODO deny some lints (missing docs)
 // TODO impl more standard types (HashMap, ...)
-// TODO allow attributes on generated impl
+// TODO allow attributes on generated impl?
 // TODO allow restricting which params should be mappable
-
-// TODO set span to call_site on idents (and other tokens?) taken from input
 
 #[proc_macro_error]
 #[proc_macro_derive(FuncMap)]

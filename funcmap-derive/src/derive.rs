@@ -3,7 +3,8 @@ use crate::idents::*;
 use crate::map_expr::map_expr;
 use crate::predicates::{UniquePredicates, UniqueTypeBounds};
 use crate::syn_ext::{
-    IntoGenericArgument, IntoType, SubsType, WithoutAttrs, WithoutDefault, WithoutMaybeBounds,
+    IntoGenericArgument, IntoType, SubsType, WithSpan, WithoutAttrs, WithoutDefault,
+    WithoutMaybeBounds,
 };
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
@@ -38,9 +39,9 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
         ident_collector.into_reserved()
     };
 
-    let src_type_ident = ident_collector.reserve_uppercase_letter('A');
-    let dst_type_ident = ident_collector.reserve_uppercase_letter('B');
-    let fn_type_ident = ident_collector.reserve_uppercase_letter('F');
+    let src_type_ident = ident_collector.reserve_uppercase_letter('A', Span::mixed_site());
+    let dst_type_ident = ident_collector.reserve_uppercase_letter('B', Span::mixed_site());
+    let fn_type_ident = ident_collector.reserve_uppercase_letter('F', Span::mixed_site());
     let fn_var_ident = Ident::new("f", Span::mixed_site());
 
     let impls = type_params.into_iter().enumerate().map(
@@ -58,7 +59,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                                     &[&src_type_ident],
                                 )
                                 .without_maybe_bounds(),
-                                ..src_type_ident.clone().into()
+                                ..src_type_ident.clone().with_span(Span::call_site()).into()
                             }),
                             GenericParam::Type(TypeParam {
                                 bounds: subs_type_in_bounds(
@@ -67,7 +68,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                                     &[&dst_type_ident],
                                 )
                                 .without_maybe_bounds(),
-                                ..dst_type_ident.clone().into()
+                                ..dst_type_ident.clone().with_span(Span::call_site()).into()
                             }),
                         ]
                     } else {
@@ -78,31 +79,54 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                                     &mapped_type_param.ident,
                                     &[&src_type_ident, &dst_type_ident],
                                 ),
-                                ..type_param.ident.clone().into()
+                                ..type_param.ident.clone().with_span(Span::call_site()).into()
                             }),
                             GenericParam::Const(const_param) => GenericParam::Const(
-                                const_param.clone().without_attrs().without_default(),
+                                const_param
+                                    .clone()
+                                    .with_span(Span::call_site())
+                                    .without_attrs()
+                                    .without_default(),
                             ),
-                            GenericParam::Lifetime(lifetime_param) => {
-                                GenericParam::Lifetime(lifetime_param.clone().without_attrs())
-                            }
+                            GenericParam::Lifetime(lifetime_param) => GenericParam::Lifetime(
+                                lifetime_param
+                                    .clone()
+                                    .with_span(Span::call_site())
+                                    .without_attrs(),
+                            ),
                         }]
                     }
                 });
 
             let src_args = all_params.iter().enumerate().map(|(param_idx, param)| {
                 if param_idx == mapped_param_idx {
-                    GenericArgument::Type(src_type_ident.clone().into_type())
+                    GenericArgument::Type(
+                        src_type_ident
+                            .clone()
+                            .with_span(Span::call_site())
+                            .into_type(),
+                    )
                 } else {
-                    param.clone().into_generic_argument()
+                    param
+                        .clone()
+                        .with_span(Span::call_site())
+                        .into_generic_argument()
                 }
             });
 
             let dst_args = all_params.iter().enumerate().map(|(param_idx, param)| {
                 if param_idx == mapped_param_idx {
-                    GenericArgument::Type(dst_type_ident.clone().into_type())
+                    GenericArgument::Type(
+                        dst_type_ident
+                            .clone()
+                            .with_span(Span::call_site())
+                            .into_type(),
+                    )
                 } else {
-                    param.clone().into_generic_argument()
+                    param
+                        .clone()
+                        .with_span(Span::call_site())
+                        .into_generic_argument()
                 }
             });
 
@@ -118,9 +142,12 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                     WherePredicate::Type(PredicateType { bounded_ty, .. })
                         if bounded_ty == &mapped_type_param.ident.clone().into_type() =>
                     {
-                        predicate.clone().without_maybe_bounds()
+                        predicate
+                            .clone()
+                            .with_span(Span::call_site())
+                            .without_maybe_bounds()
                     }
-                    predicate => predicate.clone(),
+                    predicate => predicate.clone().with_span(Span::call_site()),
                 };
 
                 unique_predicates.add(
@@ -141,7 +168,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
 
                 for (field_idx, field) in fields.into_iter().enumerate() {
                     let member: Member = match field.ident {
-                        Some(field_ident) => field_ident.into(),
+                        Some(field_ident) => field_ident.with_span(Span::call_site()).into(),
                         None => field_idx.into(),
                     };
 
@@ -163,10 +190,13 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                 }
 
                 let (pat_path, output_path) = match ident {
-                    Some(ident) => (
-                        quote!(Self::#ident),
-                        quote!(Self::#OUTPUT_TYPE_IDENT::#ident),
-                    ),
+                    Some(ident) => {
+                        let ident = ident.clone().with_span(Span::call_site());
+                        (
+                            quote!(Self::#ident),
+                            quote!(Self::#OUTPUT_TYPE_IDENT::#ident),
+                        )
+                    }
                     None => (quote!(Self), quote!(Self::#OUTPUT_TYPE_IDENT)),
                 };
 
@@ -175,7 +205,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                 });
             }
 
-            let ident = &input.ident;
+            let ident = input.ident.clone().with_span(Span::call_site());
             let where_clause = unique_predicates.into_where_clause();
 
             quote! {
@@ -222,11 +252,14 @@ fn subs_type_in_bounds<'ast>(
             TypeParamBound::Trait(trait_bound) => {
                 for new_ident in new_idents {
                     unique_type_bounds.add(TypeParamBound::Trait(
-                        trait_bound.clone().subs_type(ident, new_ident),
+                        trait_bound
+                            .clone()
+                            .with_span(Span::call_site())
+                            .subs_type(ident, new_ident),
                     ));
                 }
             }
-            bound => unique_type_bounds.add(bound.clone()),
+            bound => unique_type_bounds.add(bound.clone().with_span(Span::call_site())),
         };
     }
 
