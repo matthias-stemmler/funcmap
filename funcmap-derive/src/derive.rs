@@ -14,7 +14,7 @@ use syn::token::Add;
 use syn::visit::Visit;
 use syn::{
     Data, DataEnum, DataStruct, DeriveInput, Fields, GenericArgument, GenericParam, Member,
-    PredicateType, TypeParam, TypeParamBound, Variant, WherePredicate,
+    TypeParam, TypeParamBound, Variant, WherePredicate,
 };
 
 pub fn derive_func_map(input: DeriveInput) -> TokenStream {
@@ -138,16 +138,18 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                 .iter()
                 .flat_map(|clause| clause.predicates.iter())
             {
-                let predicate = match predicate {
-                    WherePredicate::Type(PredicateType { bounded_ty, .. })
-                        if bounded_ty == &mapped_type_param.ident.clone().into_type() =>
+                let predicate = match predicate
+                    .clone()
+                    .with_span(Span::call_site())
+                    .without_attrs()
+                {
+                    WherePredicate::Type(predicate_type)
+                        if predicate_type.bounded_ty
+                            == mapped_type_param.ident.clone().into_type() =>
                     {
-                        predicate
-                            .clone()
-                            .with_span(Span::call_site())
-                            .without_maybe_bounds()
+                        WherePredicate::Type(predicate_type.without_maybe_bounds())
                     }
-                    predicate => predicate.clone().with_span(Span::call_site()),
+                    predicate => predicate,
                 };
 
                 unique_predicates.add(
@@ -255,6 +257,7 @@ fn subs_type_in_bounds<'ast>(
                         trait_bound
                             .clone()
                             .with_span(Span::call_site())
+                            .without_attrs()
                             .subs_type(ident, new_ident),
                     ));
                 }

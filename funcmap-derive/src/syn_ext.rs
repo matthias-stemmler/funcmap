@@ -180,18 +180,42 @@ pub trait WithoutAttrs {
 
 impl WithoutAttrs for ConstParam {
     fn without_attrs(self) -> Self {
-        Self {
-            attrs: Vec::new(),
-            ..self
-        }
+        WithoutAttrsFolder.fold_const_param(self)
     }
 }
 
 impl WithoutAttrs for LifetimeDef {
     fn without_attrs(self) -> Self {
-        Self {
+        WithoutAttrsFolder.fold_lifetime_def(self)
+    }
+}
+
+impl WithoutAttrs for TraitBound {
+    fn without_attrs(self) -> Self {
+        WithoutAttrsFolder.fold_trait_bound(self)
+    }
+}
+
+impl WithoutAttrs for WherePredicate {
+    fn without_attrs(self) -> Self {
+        WithoutAttrsFolder.fold_where_predicate(self)
+    }
+}
+
+struct WithoutAttrsFolder;
+
+impl Fold for WithoutAttrsFolder {
+    fn fold_const_param(&mut self, const_param: ConstParam) -> ConstParam {
+        ConstParam {
             attrs: Vec::new(),
-            ..self
+            ..const_param
+        }
+    }
+
+    fn fold_lifetime_def(&mut self, lifetime_def: LifetimeDef) -> LifetimeDef {
+        LifetimeDef {
+            attrs: Vec::new(),
+            ..lifetime_def
         }
     }
 }
@@ -230,14 +254,11 @@ impl WithoutMaybeBounds for Punctuated<TypeParamBound, Add> {
     }
 }
 
-impl WithoutMaybeBounds for WherePredicate {
+impl WithoutMaybeBounds for PredicateType {
     fn without_maybe_bounds(self) -> Self {
-        match self {
-            WherePredicate::Type(predicate_type) => WherePredicate::Type(PredicateType {
-                bounds: predicate_type.bounds.without_maybe_bounds(),
-                ..predicate_type
-            }),
-            predicate => predicate,
+        Self {
+            bounds: self.bounds.without_maybe_bounds(),
+            ..self
         }
     }
 }
@@ -348,28 +369,28 @@ mod tests {
     use super::*;
 
     #[rstest]
-    #[case(parse_quote!(Foo), false)]
-    #[case(parse_quote!(T), true)]
-    #[case(parse_quote!((T)), true)]
-    #[case(parse_quote!((Foo, T)), true)]
-    #[case(parse_quote!([T]), true)]
-    #[case(parse_quote!([T; 1]), true)]
-    #[case(parse_quote!(fn(T) -> Foo), true)]
-    #[case(parse_quote!(fn(Foo) -> T), true)]
-    #[case(parse_quote!(*const T), true)]
-    #[case(parse_quote!(*mut T), true)]
-    #[case(parse_quote!(&T), true)]
-    #[case(parse_quote!(&mut T), true)]
-    #[case(parse_quote!(Foo::T), false)]
-    #[case(parse_quote!(::T::Foo), false)]
-    #[case(parse_quote!(Foo<Bar>), false)]
-    #[case(parse_quote!(Foo<T>), true)]
-    #[case(parse_quote!(Foo<Bar<T>>), true)]
-    #[case(parse_quote!(T<Foo>), true)]
-    #[case(parse_quote!(T::Foo<Bar>), true)]
-    #[case(parse_quote!(<T as Foo>::Bar<Baz>), true)]
-    #[case(parse_quote!(Foo<Bar, T>), true)]
-    #[case(parse_quote!(Foo<'T>), false)]
+    #[case(parse_quote ! (Foo), false)]
+    #[case(parse_quote ! (T), true)]
+    #[case(parse_quote ! ((T)), true)]
+    #[case(parse_quote ! ((Foo, T)), true)]
+    #[case(parse_quote ! ([T]), true)]
+    #[case(parse_quote ! ([T; 1]), true)]
+    #[case(parse_quote ! (fn (T) -> Foo), true)]
+    #[case(parse_quote ! (fn (Foo) -> T), true)]
+    #[case(parse_quote ! (* const T), true)]
+    #[case(parse_quote ! (* mut T), true)]
+    #[case(parse_quote ! (& T), true)]
+    #[case(parse_quote ! (& mut T), true)]
+    #[case(parse_quote ! (Foo::T), false)]
+    #[case(parse_quote ! (::T::Foo), false)]
+    #[case(parse_quote ! (Foo < Bar >), false)]
+    #[case(parse_quote ! (Foo < T >), true)]
+    #[case(parse_quote ! (Foo < Bar < T >>), true)]
+    #[case(parse_quote ! (T < Foo >), true)]
+    #[case(parse_quote ! (T::Foo < Bar >), true)]
+    #[case(parse_quote ! (< T as Foo >::Bar < Baz >), true)]
+    #[case(parse_quote ! (Foo < Bar, T >), true)]
+    #[case(parse_quote ! (Foo < 'T >), false)]
     fn test_dependency_on_type(#[case] ty: Type, #[case] expected_result: bool) {
         let type_ident = Ident::new("T", Span::call_site());
 
@@ -380,28 +401,28 @@ mod tests {
     }
 
     #[rstest]
-    #[case(parse_quote!(Foo), parse_quote!(Foo))]
-    #[case(parse_quote!(T), parse_quote!(A))]
-    #[case(parse_quote!((T)), parse_quote!((A)))]
-    #[case(parse_quote!((Foo, T)), parse_quote!((Foo, A)))]
-    #[case(parse_quote!([T]), parse_quote!([A]))]
-    #[case(parse_quote!([T; 1]), parse_quote!([A; 1]))]
-    #[case(parse_quote!(fn(T) -> Foo), parse_quote!(fn(A) -> Foo))]
-    #[case(parse_quote!(fn(Foo) -> T), parse_quote!(fn(Foo) -> A))]
-    #[case(parse_quote!(*const T), parse_quote!(*const A))]
-    #[case(parse_quote!(*mut T), parse_quote!(*mut A))]
-    #[case(parse_quote!(&T), parse_quote!(&A))]
-    #[case(parse_quote!(&mut T), parse_quote!(&mut A))]
-    #[case(parse_quote!(Foo::T), parse_quote!(Foo::T))]
-    #[case(parse_quote!(::T::Foo), parse_quote!(::T::Foo))]
-    #[case(parse_quote!(Foo<Bar>), parse_quote!(Foo<Bar>))]
-    #[case(parse_quote!(Foo<T>), parse_quote!(Foo<A>))]
-    #[case(parse_quote!(Foo<Bar<T>>), parse_quote!(Foo<Bar<A>>))]
-    #[case(parse_quote!(T<Foo>), parse_quote!(A<Foo>))]
-    #[case(parse_quote!(T::Foo<Bar>), parse_quote!(A::Foo<Bar>))]
-    #[case(parse_quote!(<T as Foo>::Bar<Baz>), parse_quote!(<A as Foo>::Bar<Baz>))]
-    #[case(parse_quote!(Foo<Bar, T>), parse_quote!(Foo<Bar, A>))]
-    #[case(parse_quote!(Foo<'T>), parse_quote!(Foo<'T>))]
+    #[case(parse_quote ! (Foo), parse_quote ! (Foo))]
+    #[case(parse_quote ! (T), parse_quote ! (A))]
+    #[case(parse_quote ! ((T)), parse_quote ! ((A)))]
+    #[case(parse_quote ! ((Foo, T)), parse_quote ! ((Foo, A)))]
+    #[case(parse_quote ! ([T]), parse_quote ! ([A]))]
+    #[case(parse_quote ! ([T; 1]), parse_quote ! ([A; 1]))]
+    #[case(parse_quote ! (fn (T) -> Foo), parse_quote ! (fn (A) -> Foo))]
+    #[case(parse_quote ! (fn (Foo) -> T), parse_quote ! (fn (Foo) -> A))]
+    #[case(parse_quote ! (* const T), parse_quote ! (* const A))]
+    #[case(parse_quote ! (* mut T), parse_quote ! (* mut A))]
+    #[case(parse_quote ! (& T), parse_quote ! (& A))]
+    #[case(parse_quote ! (& mut T), parse_quote ! (& mut A))]
+    #[case(parse_quote ! (Foo::T), parse_quote ! (Foo::T))]
+    #[case(parse_quote ! (::T::Foo), parse_quote ! (::T::Foo))]
+    #[case(parse_quote ! (Foo < Bar >), parse_quote ! (Foo < Bar >))]
+    #[case(parse_quote ! (Foo < T >), parse_quote ! (Foo < A >))]
+    #[case(parse_quote ! (Foo < Bar < T >>), parse_quote ! (Foo < Bar < A >>))]
+    #[case(parse_quote ! (T < Foo >), parse_quote ! (A < Foo >))]
+    #[case(parse_quote ! (T::Foo < Bar >), parse_quote ! (A::Foo < Bar >))]
+    #[case(parse_quote ! (< T as Foo >::Bar < Baz >), parse_quote ! (< A as Foo >::Bar < Baz >))]
+    #[case(parse_quote ! (Foo < Bar, T >), parse_quote ! (Foo < Bar, A >))]
+    #[case(parse_quote ! (Foo < 'T >), parse_quote ! (Foo < 'T >))]
     fn test_subs_type(#[case] ty: Type, #[case] expected_result: Type) {
         let type_ident = Ident::new("T", Span::call_site());
         let subs_type_ident = Ident::new("A", Span::call_site());
