@@ -11,9 +11,7 @@ mod map_expr;
 mod predicates;
 mod syn_ext;
 
-// TODO check if attributes need to be carried over (within block)
 // TODO #[funcmap(crate = "...")]
-// TODO Edition 2015/2018 compatibility
 // TODO check auto-impl/structopt/serde
 // TODO use fuzzing tests?
 // TODO docs
@@ -21,8 +19,9 @@ mod syn_ext;
 // TODO unit tests
 // TODO deny some lints (missing docs)
 // TODO impl more standard types (HashMap, ...)
-// TODO allow attributes on generated impl?
 // TODO allow restricting which params should be mappable
+// TODO allow more lints?
+// TODO no_std test
 
 #[proc_macro_error]
 #[proc_macro_derive(FuncMap)]

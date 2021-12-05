@@ -107,6 +107,17 @@ fn impl_is_restricted_to_maybe_sized_bound_on_unmapped_generic_of_original_type(
 }
 
 #[test]
+fn impl_is_restricted_to_lifetime_bounds_on_generics_of_original_type() {
+    #[derive(FuncMap, Debug, PartialEq)]
+    struct Test<'a, T: 'a>(T, PhantomData<&'a ()>);
+
+    let src = Test(T1, PhantomData);
+    let dst = src.func_map(|_| T2);
+
+    assert_eq!(dst, Test(T2, PhantomData));
+}
+
+#[test]
 fn impl_is_restricted_to_trait_bounds_in_where_clause_on_original_type() {
     trait TestTrait {}
 
@@ -243,6 +254,19 @@ fn impl_is_restricted_to_maybe_sized_bound_on_unmapped_generic_in_where_clause_o
     let dst = src.func_map_over(TypeParam::<0>, |_: T1| T2);
 
     assert_eq!(dst, Test(PhantomData, PhantomData));
+}
+
+#[test]
+fn impl_is_restricted_to_lifetime_bounds_in_where_clause_of_original_type() {
+    #[derive(FuncMap, Debug, PartialEq)]
+    struct Test<'a, T>(T, PhantomData<&'a ()>)
+    where
+        T: 'a;
+
+    let src = Test(T1, PhantomData);
+    let dst = src.func_map(|_| T2);
+
+    assert_eq!(dst, Test(T2, PhantomData));
 }
 
 #[test]

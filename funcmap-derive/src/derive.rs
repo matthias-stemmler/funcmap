@@ -3,8 +3,7 @@ use crate::idents::*;
 use crate::map_expr::map_expr;
 use crate::predicates::{UniquePredicates, UniqueTypeBounds};
 use crate::syn_ext::{
-    IntoGenericArgument, IntoType, SubsType, WithSpan, WithoutAttrs, WithoutDefault,
-    WithoutMaybeBounds,
+    IntoGenericArgument, IntoType, SubsType, WithoutAttrs, WithoutDefault, WithoutMaybeBounds,
 };
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::abort;
@@ -59,7 +58,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                                     &[&src_type_ident],
                                 )
                                 .without_maybe_bounds(),
-                                ..src_type_ident.clone().with_span(Span::call_site()).into()
+                                ..src_type_ident.clone().into()
                             }),
                             GenericParam::Type(TypeParam {
                                 bounds: subs_type_in_bounds(
@@ -68,7 +67,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                                     &[&dst_type_ident],
                                 )
                                 .without_maybe_bounds(),
-                                ..dst_type_ident.clone().with_span(Span::call_site()).into()
+                                ..dst_type_ident.clone().into()
                             }),
                         ]
                     } else {
@@ -79,54 +78,31 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                                     &mapped_type_param.ident,
                                     &[&src_type_ident, &dst_type_ident],
                                 ),
-                                ..type_param.ident.clone().with_span(Span::call_site()).into()
+                                ..type_param.ident.clone().into()
                             }),
                             GenericParam::Const(const_param) => GenericParam::Const(
-                                const_param
-                                    .clone()
-                                    .with_span(Span::call_site())
-                                    .without_attrs()
-                                    .without_default(),
+                                const_param.clone().without_attrs().without_default(),
                             ),
-                            GenericParam::Lifetime(lifetime_param) => GenericParam::Lifetime(
-                                lifetime_param
-                                    .clone()
-                                    .with_span(Span::call_site())
-                                    .without_attrs(),
-                            ),
+                            GenericParam::Lifetime(lifetime_param) => {
+                                GenericParam::Lifetime(lifetime_param.clone().without_attrs())
+                            }
                         }]
                     }
                 });
 
             let src_args = all_params.iter().enumerate().map(|(param_idx, param)| {
                 if param_idx == mapped_param_idx {
-                    GenericArgument::Type(
-                        src_type_ident
-                            .clone()
-                            .with_span(Span::call_site())
-                            .into_type(),
-                    )
+                    GenericArgument::Type(src_type_ident.clone().into_type())
                 } else {
-                    param
-                        .clone()
-                        .with_span(Span::call_site())
-                        .into_generic_argument()
+                    param.clone().into_generic_argument()
                 }
             });
 
             let dst_args = all_params.iter().enumerate().map(|(param_idx, param)| {
                 if param_idx == mapped_param_idx {
-                    GenericArgument::Type(
-                        dst_type_ident
-                            .clone()
-                            .with_span(Span::call_site())
-                            .into_type(),
-                    )
+                    GenericArgument::Type(dst_type_ident.clone().into_type())
                 } else {
-                    param
-                        .clone()
-                        .with_span(Span::call_site())
-                        .into_generic_argument()
+                    param.clone().into_generic_argument()
                 }
             });
 
@@ -138,11 +114,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                 .iter()
                 .flat_map(|clause| clause.predicates.iter())
             {
-                let predicate = match predicate
-                    .clone()
-                    .with_span(Span::call_site())
-                    .without_attrs()
-                {
+                let predicate = match predicate.clone().without_attrs() {
                     WherePredicate::Type(predicate_type)
                         if predicate_type.bounded_ty
                             == mapped_type_param.ident.clone().into_type() =>
@@ -170,7 +142,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
 
                 for (field_idx, field) in fields.into_iter().enumerate() {
                     let member: Member = match field.ident {
-                        Some(field_ident) => field_ident.with_span(Span::call_site()).into(),
+                        Some(field_ident) => field_ident.into(),
                         None => field_idx.into(),
                     };
 
@@ -192,13 +164,10 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                 }
 
                 let (pat_path, output_path) = match ident {
-                    Some(ident) => {
-                        let ident = ident.clone().with_span(Span::call_site());
-                        (
-                            quote!(Self::#ident),
-                            quote!(Self::#OUTPUT_TYPE_IDENT::#ident),
-                        )
-                    }
+                    Some(ident) => (
+                        quote!(Self::#ident),
+                        quote!(Self::#OUTPUT_TYPE_IDENT::#ident),
+                    ),
                     None => (quote!(Self), quote!(Self::#OUTPUT_TYPE_IDENT)),
                 };
 
@@ -207,10 +176,12 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                 });
             }
 
-            let ident = input.ident.clone().with_span(Span::call_site());
+            let ident = &input.ident;
             let where_clause = unique_predicates.into_where_clause();
 
             quote! {
+                #[allow(bare_trait_objects)]
+                #[allow(non_camel_case_types)]
                 #[automatically_derived]
                 impl<#(#impl_params),*>
                     ::#CRATE_IDENT::#TRAIT_IDENT<
@@ -256,13 +227,12 @@ fn subs_type_in_bounds<'ast>(
                     unique_type_bounds.add(TypeParamBound::Trait(
                         trait_bound
                             .clone()
-                            .with_span(Span::call_site())
                             .without_attrs()
                             .subs_type(ident, new_ident),
                     ));
                 }
             }
-            bound => unique_type_bounds.add(bound.clone().with_span(Span::call_site())),
+            bound => unique_type_bounds.add(bound.clone()),
         };
     }
 
