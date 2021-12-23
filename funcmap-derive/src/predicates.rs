@@ -1,7 +1,7 @@
 use proc_macro_error::abort;
 use std::collections::{HashMap, HashSet};
 use syn::{
-    punctuated::Punctuated, token::Add, BoundLifetimes, Lifetime, PredicateLifetime, PredicateType,
+    punctuated::Punctuated, BoundLifetimes, Lifetime, PredicateLifetime, PredicateType, Token,
     Type, TypeParamBound, WhereClause, WherePredicate,
 };
 
@@ -17,7 +17,7 @@ impl UniqueTypeBounds {
         self.0.insert(bound);
     }
 
-    pub fn into_bounds(self) -> Punctuated<TypeParamBound, Add> {
+    pub fn into_bounds(self) -> Punctuated<TypeParamBound, Token![+]> {
         self.0.into_iter().collect()
     }
 }
@@ -35,7 +35,7 @@ impl Extend<TypeParamBound> for UniqueTypeBounds {
 pub struct UniqueLifetimeBounds(HashSet<Lifetime>);
 
 impl UniqueLifetimeBounds {
-    pub fn into_bounds(self) -> Punctuated<Lifetime, Add> {
+    pub fn into_bounds(self) -> Punctuated<Lifetime, Token![+]> {
         self.0.into_iter().collect()
     }
 }

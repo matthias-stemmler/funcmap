@@ -1,0 +1,197 @@
+use crate::idents::ATTR_IDENT;
+use proc_macro2::{Ident, Span};
+use proc_macro_error::{diagnostic, Diagnostic, Level};
+use std::vec;
+use syn::{
+    parenthesized,
+    parse::{Parse, ParseStream},
+    punctuated::Punctuated,
+    spanned::Spanned,
+    Attribute, ConstParam, GenericParam, Lifetime, LifetimeDef, LitStr, Path, Token, TypeParam,
+};
+
+#[derive(Debug)]
+pub struct FuncMapOpts {
+    pub crate_path: Option<Path>,
+    pub params: Vec<Param>,
+}
+
+impl TryFrom<Vec<Attribute>> for FuncMapOpts {
+    type Error = Diagnostic;
+
+    fn try_from(attrs: Vec<Attribute>) -> Result<Self, Self::Error> {
+        let mut crate_path = None;
+        let mut params = Vec::new();
+
+        for arg in attrs
+            .into_iter()
+            .filter(|attr| attr.path.is_ident(&ATTR_IDENT))
+            .map(TryInto::try_into)
+            .collect::<Result<Vec<Args>, _>>()?
+            .into_iter()
+            .flatten()
+        {
+            match arg {
+                Arg::Crate(ArgCrate(value)) if crate_path.is_none() => crate_path = Some(value),
+
+                Arg::Crate(ArgCrate(value)) => {
+                    return Err(diagnostic!(
+                        value.span(),
+                        Level::Error,
+                        "duplicate crate path"
+                    ))
+                }
+
+                Arg::Params(ArgParams(values)) => {
+                    for value in values {
+                        if params.contains(&value) {
+                            return Err(diagnostic!(
+                                value.span(),
+                                Level::Error,
+                                "duplicate parameter"
+                            ));
+                        }
+
+                        params.push(value);
+                    }
+                }
+            }
+        }
+
+        Ok(Self { crate_path, params })
+    }
+}
+
+#[derive(Debug, Default)]
+struct Args(Vec<Arg>);
+
+impl TryFrom<Attribute> for Args {
+    type Error = syn::Error;
+
+    fn try_from(attr: Attribute) -> Result<Self, Self::Error> {
+        if attr.tokens.is_empty() {
+            Ok(Self::default())
+        } else {
+            attr.parse_args()
+        }
+    }
+}
+
+impl IntoIterator for Args {
+    type Item = Arg;
+    type IntoIter = vec::IntoIter<Arg>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl Parse for Args {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        Ok(Self(
+            input
+                .call(Punctuated::<_, Token![,]>::parse_terminated)?
+                .into_iter()
+                .collect(),
+        ))
+    }
+}
+
+#[derive(Debug)]
+enum Arg {
+    Crate(ArgCrate),
+    Params(ArgParams),
+}
+
+impl Parse for Arg {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        if input.peek(Token![crate]) {
+            Ok(Self::Crate(input.call(ArgCrate::parse)?))
+        } else if input.peek(kw::params) {
+            Ok(Self::Params(input.call(ArgParams::parse)?))
+        } else {
+            Err(input.error("expected \"crate\" or \"params\""))
+        }
+    }
+}
+
+#[derive(Debug)]
+struct ArgCrate(Path);
+
+impl Parse for ArgCrate {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        input.parse::<Token![crate]>()?;
+        input.parse::<Token![=]>()?;
+        Ok(Self(input.parse::<LitStr>()?.parse()?))
+    }
+}
+
+#[derive(Debug)]
+struct ArgParams(Vec<Param>);
+
+impl Parse for ArgParams {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        input.parse::<kw::params>()?;
+        let content;
+        parenthesized!(content in input);
+        Ok(Self(
+            content
+                .call(Punctuated::<_, Token![,]>::parse_terminated)?
+                .into_iter()
+                .collect(),
+        ))
+    }
+}
+
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub enum Param {
+    Lifetime(Lifetime),
+    TypeOrConst(Ident),
+}
+
+impl Parse for Param {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        input
+            .parse::<Lifetime>()
+            .map(Self::Lifetime)
+            .or_else(|_| input.parse::<Ident>().map(Self::TypeOrConst))
+            .map_err(|_| input.error("expected name of generic parameter"))
+    }
+}
+
+impl Spanned for Param {
+    fn span(&self) -> Span {
+        match self {
+            Self::Lifetime(lifetime) => lifetime.span(),
+            Self::TypeOrConst(ident) => ident.span(),
+        }
+    }
+}
+
+impl PartialEq<GenericParam> for Param {
+    fn eq(&self, other: &GenericParam) -> bool {
+        match (self, other) {
+            (Self::Lifetime(l), GenericParam::Lifetime(LifetimeDef { lifetime: r, .. })) => l == r,
+            (Self::TypeOrConst(l), GenericParam::Type(TypeParam { ident: r, .. })) => l == r,
+            (Self::TypeOrConst(l), GenericParam::Const(ConstParam { ident: r, .. })) => l == r,
+            _ => false,
+        }
+    }
+}
+
+mod kw {
+    syn::custom_keyword!(params);
+}
+
+pub fn assert_no_opts(attrs: &[Attribute], name: &str) -> Result<(), Diagnostic> {
+    match attrs.iter().find(|attr| attr.path.is_ident(&ATTR_IDENT)) {
+        Some(attr) => Err(diagnostic!(
+            attr.span(),
+            Level::Error,
+            "#[{}] helper attribute not supported for {}",
+            ATTR_IDENT,
+            name
+        )),
+        None => Ok(()),
+    }
+}

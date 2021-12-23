@@ -16,12 +16,14 @@ pub fn map_expr(
     src_type_ident: &Ident,
     dst_type_ident: &Ident,
     mapping_fn_ident: &Ident,
+    crate_path: &Path,
 ) -> (TokenStream, UniquePredicates) {
     let mut mapper = Mapper {
         type_param,
         src_type_ident,
         dst_type_ident,
         mapping_fn_ident,
+        crate_path,
         unique_predicates: UniquePredicates::new(),
     };
 
@@ -35,6 +37,7 @@ struct Mapper<'ast> {
     src_type_ident: &'ast Ident,
     dst_type_ident: &'ast Ident,
     mapping_fn_ident: &'ast Ident,
+    crate_path: &'ast Path,
     unique_predicates: UniquePredicates,
 }
 
@@ -44,13 +47,15 @@ impl<'ast> Mapper<'ast> {
             return mappable;
         }
 
+        let crate_path = self.crate_path;
+
         match ty {
             Type::Array(TypeArray { elem: inner_ty, .. }) => {
                 let (src_type, dst_type) = self.subs_types(ty.clone());
                 let (inner_src_type, inner_dst_type) = self.subs_types(Type::clone(inner_ty));
 
                 self.unique_predicates.add(parse_quote! {
-                    #src_type: ::#CRATE_IDENT::#TRAIT_IDENT<
+                    #src_type: #crate_path::#TRAIT_IDENT<
                         #inner_src_type,
                         #inner_dst_type,
                         #OUTPUT_TYPE_IDENT = #dst_type
@@ -171,10 +176,10 @@ impl<'ast> Mapper<'ast> {
                     let dst_type = make_type(type_idx + 1);
 
                     self.unique_predicates.add(parse_quote! {
-                        #src_type: ::#CRATE_IDENT::#TRAIT_IDENT<
+                        #src_type: #crate_path::#TRAIT_IDENT<
                             #inner_src_type,
                             #inner_dst_type,
-                            ::#CRATE_IDENT::#MARKER_TYPE_IDENT<#type_idx>,
+                            #crate_path::#MARKER_TYPE_IDENT<#type_idx>,
                             #OUTPUT_TYPE_IDENT = #dst_type
                         >
                     });
@@ -182,7 +187,7 @@ impl<'ast> Mapper<'ast> {
                     let closure = self.map_closure(arg_type);
 
                     mappable = quote! {
-                        #mappable.#FN_IDENT_WITH_MARKER(::#CRATE_IDENT::#MARKER_TYPE_IDENT::<#type_idx>, #closure)
+                        #mappable.#FN_IDENT_WITH_MARKER(#crate_path::#MARKER_TYPE_IDENT::<#type_idx>, #closure)
                     }
                 }
 

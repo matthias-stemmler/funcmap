@@ -1,11 +1,11 @@
 use proc_macro2::Ident;
 use syn::fold::{self, Fold};
 use syn::punctuated::Punctuated;
-use syn::token::Add;
 use syn::visit::{self, Visit};
 use syn::{
     ConstParam, GenericArgument, GenericParam, LifetimeDef, Path, PathSegment, PredicateType,
-    TraitBound, TraitBoundModifier, Type, TypeParam, TypeParamBound, TypePath, WherePredicate,
+    Token, TraitBound, TraitBoundModifier, Type, TypeParam, TypeParamBound, TypePath,
+    WherePredicate,
 };
 
 pub trait DependencyOnType {
@@ -221,7 +221,7 @@ pub trait WithoutMaybeBounds {
     fn without_maybe_bounds(self) -> Self;
 }
 
-impl WithoutMaybeBounds for Punctuated<TypeParamBound, Add> {
+impl WithoutMaybeBounds for Punctuated<TypeParamBound, Token![+]> {
     fn without_maybe_bounds(self) -> Self {
         self.into_iter()
             .filter(|bound| {

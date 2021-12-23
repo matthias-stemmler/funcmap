@@ -7,24 +7,30 @@ use syn::{parse_macro_input, DeriveInput};
 mod derive;
 mod ident_collector;
 mod idents;
+mod input;
 mod map_expr;
+mod opts;
 mod predicates;
 mod syn_ext;
 
-// TODO #[funcmap(crate = "...")]
 // TODO check auto-impl/structopt/serde
 // TODO use fuzzing tests?
 // TODO docs
 // TODO trybuild tests
 // TODO unit tests
 // TODO deny some lints (missing docs)
-// TODO impl more standard types (HashMap, ...)
-// TODO allow restricting which params should be mappable
+// TODO impl more standard types (HashMap, ...) + (optional) popular crates?
 // TODO allow more lints?
 // TODO no_std test
+// TODO don't call func_map with method call syntax as there could be a conflicting inherent method
+// TODO impl common traits for types (such as TypeParam)
+// TODO blanket impl FuncMap for Box<T> where T: FuncMap?
+// TODO MSRV policy? Which dependency semver specifiers?
+// TODO use Result<_, Diagnostic> everywhere?
+// TODO expand tests (see serde)
 
 #[proc_macro_error]
-#[proc_macro_derive(FuncMap)]
+#[proc_macro_derive(FuncMap, attributes(funcmap))]
 pub fn derive_func_map(item: TokenStream) -> TokenStream {
     let derive_input = parse_macro_input!(item as DeriveInput);
     let output = derive::derive_func_map(derive_input);

@@ -1,60 +1,44 @@
-use crate::ident_collector::IdentCollector;
 use crate::idents::*;
+use crate::input::{FuncMapInput, Structish};
 use crate::map_expr::map_expr;
 use crate::predicates::{UniquePredicates, UniqueTypeBounds};
 use crate::syn_ext::{
     IntoGenericArgument, IntoType, SubsType, WithoutAttrs, WithoutDefault, WithoutMaybeBounds,
 };
 use proc_macro2::{Ident, Span, TokenStream};
-use proc_macro_error::abort;
+use proc_macro_error::ResultExt;
 use quote::{format_ident, quote};
 use syn::punctuated::Punctuated;
-use syn::token::Add;
-use syn::visit::Visit;
 use syn::{
-    Data, DataEnum, DataStruct, DeriveInput, Fields, GenericArgument, GenericParam, Member,
-    TypeParam, TypeParamBound, Variant, WherePredicate,
+    DeriveInput, GenericArgument, GenericParam, Member, Token, TypeParam, TypeParamBound,
+    WherePredicate,
 };
 
 pub fn derive_func_map(input: DeriveInput) -> TokenStream {
-    let all_params = &input.generics.params;
-
-    let type_params: Vec<_> = all_params
-        .iter()
-        .enumerate()
-        .filter_map(|(param_idx, param)| match param {
-            GenericParam::Type(type_param) => Some((param_idx, type_param)),
-            _ => None,
-        })
-        .collect();
-
-    if type_params.is_empty() {
-        abort!(input, "expected at least one type parameter, found none");
-    }
-
-    let mut ident_collector = {
-        let mut ident_collector = IdentCollector::new_visiting();
-        ident_collector.visit_derive_input(&input);
-        ident_collector.into_reserved()
-    };
+    let input: FuncMapInput = input.try_into().unwrap_or_abort();
+    let mut ident_collector = input.meta.ident_collector;
 
     let src_type_ident = ident_collector.reserve_uppercase_letter('A', Span::mixed_site());
     let dst_type_ident = ident_collector.reserve_uppercase_letter('B', Span::mixed_site());
     let fn_type_ident = ident_collector.reserve_uppercase_letter('F', Span::mixed_site());
     let fn_var_ident = Ident::new("f", Span::mixed_site());
 
-    let impls = type_params.into_iter().enumerate().map(
-        |(mapped_type_param_idx, (mapped_param_idx, mapped_type_param))| {
+    let all_params = &input.generics.params;
+
+    let impls = input
+        .mapped_type_params
+        .into_iter()
+        .map(|mapped_type_param| {
             let impl_params = all_params
                 .iter()
                 .enumerate()
                 .flat_map(|(param_idx, param)| {
-                    if param_idx == mapped_param_idx {
+                    if param_idx == mapped_type_param.param_idx {
                         vec![
                             GenericParam::Type(TypeParam {
                                 bounds: subs_type_in_bounds(
-                                    &mapped_type_param.bounds,
-                                    &mapped_type_param.ident,
+                                    &mapped_type_param.type_param.bounds,
+                                    &mapped_type_param.type_param.ident,
                                     &[&src_type_ident],
                                 )
                                 .without_maybe_bounds(),
@@ -62,8 +46,8 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                             }),
                             GenericParam::Type(TypeParam {
                                 bounds: subs_type_in_bounds(
-                                    &mapped_type_param.bounds,
-                                    &mapped_type_param.ident,
+                                    &mapped_type_param.type_param.bounds,
+                                    &mapped_type_param.type_param.ident,
                                     &[&dst_type_ident],
                                 )
                                 .without_maybe_bounds(),
@@ -75,7 +59,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                             GenericParam::Type(type_param) => GenericParam::Type(TypeParam {
                                 bounds: subs_type_in_bounds(
                                     &type_param.bounds,
-                                    &mapped_type_param.ident,
+                                    &mapped_type_param.type_param.ident,
                                     &[&src_type_ident, &dst_type_ident],
                                 ),
                                 ..type_param.ident.clone().into()
@@ -91,7 +75,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                 });
 
             let src_args = all_params.iter().enumerate().map(|(param_idx, param)| {
-                if param_idx == mapped_param_idx {
+                if param_idx == mapped_type_param.param_idx {
                     GenericArgument::Type(src_type_ident.clone().into_type())
                 } else {
                     param.clone().into_generic_argument()
@@ -99,7 +83,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
             });
 
             let dst_args = all_params.iter().enumerate().map(|(param_idx, param)| {
-                if param_idx == mapped_param_idx {
+                if param_idx == mapped_type_param.param_idx {
                     GenericArgument::Type(dst_type_ident.clone().into_type())
                 } else {
                     param.clone().into_generic_argument()
@@ -117,7 +101,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                 let predicate = match predicate.clone().without_attrs() {
                     WherePredicate::Type(predicate_type)
                         if predicate_type.bounded_ty
-                            == mapped_type_param.ident.clone().into_type() =>
+                            == mapped_type_param.type_param.ident.clone().into_type() =>
                     {
                         WherePredicate::Type(predicate_type.without_maybe_bounds())
                     }
@@ -127,22 +111,26 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                 unique_predicates.add(
                     predicate
                         .clone()
-                        .subs_type(&mapped_type_param.ident, &src_type_ident),
+                        .subs_type(&mapped_type_param.type_param.ident, &src_type_ident),
                 );
 
                 unique_predicates
-                    .add(predicate.subs_type(&mapped_type_param.ident, &dst_type_ident));
+                    .add(predicate.subs_type(&mapped_type_param.type_param.ident, &dst_type_ident));
             }
 
             let mut arms = Vec::new();
 
-            for StructLike { ident, fields } in struct_likes(&input) {
+            for Structish {
+                variant_ident,
+                fields,
+            } in &input.variants
+            {
                 let mut mappings = Vec::new();
                 let mut patterns = Vec::new();
 
-                for (field_idx, field) in fields.into_iter().enumerate() {
-                    let member: Member = match field.ident {
-                        Some(field_ident) => field_ident.into(),
+                for (field_idx, field) in fields.iter().enumerate() {
+                    let member: Member = match &field.ident {
+                        Some(field_ident) => field_ident.clone().into(),
                         None => field_idx.into(),
                     };
 
@@ -152,10 +140,11 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                     let (mapped, predicates) = map_expr(
                         ident,
                         &field.ty,
-                        mapped_type_param,
+                        &mapped_type_param.type_param,
                         &src_type_ident,
                         &dst_type_ident,
                         &fn_var_ident,
+                        &input.meta.crate_path,
                     );
 
                     unique_predicates.extend(predicates.into_iter());
@@ -163,7 +152,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                     mappings.push(quote!(#member: #mapped));
                 }
 
-                let (pat_path, output_path) = match ident {
+                let (pat_path, output_path) = match variant_ident {
                     Some(ident) => (
                         quote!(Self::#ident),
                         quote!(Self::#OUTPUT_TYPE_IDENT::#ident),
@@ -176,18 +165,20 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                 });
             }
 
+            let crate_path = &input.meta.crate_path;
             let ident = &input.ident;
             let where_clause = unique_predicates.into_where_clause();
+            let type_param_idx = mapped_type_param.type_param_idx;
 
             quote! {
                 #[allow(bare_trait_objects)]
                 #[allow(non_camel_case_types)]
                 #[automatically_derived]
                 impl<#(#impl_params),*>
-                    ::#CRATE_IDENT::#TRAIT_IDENT<
+                    #crate_path::#TRAIT_IDENT<
                         #src_type_ident,
                         #dst_type_ident,
-                        ::#CRATE_IDENT::#MARKER_TYPE_IDENT<#mapped_type_param_idx>
+                        #crate_path::#MARKER_TYPE_IDENT<#type_param_idx>
                     >
                     for #ident<#(#src_args),*>
                     #where_clause
@@ -207,8 +198,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                     }
                 }
             }
-        },
-    );
+        });
 
     quote!(#(#impls)*)
 }
@@ -217,7 +207,7 @@ fn subs_type_in_bounds<'ast>(
     bounds: impl IntoIterator<Item = &'ast TypeParamBound>,
     ident: &Ident,
     new_idents: &[&Ident],
-) -> Punctuated<TypeParamBound, Add> {
+) -> Punctuated<TypeParamBound, Token![+]> {
     let mut unique_type_bounds = UniqueTypeBounds::new();
 
     for bound in bounds {
@@ -237,26 +227,4 @@ fn subs_type_in_bounds<'ast>(
     }
 
     unique_type_bounds.into_bounds()
-}
-
-struct StructLike {
-    ident: Option<Ident>,
-    fields: Fields,
-}
-
-fn struct_likes(input: &DeriveInput) -> Vec<StructLike> {
-    match &input.data {
-        Data::Struct(DataStruct { fields, .. }) => vec![StructLike {
-            ident: None,
-            fields: fields.clone(),
-        }],
-        Data::Enum(DataEnum { variants, .. }) => variants
-            .iter()
-            .map(|Variant { ident, fields, .. }| StructLike {
-                ident: Some(ident.clone()),
-                fields: fields.clone(),
-            })
-            .collect(),
-        Data::Union(..) => abort!(input, "expected a struct or an enum, found a union"),
-    }
 }
