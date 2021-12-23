@@ -7,8 +7,8 @@ use proc_macro2::Ident;
 use proc_macro_error::{diagnostic, Diagnostic, Level};
 use std::{collections::HashSet, iter};
 use syn::{
-    spanned::Spanned, Data, DataEnum, DataStruct, DeriveInput, Field, GenericParam, Generics, Path,
-    Type, TypeParam, Variant, visit::Visit,
+    visit::Visit, Data, DataEnum, DataStruct, DataUnion, DeriveInput, Field, GenericParam,
+    Generics, Path, Type, TypeParam, Variant,
 };
 
 #[derive(Debug)]
@@ -55,8 +55,6 @@ impl TryFrom<DeriveInput> for FuncMapInput {
             ident_collector.into_reserved()
         };
 
-        let derive_input_span = derive_input.span();
-        
         let opts: FuncMapOpts = derive_input.attrs.try_into()?;
 
         let meta = FuncMapMeta {
@@ -83,7 +81,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
                 }
                 (Some(GenericParam::Lifetime(..)), param) => {
                     return Err(diagnostic!(
-                        param.span(),
+                        param,
                         Level::Error,
                         "cannot implement {} over lifetime parameter",
                         TRAIT_IDENT
@@ -91,7 +89,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
                 }
                 (Some(GenericParam::Const(..)), param) => {
                     return Err(diagnostic!(
-                        param.span(),
+                        param,
                         Level::Error,
                         "cannot implement {} over const generic",
                         TRAIT_IDENT
@@ -99,7 +97,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
                 }
                 (_, param) => {
                     return Err(diagnostic!(
-                        param.span(),
+                        param,
                         Level::Error,
                         "unknown generic parameter"
                     ));
@@ -133,7 +131,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
 
         if mapped_type_params.is_empty() {
             return Err(diagnostic!(
-                derive_input_span,
+                derive_input.generics,
                 Level::Error,
                 "expected at least one mapped type parameter, found none"
             ));
@@ -149,9 +147,9 @@ impl TryFrom<DeriveInput> for FuncMapInput {
                 .map(TryInto::try_into)
                 .collect::<Result<Vec<_>, _>>(),
 
-            Data::Union(..) => {
+            Data::Union(DataUnion { union_token, .. }) => {
                 return Err(diagnostic!(
-                    derive_input_span,
+                    union_token,
                     Level::Error,
                     "expected a struct or an enum, found a union"
                 ))

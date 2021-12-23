@@ -1,4 +1,3 @@
-use proc_macro_error::abort;
 use std::collections::{HashMap, HashSet};
 use syn::{
     punctuated::Punctuated, BoundLifetimes, Lifetime, PredicateLifetime, PredicateType, Token,
@@ -83,10 +82,9 @@ impl UniquePredicates {
                 .or_default()
                 .extend(predicate_lifetime.bounds),
 
-            WherePredicate::Eq(..) => abort!(
-                predicate,
-                "equality predicates in `where` clauses are not supported"
-            ),
+            WherePredicate::Eq(..) => {
+                unreachable!("equality predicates in `where` clauses are unsupported in Rust")
+            }
         }
     }
 

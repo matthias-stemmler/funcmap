@@ -1,7 +1,7 @@
 #![deny(missing_debug_implementations)]
 
 use proc_macro::TokenStream;
-use proc_macro_error::proc_macro_error;
+use quote::ToTokens;
 use syn::{parse_macro_input, DeriveInput};
 
 mod derive;
@@ -26,16 +26,20 @@ mod syn_ext;
 // TODO impl common traits for types (such as TypeParam)
 // TODO blanket impl FuncMap for Box<T> where T: FuncMap?
 // TODO MSRV policy? Which dependency semver specifiers?
-// TODO use Result<_, Diagnostic> everywhere?
 // TODO expand tests (see serde)
 
-#[proc_macro_error]
 #[proc_macro_derive(FuncMap, attributes(funcmap))]
 pub fn derive_func_map(item: TokenStream) -> TokenStream {
     let derive_input = parse_macro_input!(item as DeriveInput);
-    let output = derive::derive_func_map(derive_input);
-    diagnostic::print(&output);
-    output.into()
+
+    match derive::derive_func_map(derive_input) {
+        Ok(output) => {
+            diagnostic::print(&output);
+            output
+        }
+        Err(diagnostic) => diagnostic.to_token_stream(),
+    }
+    .into()
 }
 
 #[cfg(feature = "debug")]

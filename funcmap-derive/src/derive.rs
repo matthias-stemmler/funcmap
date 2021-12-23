@@ -6,7 +6,7 @@ use crate::syn_ext::{
     IntoGenericArgument, IntoType, SubsType, WithoutAttrs, WithoutDefault, WithoutMaybeBounds,
 };
 use proc_macro2::{Ident, Span, TokenStream};
-use proc_macro_error::ResultExt;
+use proc_macro_error::Diagnostic;
 use quote::{format_ident, quote};
 use syn::punctuated::Punctuated;
 use syn::{
@@ -14,8 +14,8 @@ use syn::{
     WherePredicate,
 };
 
-pub fn derive_func_map(input: DeriveInput) -> TokenStream {
-    let input: FuncMapInput = input.try_into().unwrap_or_abort();
+pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Diagnostic> {
+    let input: FuncMapInput = input.try_into()?;
     let mut ident_collector = input.meta.ident_collector;
 
     let src_type_ident = ident_collector.reserve_uppercase_letter('A', Span::mixed_site());
@@ -145,7 +145,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                         &dst_type_ident,
                         &fn_var_ident,
                         &input.meta.crate_path,
-                    );
+                    )?;
 
                     unique_predicates.extend(predicates.into_iter());
                     patterns.push(pattern);
@@ -170,7 +170,7 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
             let where_clause = unique_predicates.into_where_clause();
             let type_param_idx = mapped_type_param.type_param_idx;
 
-            quote! {
+            Ok(quote! {
                 #[allow(bare_trait_objects)]
                 #[allow(non_camel_case_types)]
                 #[automatically_derived]
@@ -197,10 +197,11 @@ pub fn derive_func_map(input: DeriveInput) -> TokenStream {
                         }
                     }
                 }
-            }
-        });
+            })
+        })
+        .collect::<Result<Vec<_>, Diagnostic>>()?;
 
-    quote!(#(#impls)*)
+    Ok(quote!(#(#impls)*))
 }
 
 fn subs_type_in_bounds<'ast>(

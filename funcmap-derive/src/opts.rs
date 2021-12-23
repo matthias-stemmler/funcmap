@@ -1,12 +1,12 @@
 use crate::idents::ATTR_IDENT;
-use proc_macro2::{Ident, Span};
+use proc_macro2::{Ident, TokenStream};
 use proc_macro_error::{diagnostic, Diagnostic, Level};
+use quote::ToTokens;
 use std::vec;
 use syn::{
     parenthesized,
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
-    spanned::Spanned,
     Attribute, ConstParam, GenericParam, Lifetime, LifetimeDef, LitStr, Path, Token, TypeParam,
 };
 
@@ -35,21 +35,13 @@ impl TryFrom<Vec<Attribute>> for FuncMapOpts {
                 Arg::Crate(ArgCrate(value)) if crate_path.is_none() => crate_path = Some(value),
 
                 Arg::Crate(ArgCrate(value)) => {
-                    return Err(diagnostic!(
-                        value.span(),
-                        Level::Error,
-                        "duplicate crate path"
-                    ))
+                    return Err(diagnostic!(value, Level::Error, "duplicate crate path"))
                 }
 
                 Arg::Params(ArgParams(values)) => {
                     for value in values {
                         if params.contains(&value) {
-                            return Err(diagnostic!(
-                                value.span(),
-                                Level::Error,
-                                "duplicate parameter"
-                            ));
+                            return Err(diagnostic!(value, Level::Error, "duplicate parameter"));
                         }
 
                         params.push(value);
@@ -110,7 +102,7 @@ impl Parse for Arg {
         } else if input.peek(kw::params) {
             Ok(Self::Params(input.call(ArgParams::parse)?))
         } else {
-            Err(input.error("expected \"crate\" or \"params\""))
+            Err(input.error("expected crate or params"))
         }
     }
 }
@@ -159,11 +151,11 @@ impl Parse for Param {
     }
 }
 
-impl Spanned for Param {
-    fn span(&self) -> Span {
+impl ToTokens for Param {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
-            Self::Lifetime(lifetime) => lifetime.span(),
-            Self::TypeOrConst(ident) => ident.span(),
+            Self::Lifetime(lifetime) => lifetime.to_tokens(tokens),
+            Self::TypeOrConst(ident) => ident.to_tokens(tokens),
         }
     }
 }
@@ -186,7 +178,7 @@ mod kw {
 pub fn assert_no_opts(attrs: &[Attribute], name: &str) -> Result<(), Diagnostic> {
     match attrs.iter().find(|attr| attr.path.is_ident(&ATTR_IDENT)) {
         Some(attr) => Err(diagnostic!(
-            attr.span(),
+            attr,
             Level::Error,
             "#[{}] helper attribute not supported for {}",
             ATTR_IDENT,
