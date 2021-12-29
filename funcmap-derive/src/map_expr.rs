@@ -73,7 +73,7 @@ impl<'ast> Mapper<'ast> {
 
                 let closure = self.map_closure(inner_ty)?;
 
-                Ok(quote!(#mappable.#FN_IDENT(#closure)))
+                Ok(quote!(#crate_path::#TRAIT_IDENT::#FN_IDENT(#mappable, #closure)))
             }
             Type::Paren(TypeParen { elem: inner_ty, .. }) => self.map(mappable, inner_ty),
             Type::Path(type_path) => {
@@ -215,7 +215,7 @@ impl<'ast> Mapper<'ast> {
                     let closure = self.map_closure(arg_type)?;
 
                     mappable = quote! {
-                        #mappable.#FN_IDENT_WITH_MARKER(#crate_path::#MARKER_TYPE_IDENT::<#type_idx>, #closure)
+                        #crate_path::#TRAIT_IDENT::#FN_IDENT_WITH_MARKER(#mappable, #crate_path::#MARKER_TYPE_IDENT::<#type_idx>, #closure)
                     }
                 }
 

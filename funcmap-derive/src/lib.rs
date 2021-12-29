@@ -21,7 +21,6 @@ mod syn_ext;
 // TODO impl more standard types (HashMap, ...) + (optional) popular crates?
 // TODO allow more lints?
 // TODO no_std test
-// TODO don't call func_map with method call syntax as there could be a conflicting inherent method
 // TODO impl common traits for types (such as TypeParam)
 // TODO blanket impl FuncMap for Box<T> where T: FuncMap?
 // TODO MSRV policy? Which dependency semver specifiers?

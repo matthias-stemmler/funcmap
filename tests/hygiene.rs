@@ -1,4 +1,4 @@
-use funcmap::FuncMap;
+use funcmap::{FuncMap, TypeParam};
 
 #[test]
 fn conflicting_type_params_are_avoided() {
@@ -33,6 +33,39 @@ fn nested_items_are_not_mistaken_for_generics() {
 
     #[derive(FuncMap)]
     struct Test<T>(T, test::T);
+}
+
+#[test]
+fn inherent_methods_are_not_mistaken_for_trait_methods() {
+    #[derive(FuncMap)]
+    struct Inner<T>(T);
+
+    #[allow(dead_code)]
+    impl<T> Inner<T> {
+        fn func_map(self) {}
+        fn func_map_over(self) {}
+    }
+
+    #[derive(FuncMap)]
+    struct Test<T>(Inner<T>);
+}
+
+#[test]
+fn trait_methods_are_not_confused_with_methods_of_other_traits() {
+    #[derive(FuncMap)]
+    struct Inner<T>(T);
+
+    trait LikeFuncMap: Sized {
+        fn func_map(self) {}
+        fn func_map_over(self) {}
+    }
+
+    impl<T> LikeFuncMap for Inner<T> {}
+
+    impl<T, const N: usize> LikeFuncMap for [T; N] {}
+
+    #[derive(FuncMap)]
+    struct Test<T, const N: usize>(Inner<T>, [T; N]);
 }
 
 #[test]
