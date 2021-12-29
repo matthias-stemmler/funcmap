@@ -1,7 +1,6 @@
 #![deny(missing_debug_implementations)]
 
 use proc_macro::TokenStream;
-use quote::ToTokens;
 use syn::{parse_macro_input, DeriveInput};
 
 mod derive;
@@ -34,7 +33,7 @@ pub fn derive_func_map(item: TokenStream) -> TokenStream {
             diagnostic::print(&output);
             output
         }
-        Err(diagnostic) => diagnostic.to_token_stream(),
+        Err(err) => err.to_compile_error(),
     }
     .into()
 }

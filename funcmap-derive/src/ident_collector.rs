@@ -1,5 +1,6 @@
-use proc_macro2::{Ident, Span};
 use std::collections::HashSet;
+
+use proc_macro2::{Ident, Span};
 use syn::visit::Visit;
 
 #[derive(Debug, Default)]

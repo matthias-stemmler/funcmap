@@ -1,5 +1,5 @@
-use proc_macro_error::{diagnostic, Diagnostic, Level};
 use std::collections::{HashMap, HashSet};
+
 use syn::{
     punctuated::Punctuated, BoundLifetimes, Lifetime, PredicateEq, PredicateLifetime,
     PredicateType, Token, Type, TypeParamBound, WhereClause, WherePredicate,
@@ -66,7 +66,7 @@ impl UniquePredicates {
         Self::default()
     }
 
-    pub fn add(&mut self, predicate: WherePredicate) -> Result<(), Diagnostic> {
+    pub fn add(&mut self, predicate: WherePredicate) -> Result<(), syn::Error> {
         match predicate {
             WherePredicate::Type(predicate_type) => self
                 .for_types
@@ -86,10 +86,9 @@ impl UniquePredicates {
             WherePredicate::Eq(PredicateEq { eq_token, .. }) => {
                 // currently unsupported in Rust
                 // see https://github.com/rust-lang/rust/issues/20041
-                return Err(diagnostic!(
+                return Err(syn::Error::new_spanned(
                     eq_token,
-                    Level::Error,
-                    "equality constraints in `where` clauses are not supported"
+                    "equality constraints in `where` clauses are not supported",
                 ));
             }
         }

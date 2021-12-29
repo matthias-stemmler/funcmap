@@ -1,6 +1,7 @@
+use std::fmt::{self, Display, Formatter};
+
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::ToTokens;
-use std::fmt::{self, Display, Formatter};
 
 pub const CRATE_IDENT: StaticIdent = StaticIdent("funcmap");
 pub const TRAIT_IDENT: StaticIdent = StaticIdent("FuncMap");

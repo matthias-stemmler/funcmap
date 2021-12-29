@@ -1,8 +1,8 @@
 use crate::idents::*;
 use crate::predicates::UniquePredicates;
 use crate::syn_ext::{DependencyOnType, SubsType};
+
 use proc_macro2::{Ident, Span, TokenStream};
-use proc_macro_error::{diagnostic, Diagnostic, Level};
 use quote::{quote, ToTokens};
 use syn::TypeParen;
 use syn::{
@@ -18,7 +18,7 @@ pub fn map_expr(
     dst_type_ident: &Ident,
     mapping_fn_ident: &Ident,
     crate_path: &Path,
-) -> Result<(TokenStream, UniquePredicates), Diagnostic> {
+) -> Result<(TokenStream, UniquePredicates), syn::Error> {
     let mut mapper = Mapper {
         type_param,
         src_type_ident,
@@ -43,12 +43,11 @@ struct Mapper<'ast> {
 }
 
 impl<'ast> Mapper<'ast> {
-    fn map(&mut self, mappable: TokenStream, ty: &Type) -> Result<TokenStream, Diagnostic> {
+    fn map(&mut self, mappable: TokenStream, ty: &Type) -> Result<TokenStream, syn::Error> {
         if let Type::Macro(..) = ty {
-            return Err(diagnostic!(
+            return Err(syn::Error::new_spanned(
                 ty,
-                Level::Error,
-                "`derive` cannot be used on items with type macros"
+                "`derive` cannot be used on items with type macros",
             ));
         }
 
@@ -88,10 +87,9 @@ impl<'ast> Mapper<'ast> {
 
                 if let Some(QSelf { ty, .. }) = &qself {
                     if let Some(dep_ty) = ty.dependency_on_type(&self.type_param.ident) {
-                        return Err(diagnostic!(
+                        return Err(syn::Error::new_spanned(
                             dep_ty,
-                            Level::Error,
-                            "mapping over type with associated item is not supported"
+                            "mapping over type with associated item is not supported",
                         ));
                     }
                 }
@@ -103,17 +101,15 @@ impl<'ast> Mapper<'ast> {
                             (prefix, ident, arguments)
                         }
                         Some(..) => {
-                            return Err(diagnostic!(
+                            return Err(syn::Error::new_spanned(
                                 segments,
-                                Level::Error,
-                                "mapping over type with trailing :: is not supported"
+                                "mapping over type with trailing :: is not supported",
                             ))
                         }
                         None => {
-                            return Err(diagnostic!(
+                            return Err(syn::Error::new_spanned(
                                 segments,
-                                Level::Error,
-                                "mapping over empty type is not supported"
+                                "mapping over empty type is not supported",
                             ))
                         }
                     }
@@ -128,10 +124,9 @@ impl<'ast> Mapper<'ast> {
                 });
 
                 if let Some(prefix_dep) = prefix_type.dependency_on_type(&self.type_param.ident) {
-                    return Err(diagnostic!(
+                    return Err(syn::Error::new_spanned(
                         prefix_dep,
-                        Level::Error,
-                        "mapping over type with associated item is not supported"
+                        "mapping over type with associated item is not supported",
                     ));
                 }
 
@@ -142,10 +137,9 @@ impl<'ast> Mapper<'ast> {
                     }
                     PathArguments::AngleBracketed(angle_bracketed) => angle_bracketed,
                     PathArguments::Parenthesized(..) => {
-                        return Err(diagnostic!(
+                        return Err(syn::Error::new_spanned(
                             arguments,
-                            Level::Error,
-                            "mapping over function type is not supported"
+                            "mapping over function type is not supported",
                         ))
                     }
                 };
@@ -235,40 +229,34 @@ impl<'ast> Mapper<'ast> {
 
                 Ok(quote!((#(#mapped),*)))
             }
-            Type::BareFn(..) => Err(diagnostic!(
+            Type::BareFn(..) => Err(syn::Error::new_spanned(
                 ty,
-                Level::Error,
-                "mapping over function type is not supported"
+                "mapping over function type is not supported",
             )),
-            Type::Ptr(..) => Err(diagnostic!(
+            Type::Ptr(..) => Err(syn::Error::new_spanned(
                 ty,
-                Level::Error,
-                "mapping over pointer type is not supported"
+                "mapping over pointer type is not supported",
             )),
-            Type::Reference(..) => Err(diagnostic!(
+            Type::Reference(..) => Err(syn::Error::new_spanned(
                 ty,
-                Level::Error,
-                "mapping over reference type is not supported"
+                "mapping over reference type is not supported",
             )),
-            Type::Slice(..) => Err(diagnostic!(
+            Type::Slice(..) => Err(syn::Error::new_spanned(
                 ty,
-                Level::Error,
-                "mapping over slice type is not supported"
+                "mapping over slice type is not supported",
             )),
-            Type::TraitObject(..) => Err(diagnostic!(
+            Type::TraitObject(..) => Err(syn::Error::new_spanned(
                 ty,
-                Level::Error,
-                "mapping over trait object type is not supported"
+                "mapping over trait object type is not supported",
             )),
-            _ => Err(diagnostic!(
+            _ => Err(syn::Error::new_spanned(
                 ty,
-                Level::Error,
-                "mapping over this type is not supported"
+                "mapping over this type is not supported",
             )),
         }
     }
 
-    fn map_closure(&mut self, ty: &Type) -> Result<TokenStream, Diagnostic> {
+    fn map_closure(&mut self, ty: &Type) -> Result<TokenStream, syn::Error> {
         let closure_arg = Ident::new("value", Span::mixed_site());
         let mapped = self.map(closure_arg.clone().into_token_stream(), ty)?;
         Ok(quote!(|#closure_arg| #mapped))

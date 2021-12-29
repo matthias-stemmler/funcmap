@@ -1,5 +1,4 @@
-use proc_macro2::Ident;
-use proc_macro_error::SpanRange;
+use proc_macro2::{Ident, TokenStream};
 use quote::ToTokens;
 use syn::fold::{self, Fold};
 use syn::punctuated::Punctuated;
@@ -159,22 +158,19 @@ impl IntoType for Ident {
     }
 }
 
-pub trait NonEmptySpanRange {
-    fn non_empty_span_range(&self) -> Option<SpanRange>;
+pub trait ToNonEmptyTokens {
+    fn to_non_empty_token_stream(&self) -> Option<TokenStream>;
 }
 
-impl<T> NonEmptySpanRange for T
+impl<T> ToNonEmptyTokens for T
 where
     T: ?Sized + ToTokens,
 {
-    fn non_empty_span_range(&self) -> Option<SpanRange> {
-        let mut tokens = self.to_token_stream().into_iter();
-        let first = tokens.next()?;
-
-        Some(SpanRange {
-            first: first.span(),
-            last: tokens.last().unwrap_or(first).span(),
-        })
+    fn to_non_empty_token_stream(&self) -> Option<TokenStream> {
+        match self.to_token_stream() {
+            tokens if !tokens.is_empty() => Some(tokens),
+            _ => None,
+        }
     }
 }
 

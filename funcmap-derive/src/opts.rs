@@ -1,8 +1,9 @@
 use crate::idents::ATTR_IDENT;
-use proc_macro2::{Ident, TokenStream};
-use proc_macro_error::{diagnostic, Diagnostic, Level};
-use quote::ToTokens;
+
 use std::vec;
+
+use proc_macro2::{Ident, TokenStream};
+use quote::ToTokens;
 use syn::{
     parenthesized,
     parse::{Parse, ParseStream},
@@ -21,7 +22,7 @@ pub struct FuncMapOpts {
 }
 
 impl TryFrom<Vec<Attribute>> for FuncMapOpts {
-    type Error = Diagnostic;
+    type Error = syn::Error;
 
     fn try_from(attrs: Vec<Attribute>) -> Result<Self, Self::Error> {
         let mut crate_path = None;
@@ -39,13 +40,13 @@ impl TryFrom<Vec<Attribute>> for FuncMapOpts {
                 Arg::Crate(ArgCrate(value)) if crate_path.is_none() => crate_path = Some(value),
 
                 Arg::Crate(ArgCrate(value)) => {
-                    return Err(diagnostic!(value, Level::Error, "duplicate crate path"))
+                    return Err(syn::Error::new_spanned(value, "duplicate crate path"))
                 }
 
                 Arg::Params(ArgParams(values)) => {
                     for value in values {
                         if params.contains(&value) {
-                            return Err(diagnostic!(value, Level::Error, "duplicate parameter"));
+                            return Err(syn::Error::new_spanned(value, "duplicate parameter"));
                         }
 
                         params.push(value);
@@ -195,14 +196,14 @@ impl PartialEq<GenericParam> for Param {
     }
 }
 
-pub fn assert_no_opts(attrs: &[Attribute], name: &str) -> Result<(), Diagnostic> {
+pub fn assert_no_opts(attrs: &[Attribute], name: &str) -> Result<(), syn::Error> {
     match attrs.iter().find(|attr| attr.path.is_ident(&ATTR_IDENT)) {
-        Some(attr) => Err(diagnostic!(
+        Some(attr) => Err(syn::Error::new_spanned(
             attr,
-            Level::Error,
-            "#[{}] helper attribute is not supported for {}",
-            ATTR_IDENT,
-            name
+            format!(
+                "#[{}] helper attribute is not supported for {}",
+                ATTR_IDENT, name
+            ),
         )),
         None => Ok(()),
     }

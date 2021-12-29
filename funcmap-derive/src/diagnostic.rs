@@ -1,6 +1,7 @@
-use proc_macro2::TokenStream;
 use std::io::{self, Write};
 use std::process::{Command, Stdio};
+
+use proc_macro2::TokenStream;
 
 pub fn print(tokens: &TokenStream) {
     if let Err(err) = print_formatted(&tokens.to_string()) {

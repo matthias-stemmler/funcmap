@@ -2,11 +2,13 @@ use crate::{
     ident_collector::IdentCollector,
     idents::*,
     opts::{assert_no_opts, FuncMapOpts, Param},
-    syn_ext::NonEmptySpanRange,
+    syn_ext::ToNonEmptyTokens,
 };
-use proc_macro2::Ident;
-use proc_macro_error::{diagnostic, Diagnostic, Level, SpanRange};
+
 use std::{collections::HashSet, iter};
+
+use proc_macro2::Ident;
+use quote::ToTokens;
 use syn::{
     visit::Visit, Data, DataEnum, DataStruct, DataUnion, DeriveInput, Field, GenericParam,
     Generics, Path, Type, TypeParam, Variant,
@@ -47,7 +49,7 @@ pub struct Fieldish {
 }
 
 impl TryFrom<DeriveInput> for FuncMapInput {
-    type Error = Diagnostic;
+    type Error = syn::Error;
 
     fn try_from(derive_input: DeriveInput) -> Result<Self, Self::Error> {
         let ident_collector = {
@@ -67,6 +69,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
                     ..path
                 }
             }),
+
             ident_collector,
         };
 
@@ -81,27 +84,19 @@ impl TryFrom<DeriveInput> for FuncMapInput {
                     mapped_type_param_idents.insert(ident);
                 }
                 (Some(GenericParam::Lifetime(..)), param) => {
-                    return Err(diagnostic!(
+                    return Err(syn::Error::new_spanned(
                         param,
-                        Level::Error,
-                        "cannot implement {} over lifetime parameter",
-                        TRAIT_IDENT
+                        format!("cannot implement {} over lifetime parameter", TRAIT_IDENT),
                     ));
                 }
                 (Some(GenericParam::Const(..)), param) => {
-                    return Err(diagnostic!(
+                    return Err(syn::Error::new_spanned(
                         param,
-                        Level::Error,
-                        "cannot implement {} over const generic",
-                        TRAIT_IDENT
+                        format!("cannot implement {} over const generic", TRAIT_IDENT),
                     ));
                 }
                 (_, param) => {
-                    return Err(diagnostic!(
-                        param,
-                        Level::Error,
-                        "unknown generic parameter"
-                    ));
+                    return Err(syn::Error::new_spanned(param, "unknown generic parameter"));
                 }
             }
         }
@@ -131,14 +126,12 @@ impl TryFrom<DeriveInput> for FuncMapInput {
             .collect();
 
         if mapped_type_params.is_empty() {
-            return Err(diagnostic!(
+            return Err(syn::Error::new_spanned(
                 derive_input
                     .generics
-                    .non_empty_span_range()
-                    .or_else(|| derive_input.ident.non_empty_span_range())
-                    .unwrap_or_else(SpanRange::call_site),
-                Level::Error,
-                "expected at least one type parameter, found none"
+                    .to_non_empty_token_stream()
+                    .unwrap_or_else(|| derive_input.ident.to_token_stream()),
+                "expected at least one type parameter, found none",
             ));
         }
 
@@ -153,10 +146,9 @@ impl TryFrom<DeriveInput> for FuncMapInput {
                 .collect::<Result<Vec<_>, _>>(),
 
             Data::Union(DataUnion { union_token, .. }) => {
-                return Err(diagnostic!(
+                return Err(syn::Error::new_spanned(
                     union_token,
-                    Level::Error,
-                    "expected a struct or an enum, found a union"
+                    "expected a struct or an enum, found a union",
                 ))
             }
         }?;
@@ -172,7 +164,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
 }
 
 impl TryFrom<DataStruct> for Structish {
-    type Error = Diagnostic;
+    type Error = syn::Error;
 
     fn try_from(data_struct: DataStruct) -> Result<Self, Self::Error> {
         Ok(Self {
@@ -187,7 +179,7 @@ impl TryFrom<DataStruct> for Structish {
 }
 
 impl TryFrom<Variant> for Structish {
-    type Error = Diagnostic;
+    type Error = syn::Error;
 
     fn try_from(variant: Variant) -> Result<Self, Self::Error> {
         assert_no_opts(&variant.attrs, "variants")?;
@@ -204,7 +196,7 @@ impl TryFrom<Variant> for Structish {
 }
 
 impl TryFrom<Field> for Fieldish {
-    type Error = Diagnostic;
+    type Error = syn::Error;
 
     fn try_from(field: Field) -> Result<Self, Self::Error> {
         assert_no_opts(&field.attrs, "fields")?;

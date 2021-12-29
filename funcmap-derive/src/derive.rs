@@ -5,8 +5,8 @@ use crate::predicates::{UniquePredicates, UniqueTypeBounds};
 use crate::syn_ext::{
     IntoGenericArgument, IntoType, SubsType, WithoutAttrs, WithoutDefault, WithoutMaybeBounds,
 };
+
 use proc_macro2::{Ident, Span, TokenStream};
-use proc_macro_error::Diagnostic;
 use quote::{format_ident, quote};
 use syn::punctuated::Punctuated;
 use syn::{
@@ -14,7 +14,7 @@ use syn::{
     WherePredicate,
 };
 
-pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Diagnostic> {
+pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, syn::Error> {
     let input: FuncMapInput = input.try_into()?;
     let mut ident_collector = input.meta.ident_collector;
 
@@ -203,7 +203,7 @@ pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Diagnostic> {
                 }
             })
         })
-        .collect::<Result<Vec<_>, Diagnostic>>()?;
+        .collect::<Result<Vec<_>, syn::Error>>()?;
 
     Ok(quote!(#(#impls)*))
 }

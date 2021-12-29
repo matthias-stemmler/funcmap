@@ -1,4 +1,4 @@
-use funcmap::{FuncMap, TypeParam};
+use funcmap::FuncMap;
 
 #[test]
 fn conflicting_type_params_are_avoided() {
