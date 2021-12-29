@@ -1,0 +1,5 @@
+error: mapping over function type is not supported
+ --> tests/ui/structure/05_function_type.rs:4:16
+  |
+4 | struct Test<T>(fn(T));
+  |                ^^^^^

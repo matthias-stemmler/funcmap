@@ -1,0 +1,5 @@
+error: mapping over reference type is not supported
+ --> tests/ui/structure/06_reference_type.rs:4:20
+  |
+4 | struct Test<'a, T>(&'a T);
+  |                    ^^^^^

@@ -81,7 +81,7 @@ impl<'ast> Mapper<'ast> {
                         return Err(diagnostic!(
                             dep_ty,
                             Level::Error,
-                            "mapping over self type is not supported"
+                            "mapping over type with associated item is not supported"
                         ));
                     }
                 }
@@ -92,7 +92,7 @@ impl<'ast> Mapper<'ast> {
                         Some(Pair::End(PathSegment { ident, arguments })) => {
                             (prefix, ident, arguments)
                         }
-                        Some(_) => {
+                        Some(..) => {
                             return Err(diagnostic!(
                                 segments,
                                 Level::Error,
@@ -121,7 +121,7 @@ impl<'ast> Mapper<'ast> {
                     return Err(diagnostic!(
                         prefix_dep,
                         Level::Error,
-                        "mapping over types with associated items is not supported"
+                        "mapping over type with associated item is not supported"
                     ));
                 }
 
@@ -135,7 +135,7 @@ impl<'ast> Mapper<'ast> {
                         return Err(diagnostic!(
                             arguments,
                             Level::Error,
-                            "mapping over function types is not supported"
+                            "mapping over function type is not supported"
                         ))
                     }
                 };
@@ -225,7 +225,12 @@ impl<'ast> Mapper<'ast> {
 
                 Ok(quote!((#(#mapped),*)))
             }
-            _ => Err(diagnostic!(ty, Level::Error, "type not supported")),
+            Type::BareFn(..) => Err(diagnostic!(ty, Level::Error, "mapping over function type is not supported")),
+            Type::Ptr(..) => Err(diagnostic!(ty, Level::Error, "mapping over pointer type is not supported")),
+            Type::Reference(..) => Err(diagnostic!(ty, Level::Error, "mapping over reference type is not supported")),
+            Type::Slice(..) => Err(diagnostic!(ty, Level::Error, "mapping over slice type is not supported")),
+            Type::TraitObject(..) => Err(diagnostic!(ty, Level::Error, "mapping over trait object type is not supported")),
+            _ => Err(diagnostic!(ty, Level::Error, "mapping over this type is not supported")),
         }
     }
 

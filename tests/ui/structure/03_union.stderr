@@ -1,0 +1,5 @@
+error: expected a struct or an enum, found a union
+ --> tests/ui/structure/03_union.rs:5:1
+  |
+5 | union Test<T> {
+  | ^^^^^

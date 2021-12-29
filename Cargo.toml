@@ -15,7 +15,7 @@ debug = ["funcmap-derive/debug"]
 "funcmap-derive" = { path = "funcmap-derive" }
 
 [dev-dependencies]
-trybuild = "1.0.53"
+trybuild = "1"
 
 [[test]]
 name = "edition2015"

@@ -2,9 +2,10 @@ use crate::{
     ident_collector::IdentCollector,
     idents::*,
     opts::{assert_no_opts, FuncMapOpts, Param},
+    syn_ext::NonEmptySpanRange,
 };
 use proc_macro2::Ident;
-use proc_macro_error::{diagnostic, Diagnostic, Level};
+use proc_macro_error::{diagnostic, Diagnostic, Level, SpanRange};
 use std::{collections::HashSet, iter};
 use syn::{
     visit::Visit, Data, DataEnum, DataStruct, DataUnion, DeriveInput, Field, GenericParam,
@@ -131,7 +132,11 @@ impl TryFrom<DeriveInput> for FuncMapInput {
 
         if mapped_type_params.is_empty() {
             return Err(diagnostic!(
-                derive_input.generics,
+                derive_input
+                    .generics
+                    .non_empty_span_range()
+                    .or_else(|| derive_input.ident.non_empty_span_range())
+                    .unwrap_or_else(SpanRange::call_site),
                 Level::Error,
                 "expected at least one type parameter, found none"
             ));

@@ -1,4 +1,6 @@
 use proc_macro2::Ident;
+use proc_macro_error::SpanRange;
+use quote::ToTokens;
 use syn::fold::{self, Fold};
 use syn::punctuated::Punctuated;
 use syn::visit::{self, Visit};
@@ -153,6 +155,25 @@ impl IntoType for Ident {
         Type::Path(TypePath {
             qself: None,
             path: self.into(),
+        })
+    }
+}
+
+pub trait NonEmptySpanRange {
+    fn non_empty_span_range(&self) -> Option<SpanRange>;
+}
+
+impl<T> NonEmptySpanRange for T
+where
+    T: ?Sized + ToTokens,
+{
+    fn non_empty_span_range(&self) -> Option<SpanRange> {
+        let mut tokens = self.to_token_stream().into_iter();
+        let first = tokens.next()?;
+        
+        Some(SpanRange {
+            first: first.span(),
+            last: tokens.last().unwrap_or(first).span(),
         })
     }
 }

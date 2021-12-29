@@ -1,0 +1,5 @@
+error: expected at least one type parameter, found none
+ --> tests/ui/structure/02_no_type_params.rs:4:12
+  |
+4 | struct Test<'a, const N: usize>(&'a ());
+  |            ^^^^^^^^^^^^^^^^^^^^

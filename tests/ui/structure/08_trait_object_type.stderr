@@ -1,0 +1,5 @@
+error: mapping over trait object type is not supported
+ --> tests/ui/structure/08_trait_object_type.rs:4:16
+  |
+4 | struct Test<T>(dyn Fn(T));
+  |                ^^^^^^^^^
