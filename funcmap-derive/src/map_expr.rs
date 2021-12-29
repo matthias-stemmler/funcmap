@@ -43,6 +43,14 @@ struct Mapper<'ast> {
 
 impl<'ast> Mapper<'ast> {
     fn map(&mut self, mappable: TokenStream, ty: &Type) -> Result<TokenStream, Diagnostic> {
+        if let Type::Macro(..) = ty {
+            return Err(diagnostic!(
+                ty,
+                Level::Error,
+                "mapping over macro in type position is not supported"
+            ));
+        }
+
         if ty.dependency_on_type(&self.type_param.ident).is_none() {
             return Ok(mappable);
         }
@@ -225,12 +233,36 @@ impl<'ast> Mapper<'ast> {
 
                 Ok(quote!((#(#mapped),*)))
             }
-            Type::BareFn(..) => Err(diagnostic!(ty, Level::Error, "mapping over function type is not supported")),
-            Type::Ptr(..) => Err(diagnostic!(ty, Level::Error, "mapping over pointer type is not supported")),
-            Type::Reference(..) => Err(diagnostic!(ty, Level::Error, "mapping over reference type is not supported")),
-            Type::Slice(..) => Err(diagnostic!(ty, Level::Error, "mapping over slice type is not supported")),
-            Type::TraitObject(..) => Err(diagnostic!(ty, Level::Error, "mapping over trait object type is not supported")),
-            _ => Err(diagnostic!(ty, Level::Error, "mapping over this type is not supported")),
+            Type::BareFn(..) => Err(diagnostic!(
+                ty,
+                Level::Error,
+                "mapping over function type is not supported"
+            )),
+            Type::Ptr(..) => Err(diagnostic!(
+                ty,
+                Level::Error,
+                "mapping over pointer type is not supported"
+            )),
+            Type::Reference(..) => Err(diagnostic!(
+                ty,
+                Level::Error,
+                "mapping over reference type is not supported"
+            )),
+            Type::Slice(..) => Err(diagnostic!(
+                ty,
+                Level::Error,
+                "mapping over slice type is not supported"
+            )),
+            Type::TraitObject(..) => Err(diagnostic!(
+                ty,
+                Level::Error,
+                "mapping over trait object type is not supported"
+            )),
+            _ => Err(diagnostic!(
+                ty,
+                Level::Error,
+                "mapping over this type is not supported"
+            )),
         }
     }
 
