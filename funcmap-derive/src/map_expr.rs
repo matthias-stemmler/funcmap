@@ -4,6 +4,7 @@ use crate::syn_ext::{DependencyOnType, SubsType};
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_error::{diagnostic, Diagnostic, Level};
 use quote::{quote, ToTokens};
+use syn::TypeParen;
 use syn::{
     parse_quote, punctuated::Pair, AngleBracketedGenericArguments, GenericArgument, Index, Path,
     PathArguments, PathSegment, QSelf, Type, TypeArray, TypeParam, TypePath,
@@ -47,7 +48,7 @@ impl<'ast> Mapper<'ast> {
             return Err(diagnostic!(
                 ty,
                 Level::Error,
-                "mapping over macro in type position is not supported"
+                "`derive` cannot be used on items with type macros"
             ));
         }
 
@@ -74,6 +75,7 @@ impl<'ast> Mapper<'ast> {
 
                 Ok(quote!(#mappable.#FN_IDENT(#closure)))
             }
+            Type::Paren(TypeParen { elem: inner_ty, .. }) => self.map(mappable, inner_ty),
             Type::Path(type_path) => {
                 let TypePath {
                     qself,

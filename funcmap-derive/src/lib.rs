@@ -16,7 +16,6 @@ mod syn_ext;
 // TODO check auto-impl/structopt/serde
 // TODO use fuzzing tests?
 // TODO docs
-// TODO trybuild tests
 // TODO unit tests
 // TODO deny some lints (missing docs)
 // TODO impl more standard types (HashMap, ...) + (optional) popular crates?

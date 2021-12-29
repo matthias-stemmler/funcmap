@@ -51,7 +51,19 @@ fn field_of_non_generic_type_is_not_mapped() {
 }
 
 #[test]
-fn tuple_entry_of_generic_type_is_mapped() {
+fn parenthesized_generic_param_is_mapped() {
+    #[allow(unused_parens)]
+    #[derive(FuncMap, Debug, PartialEq)]
+    struct Test<T>((T));
+
+    let src = Test(T1);
+    let dst = src.func_map(|_| T2);
+
+    assert_eq!(dst, Test(T2));
+}
+
+#[test]
+fn tuple_entry_of_generic_param_type_is_mapped() {
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<T>((T, i32, T));
 
