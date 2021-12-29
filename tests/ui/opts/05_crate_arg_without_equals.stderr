@@ -1,0 +1,5 @@
+error: expected `=`
+ --> tests/ui/opts/05_crate_arg_without_equals.rs:4:16
+  |
+4 | #[funcmap(crate("fake_funcmap"))]
+  |                ^^^^^^^^^^^^^^^^

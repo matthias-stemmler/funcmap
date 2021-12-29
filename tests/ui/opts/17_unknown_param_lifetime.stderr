@@ -1,0 +1,5 @@
+error: unknown generic parameter
+ --> tests/ui/opts/17_unknown_param_lifetime.rs:4:18
+  |
+4 | #[funcmap(params('a))]
+  |                  ^^

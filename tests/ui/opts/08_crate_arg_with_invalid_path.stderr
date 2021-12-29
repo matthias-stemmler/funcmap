@@ -1,0 +1,5 @@
+error: expected path
+ --> tests/ui/opts/08_crate_arg_with_invalid_path.rs:4:19
+  |
+4 | #[funcmap(crate = "not a path")]
+  |                   ^^^^^^^^^^^^

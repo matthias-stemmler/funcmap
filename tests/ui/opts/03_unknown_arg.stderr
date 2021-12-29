@@ -1,0 +1,5 @@
+error: expected one of these arguments: `crate`, `params`
+ --> tests/ui/opts/03_unknown_arg.rs:4:11
+  |
+4 | #[funcmap(unknown)]
+  |           ^^^^^^^

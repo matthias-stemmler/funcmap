@@ -1,0 +1,5 @@
+error: unexpected end of input, expected parentheses
+ --> tests/ui/opts/11_plain_params_arg.rs:4:10
+  |
+4 | #[funcmap(params)]
+  |          ^^^^^^^^

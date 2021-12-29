@@ -62,7 +62,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
                 let path = CRATE_IDENT.to_ident().into();
 
                 Path {
-                    leading_colon: Default::default(),
+                    leading_colon: Some(Default::default()),
                     ..path
                 }
             }),
@@ -133,7 +133,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
             return Err(diagnostic!(
                 derive_input.generics,
                 Level::Error,
-                "expected at least one mapped type parameter, found none"
+                "expected at least one type parameter, found none"
             ));
         }
 

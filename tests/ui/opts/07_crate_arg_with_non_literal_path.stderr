@@ -1,0 +1,5 @@
+error: expected string literal
+ --> tests/ui/opts/07_crate_arg_with_non_literal_path.rs:4:19
+  |
+4 | #[funcmap(crate = fake_funcmap)]
+  |                   ^^^^^^^^^^^^

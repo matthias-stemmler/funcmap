@@ -1,8 +1,19 @@
 #[test]
+fn crate_path_uses_leading_colon_by_default() {
+    use ::funcmap::FuncMap;
+
+    #[derive(FuncMap)]
+    struct Test<T>(T);
+
+    // would be referred to if derive macro produced `funcmap::..` instead of `::funcmap::..`
+    mod funcmap {}
+}
+
+#[test]
 fn crate_path_can_be_configured() {
     use fake_funcmap::FuncMap;
 
-    #[derive(FuncMap, Debug, PartialEq)]
+    #[derive(FuncMap)]
     #[funcmap(crate = "fake_funcmap")]
     struct Test<T>(T);
 

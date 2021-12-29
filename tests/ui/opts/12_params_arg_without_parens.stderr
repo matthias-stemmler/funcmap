@@ -1,0 +1,5 @@
+error: expected parentheses
+ --> tests/ui/opts/12_params_arg_without_parens.rs:4:18
+  |
+4 | #[funcmap(params = T)]
+  |                  ^

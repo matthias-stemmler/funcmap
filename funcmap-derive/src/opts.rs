@@ -54,18 +54,14 @@ impl TryFrom<Vec<Attribute>> for FuncMapOpts {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 struct Args(Vec<Arg>);
 
 impl TryFrom<Attribute> for Args {
     type Error = syn::Error;
 
     fn try_from(attr: Attribute) -> Result<Self, Self::Error> {
-        if attr.tokens.is_empty() {
-            Ok(Self::default())
-        } else {
-            attr.parse_args()
-        }
+        attr.parse_args()
     }
 }
 
@@ -80,12 +76,16 @@ impl IntoIterator for Args {
 
 impl Parse for Args {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        Ok(Self(
-            input
-                .call(Punctuated::<_, Token![,]>::parse_terminated)?
-                .into_iter()
-                .collect(),
-        ))
+        let args: Vec<_> = input
+            .call(Punctuated::<_, Token![,]>::parse_terminated)?
+            .into_iter()
+            .collect();
+
+        if args.is_empty() {
+            Err(input.error("expected at least one argument"))
+        } else {
+            Ok(Self(args))
+        }
     }
 }
 
@@ -102,7 +102,7 @@ impl Parse for Arg {
         } else if input.peek(kw::params) {
             Ok(Self::Params(input.call(ArgParams::parse)?))
         } else {
-            Err(input.error("expected crate or params"))
+            Err(input.error("expected one of these arguments: `crate`, `params`"))
         }
     }
 }
@@ -114,7 +114,27 @@ impl Parse for ArgCrate {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         input.parse::<Token![crate]>()?;
         input.parse::<Token![=]>()?;
-        Ok(Self(input.parse::<LitStr>()?.parse()?))
+        Ok(Self(
+            input.parse::<LitStr>()?.parse::<TerminatedPath>()?.into(),
+        ))
+    }
+}
+
+#[derive(Debug)]
+struct TerminatedPath(Path);
+
+impl Parse for TerminatedPath {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        match input.parse() {
+            Ok(path) if input.is_empty() => Ok(Self(path)),
+            _ => Err(input.error("expected path")),
+        }
+    }
+}
+
+impl From<TerminatedPath> for Path {
+    fn from(terminated_path: TerminatedPath) -> Self {
+        terminated_path.0
     }
 }
 
@@ -180,7 +200,7 @@ pub fn assert_no_opts(attrs: &[Attribute], name: &str) -> Result<(), Diagnostic>
         Some(attr) => Err(diagnostic!(
             attr,
             Level::Error,
-            "#[{}] helper attribute not supported for {}",
+            "#[{}] helper attribute is not supported for {}",
             ATTR_IDENT,
             name
         )),

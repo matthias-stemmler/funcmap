@@ -1,0 +1,5 @@
+error: duplicate parameter
+ --> tests/ui/opts/14_duplicate_param_same_attr.rs:4:21
+  |
+4 | #[funcmap(params(T, T))]
+  |                     ^
