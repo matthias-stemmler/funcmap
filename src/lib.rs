@@ -7,7 +7,7 @@ use core::marker::PhantomData;
 #[doc(hidden)]
 pub use funcmap_derive::*;
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct TypeParam<const N: usize>;
 
 pub trait FuncMap<A, B, P = TypeParam<0>>: Sized {
