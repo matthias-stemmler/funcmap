@@ -20,10 +20,10 @@ mod syn_ext;
 // TODO deny some lints (missing docs)
 // TODO impl more standard types (HashMap, ...) + (optional) popular crates?
 // TODO allow more lints?
-// TODO no_std test
-// TODO blanket impl FuncMap for Box<T> where T: FuncMap?
-// TODO MSRV policy? Which dependency semver specifiers?
+// TODO MSRV policy?
 // TODO expand tests (see serde)
+
+// TODO CI: cargo msrv --verify, cargo nono check
 
 #[proc_macro_derive(FuncMap, attributes(funcmap))]
 pub fn derive_func_map(item: TokenStream) -> TokenStream {
