@@ -10,6 +10,10 @@ use syn::{
     Attribute, ConstParam, GenericParam, Lifetime, LifetimeDef, LitStr, Path, Token, TypeParam,
 };
 
+mod kw {
+    syn::custom_keyword!(params);
+}
+
 #[derive(Debug)]
 pub struct FuncMapOpts {
     pub crate_path: Option<Path>,
@@ -189,10 +193,6 @@ impl PartialEq<GenericParam> for Param {
             _ => false,
         }
     }
-}
-
-mod kw {
-    syn::custom_keyword!(params);
 }
 
 pub fn assert_no_opts(attrs: &[Attribute], name: &str) -> Result<(), Diagnostic> {

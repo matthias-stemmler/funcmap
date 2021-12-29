@@ -112,10 +112,11 @@ pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Diagnostic> {
                     predicate
                         .clone()
                         .subs_type(&mapped_type_param.type_param.ident, &src_type_ident),
-                );
+                )?;
 
-                unique_predicates
-                    .add(predicate.subs_type(&mapped_type_param.type_param.ident, &dst_type_ident));
+                unique_predicates.add(
+                    predicate.subs_type(&mapped_type_param.type_param.ident, &dst_type_ident),
+                )?;
             }
 
             let mut arms = Vec::new();
@@ -147,7 +148,10 @@ pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Diagnostic> {
                         &input.meta.crate_path,
                     )?;
 
-                    unique_predicates.extend(predicates.into_iter());
+                    for predicate in predicates.into_iter() {
+                        unique_predicates.add(predicate)?;
+                    }
+
                     patterns.push(pattern);
                     mappings.push(quote!(#member: #mapped));
                 }

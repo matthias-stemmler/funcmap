@@ -1,7 +1,8 @@
+use proc_macro_error::{diagnostic, Diagnostic, Level};
 use std::collections::{HashMap, HashSet};
 use syn::{
-    punctuated::Punctuated, BoundLifetimes, Lifetime, PredicateLifetime, PredicateType, Token,
-    Type, TypeParamBound, WhereClause, WherePredicate,
+    punctuated::Punctuated, BoundLifetimes, Lifetime, PredicateEq, PredicateLifetime,
+    PredicateType, Token, Type, TypeParamBound, WhereClause, WherePredicate,
 };
 
 #[derive(Debug, Default)]
@@ -65,7 +66,7 @@ impl UniquePredicates {
         Self::default()
     }
 
-    pub fn add(&mut self, predicate: WherePredicate) {
+    pub fn add(&mut self, predicate: WherePredicate) -> Result<(), Diagnostic> {
         match predicate {
             WherePredicate::Type(predicate_type) => self
                 .for_types
@@ -82,10 +83,18 @@ impl UniquePredicates {
                 .or_default()
                 .extend(predicate_lifetime.bounds),
 
-            WherePredicate::Eq(..) => {
-                unreachable!("equality predicates in `where` clauses are unsupported in Rust")
+            WherePredicate::Eq(PredicateEq { eq_token, .. }) => {
+                // currently unsupported in Rust
+                // see https://github.com/rust-lang/rust/issues/20041
+                return Err(diagnostic!(
+                    eq_token,
+                    Level::Error,
+                    "equality constraints in `where` clauses are not supported"
+                ));
             }
         }
+
+        Ok(())
     }
 
     pub fn into_iter(self) -> impl Iterator<Item = WherePredicate> {
@@ -123,17 +132,6 @@ impl UniquePredicates {
         WhereClause {
             where_token: Default::default(),
             predicates: self.into_iter().collect(),
-        }
-    }
-}
-
-impl Extend<WherePredicate> for UniquePredicates {
-    fn extend<I>(&mut self, iter: I)
-    where
-        I: IntoIterator<Item = WherePredicate>,
-    {
-        for predicate in iter {
-            self.add(predicate);
         }
     }
 }

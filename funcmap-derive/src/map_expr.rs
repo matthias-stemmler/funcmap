@@ -60,7 +60,7 @@ impl<'ast> Mapper<'ast> {
                         #inner_dst_type,
                         #OUTPUT_TYPE_IDENT = #dst_type
                     >
-                });
+                })?;
 
                 let closure = self.map_closure(inner_ty)?;
 
@@ -200,7 +200,7 @@ impl<'ast> Mapper<'ast> {
                             #crate_path::#MARKER_TYPE_IDENT<#type_idx>,
                             #OUTPUT_TYPE_IDENT = #dst_type
                         >
-                    });
+                    })?;
 
                     let closure = self.map_closure(arg_type)?;
 
