@@ -9,10 +9,10 @@ rust-version = "1.56"
 [features]
 default = ["alloc", "debug"] # TODO: remove debug
 alloc = []
-debug = ["funcmap-derive/debug"]
+debug = ["funcmap_derive/debug"]
 
 [dependencies]
-"funcmap-derive" = { path = "funcmap-derive" }
+"funcmap_derive" = { path = "funcmap_derive" }
 
 [dev-dependencies]
 trybuild = "1"

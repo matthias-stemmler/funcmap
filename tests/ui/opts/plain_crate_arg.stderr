@@ -1,5 +1,5 @@
 error: expected `=`
- --> tests/ui/opts/plain_crate_arg.rs:4:10
+ --> tests/ui/opts/plain_crate_arg.rs:4:16
   |
 4 | #[funcmap(crate)]
-  |          ^^^^^^^
+  |                ^

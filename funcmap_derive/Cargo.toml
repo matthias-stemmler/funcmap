@@ -1,5 +1,5 @@
 [package]
-name = "funcmap-derive"
+name = "funcmap_derive"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.56"

@@ -1,5 +1,5 @@
 error: unexpected end of input, expected name of generic parameter
- --> tests/ui/opts/params_arg_without_params.rs:4:10
+ --> tests/ui/opts/params_arg_without_params.rs:4:18
   |
 4 | #[funcmap(params())]
-  |          ^^^^^^^^^^
+  |                  ^

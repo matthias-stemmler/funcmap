@@ -146,43 +146,32 @@ impl Parser for PathParser {
 }
 
 #[derive(Debug)]
-struct TerminatedPath(Path);
-
-impl Parse for TerminatedPath {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        match input.parse() {
-            Ok(path) if input.is_empty() => Ok(Self(path)),
-            _ => Err(input.error("expected path")),
-        }
-    }
-}
-
-impl From<TerminatedPath> for Path {
-    fn from(terminated_path: TerminatedPath) -> Self {
-        terminated_path.0
-    }
-}
-
-#[derive(Debug)]
 struct ArgParams(Vec<Param>);
 
 impl Parse for ArgParams {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         input.parse::<kw::params>()?;
-
         let content;
         parenthesized!(content in input);
+        Ok(Self(content.parse::<TerminatedParams>()?.into()))
+    }
+}
 
-        let params: Vec<_> = content
-            .call(Punctuated::<_, Token![,]>::parse_terminated)?
-            .into_iter()
-            .collect();
+#[derive(Debug)]
+struct TerminatedParams(Vec<Param>);
 
-        if params.is_empty() {
-            return Err(input.error("expected name of generic parameter"));
+impl Parse for TerminatedParams {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        match input.call(Punctuated::<_, Token![,]>::parse_separated_nonempty) {
+            Ok(params) if input.is_empty() => Ok(Self(params.into_iter().collect())),
+            _ => Err(input.error("expected name of generic parameter")),
         }
+    }
+}
 
-        Ok(Self(params))
+impl From<TerminatedParams> for Vec<Param> {
+    fn from(terminated_params: TerminatedParams) -> Self {
+        terminated_params.0
     }
 }
 
