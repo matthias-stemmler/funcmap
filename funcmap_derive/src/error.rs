@@ -103,13 +103,7 @@ where
         let mut error = Error::new();
 
         let values = self
-            .filter_map(|result| match result {
-                Ok(value) => Some(value),
-                Err(err) => {
-                    error.combine(err);
-                    None
-                }
-            })
+            .filter_map(|result| result.combine_err_with(&mut error))
             .collect();
 
         error.ok()?;
@@ -147,9 +141,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use proc_macro2::Span;
-
     use super::*;
+
+    use proc_macro2::Span;
 
     #[test]
     fn collect_combining_errors_success() {

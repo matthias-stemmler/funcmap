@@ -7,9 +7,6 @@ rust-version = "1.56"
 [lib]
 proc-macro = true
 
-[features]
-debug = []
-
 [dependencies]
 proc-macro2 = "1"
 quote = "1"

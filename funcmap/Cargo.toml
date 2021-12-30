@@ -5,9 +5,8 @@ edition = "2021"
 rust-version = "1.56"
 
 [features]
-default = ["alloc", "debug"] # TODO: remove debug
+default = ["alloc"]
 alloc = []
-debug = ["funcmap_derive/debug"]
 
 [dependencies]
 "funcmap_derive" = { path = "../funcmap_derive" }
