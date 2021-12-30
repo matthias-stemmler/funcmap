@@ -6,7 +6,7 @@ use proc_macro2::{Ident, TokenStream};
 use quote::ToTokens;
 use syn::{
     parenthesized,
-    parse::{Parse, ParseStream},
+    parse::{Parse, ParseStream, Parser},
     punctuated::Punctuated,
     Attribute, ConstParam, GenericParam, Lifetime, LifetimeDef, LitStr, Path, Token, TypeParam,
 };
@@ -119,9 +119,17 @@ impl Parse for ArgCrate {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         input.parse::<Token![crate]>()?;
         input.parse::<Token![=]>()?;
-        Ok(Self(
-            input.parse::<LitStr>()?.parse::<TerminatedPath>()?.into(),
-        ))
+        Ok(Self(input.parse::<LitStr>()?.parse_with(PathParser)?))
+    }
+}
+
+struct PathParser;
+
+impl Parser for PathParser {
+    type Output = Path;
+
+    fn parse2(self, tokens: TokenStream) -> syn::Result<Self::Output> {
+        syn::parse2(tokens.clone()).map_err(|_| syn::Error::new_spanned(tokens, "expected path"))
     }
 }
 
