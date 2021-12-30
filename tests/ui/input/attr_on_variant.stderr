@@ -1,5 +1,5 @@
 error: #[funcmap] helper attribute is not supported for variants
- --> tests/ui/opts/attr_on_variant.rs:5:5
+ --> tests/ui/input/attr_on_variant.rs:5:5
   |
 5 |     #[funcmap]
   |     ^^^^^^^^^^

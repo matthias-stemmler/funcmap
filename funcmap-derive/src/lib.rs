@@ -4,6 +4,7 @@ use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput};
 
 mod derive;
+mod error;
 mod ident_collector;
 mod idents;
 mod input;
@@ -22,7 +23,7 @@ mod syn_ext;
 // TODO MSRV policy?
 // TODO expand tests (see serde)
 // TODO dummy impl?
-// TODO collect multiple errors?
+// TODO reject params()
 
 // TODO CI: cargo msrv --verify, cargo nono check
 

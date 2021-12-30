@@ -1,5 +1,5 @@
 error: unknown generic parameter
- --> tests/ui/opts/unknown_param_ident.rs:4:18
+ --> tests/ui/input/unknown_param_ident.rs:4:18
   |
 4 | #[funcmap(params(S))]
   |                  ^

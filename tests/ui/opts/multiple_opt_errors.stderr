@@ -1,0 +1,17 @@
+error: expected attribute arguments in parentheses: #[funcmap(...)]
+ --> tests/ui/opts/multiple_opt_errors.rs:4:1
+  |
+4 | #[funcmap]
+  | ^^^^^^^^^^
+
+error: duplicate crate path
+ --> tests/ui/opts/multiple_opt_errors.rs:5:45
+  |
+5 | #[funcmap(crate = "fake_funcmap_1", crate = "fake_funcmap_2")]
+  |                                             ^^^^^^^^^^^^^^^^
+
+error: duplicate parameter
+ --> tests/ui/opts/multiple_opt_errors.rs:6:21
+  |
+6 | #[funcmap(params(T, T))]
+  |                     ^

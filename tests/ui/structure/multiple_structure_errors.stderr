@@ -1,0 +1,35 @@
+error: mapping over function type is not supported
+  --> tests/ui/structure/multiple_structure_errors.rs:18:20
+   |
+18 |     function_type: fn(T),
+   |                    ^^^^^
+
+error: `derive` cannot be used on items with type macros
+  --> tests/ui/structure/multiple_structure_errors.rs:19:17
+   |
+19 |     macro_type: test_type!(),
+   |                 ^^^^^^^^^^^^
+
+error: mapping over reference type is not supported
+  --> tests/ui/structure/multiple_structure_errors.rs:20:21
+   |
+20 |     reference_type: &'a T,
+   |                     ^^^^^
+
+error: mapping over type with associated item is not supported
+  --> tests/ui/structure/multiple_structure_errors.rs:21:16
+   |
+21 |     self_type: <T as TestTrait>::Assoc,
+   |                ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: mapping over slice type is not supported
+  --> tests/ui/structure/multiple_structure_errors.rs:22:21
+   |
+22 |     slice_type: Box<[T]>,
+   |                     ^^^
+
+error: mapping over trait object type is not supported
+  --> tests/ui/structure/multiple_structure_errors.rs:23:28
+   |
+23 |     trait_object_type: Box<dyn Fn(T)>,
+   |                            ^^^^^^^^^

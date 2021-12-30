@@ -1,3 +1,5 @@
+use crate::error::Error;
+
 use std::collections::{HashMap, HashSet};
 
 use syn::{
@@ -66,7 +68,7 @@ impl UniquePredicates {
         Self::default()
     }
 
-    pub fn add(&mut self, predicate: WherePredicate) -> Result<(), syn::Error> {
+    pub fn add(&mut self, predicate: WherePredicate) -> Result<(), Error> {
         match predicate {
             WherePredicate::Type(predicate_type) => self
                 .for_types
@@ -89,7 +91,8 @@ impl UniquePredicates {
                 return Err(syn::Error::new_spanned(
                     eq_token,
                     "equality constraints in `where` clauses are not supported",
-                ));
+                )
+                .into());
             }
         }
 

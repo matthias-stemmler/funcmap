@@ -1,4 +1,4 @@
-use crate::idents::ATTR_IDENT;
+use crate::{error::Error, idents::ATTR_IDENT};
 
 use std::vec;
 
@@ -22,38 +22,50 @@ pub struct FuncMapOpts {
 }
 
 impl TryFrom<Vec<Attribute>> for FuncMapOpts {
-    type Error = syn::Error;
+    type Error = Error;
 
     fn try_from(attrs: Vec<Attribute>) -> Result<Self, Self::Error> {
         let mut crate_path = None;
         let mut params = Vec::new();
+        let mut error = Error::new();
 
-        for arg in attrs
+        for args_result in attrs
             .into_iter()
             .filter(|attr| attr.path.is_ident(&ATTR_IDENT))
-            .map(TryInto::try_into)
-            .collect::<Result<Vec<Args>, _>>()?
-            .into_iter()
-            .flatten()
+            .map(TryInto::<Args>::try_into)
         {
-            match arg {
-                Arg::Crate(ArgCrate(value)) if crate_path.is_none() => crate_path = Some(value),
+            match args_result {
+                Ok(args) => {
+                    for arg in args {
+                        match arg {
+                            Arg::Crate(ArgCrate(value)) if crate_path.is_none() => {
+                                crate_path = Some(value)
+                            }
 
-                Arg::Crate(ArgCrate(value)) => {
-                    return Err(syn::Error::new_spanned(value, "duplicate crate path"))
-                }
+                            Arg::Crate(ArgCrate(value)) => error
+                                .combine(syn::Error::new_spanned(value, "duplicate crate path")),
 
-                Arg::Params(ArgParams(values)) => {
-                    for value in values {
-                        if params.contains(&value) {
-                            return Err(syn::Error::new_spanned(value, "duplicate parameter"));
+                            Arg::Params(ArgParams(values)) => {
+                                for value in values {
+                                    if params.contains(&value) {
+                                        error.combine(syn::Error::new_spanned(
+                                            value,
+                                            "duplicate parameter",
+                                        ));
+                                    } else {
+                                        params.push(value);
+                                    }
+                                }
+                            }
                         }
-
-                        params.push(value);
                     }
                 }
+
+                Err(err) => error.combine(err),
             }
         }
+
+        error.ok()?;
 
         Ok(Self { crate_path, params })
     }
@@ -63,10 +75,10 @@ impl TryFrom<Vec<Attribute>> for FuncMapOpts {
 struct Args(Vec<Arg>);
 
 impl TryFrom<Attribute> for Args {
-    type Error = syn::Error;
+    type Error = Error;
 
     fn try_from(attr: Attribute) -> Result<Self, Self::Error> {
-        attr.parse_args()
+        Ok(attr.parse_args()?)
     }
 }
 
@@ -204,15 +216,19 @@ impl PartialEq<GenericParam> for Param {
     }
 }
 
-pub fn assert_no_opts(attrs: &[Attribute], name: &str) -> Result<(), syn::Error> {
-    match attrs.iter().find(|attr| attr.path.is_ident(&ATTR_IDENT)) {
-        Some(attr) => Err(syn::Error::new_spanned(
-            attr,
-            format!(
-                "#[{}] helper attribute is not supported for {}",
-                ATTR_IDENT, name
-            ),
-        )),
-        None => Ok(()),
-    }
+pub fn assert_no_opts(attrs: &[Attribute], name: &str) -> Result<(), Error> {
+    attrs
+        .iter()
+        .filter(|attr| attr.path.is_ident(&ATTR_IDENT))
+        .map(|attr| {
+            syn::Error::new_spanned(
+                attr,
+                format!(
+                    "#[{}] helper attribute is not supported for {}",
+                    ATTR_IDENT, name
+                ),
+            )
+        })
+        .collect::<Error>()
+        .ok()
 }

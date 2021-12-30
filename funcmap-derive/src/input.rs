@@ -1,4 +1,5 @@
 use crate::{
+    error::{Error, IteratorExt, ResultExt},
     ident_collector::IdentCollector,
     idents::*,
     opts::{assert_no_opts, FuncMapOpts, Param},
@@ -49,7 +50,7 @@ pub struct Fieldish {
 }
 
 impl TryFrom<DeriveInput> for FuncMapInput {
-    type Error = syn::Error;
+    type Error = Error;
 
     fn try_from(derive_input: DeriveInput) -> Result<Self, Self::Error> {
         let ident_collector = {
@@ -74,6 +75,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
         };
 
         let mut mapped_type_param_idents = HashSet::new();
+        let mut error = Error::new();
 
         for param in opts.params {
             match (
@@ -84,19 +86,19 @@ impl TryFrom<DeriveInput> for FuncMapInput {
                     mapped_type_param_idents.insert(ident);
                 }
                 (Some(GenericParam::Lifetime(..)), param) => {
-                    return Err(syn::Error::new_spanned(
+                    error.combine(syn::Error::new_spanned(
                         param,
                         format!("cannot implement {} over lifetime parameter", TRAIT_IDENT),
                     ));
                 }
                 (Some(GenericParam::Const(..)), param) => {
-                    return Err(syn::Error::new_spanned(
+                    error.combine(syn::Error::new_spanned(
                         param,
                         format!("cannot implement {} over const generic", TRAIT_IDENT),
                     ));
                 }
                 (_, param) => {
-                    return Err(syn::Error::new_spanned(param, "unknown generic parameter"));
+                    error.combine(syn::Error::new_spanned(param, "unknown generic parameter"));
                 }
             }
         }
@@ -126,7 +128,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
             .collect();
 
         if mapped_type_params.is_empty() {
-            return Err(syn::Error::new_spanned(
+            error.combine(syn::Error::new_spanned(
                 derive_input
                     .generics
                     .to_non_empty_token_stream()
@@ -137,21 +139,21 @@ impl TryFrom<DeriveInput> for FuncMapInput {
 
         let variants = match derive_input.data {
             Data::Struct(data_struct) => {
-                iter::once(data_struct.try_into()).collect::<Result<Vec<_>, _>>()
+                iter::once(data_struct.try_into()).collect_combining_errors()
             }
 
             Data::Enum(DataEnum { variants, .. }) => variants
                 .into_iter()
                 .map(TryInto::try_into)
-                .collect::<Result<Vec<_>, _>>(),
+                .collect_combining_errors(),
 
-            Data::Union(DataUnion { union_token, .. }) => {
-                return Err(syn::Error::new_spanned(
-                    union_token,
-                    "expected a struct or an enum, found a union",
-                ))
-            }
-        }?;
+            Data::Union(DataUnion { union_token, .. }) => iter::once(Err(syn::Error::new_spanned(
+                union_token,
+                "expected a struct or an enum, found a union",
+            )))
+            .collect_combining_errors(),
+        }
+        .err_combined_with(error)?;
 
         Ok(Self {
             meta,
@@ -164,7 +166,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
 }
 
 impl TryFrom<DataStruct> for Structish {
-    type Error = syn::Error;
+    type Error = Error;
 
     fn try_from(data_struct: DataStruct) -> Result<Self, Self::Error> {
         Ok(Self {
@@ -173,16 +175,18 @@ impl TryFrom<DataStruct> for Structish {
                 .fields
                 .into_iter()
                 .map(TryInto::try_into)
-                .collect::<Result<_, _>>()?,
+                .collect_combining_errors()?,
         })
     }
 }
 
 impl TryFrom<Variant> for Structish {
-    type Error = syn::Error;
+    type Error = Error;
 
     fn try_from(variant: Variant) -> Result<Self, Self::Error> {
-        assert_no_opts(&variant.attrs, "variants")?;
+        let mut error = Error::new();
+
+        assert_no_opts(&variant.attrs, "variants").combine_err_with(&mut error);
 
         Ok(Self {
             variant_ident: Some(variant.ident),
@@ -190,13 +194,14 @@ impl TryFrom<Variant> for Structish {
                 .fields
                 .into_iter()
                 .map(TryInto::try_into)
-                .collect::<Result<_, _>>()?,
+                .collect_combining_errors()
+                .err_combined_with(error)?,
         })
     }
 }
 
 impl TryFrom<Field> for Fieldish {
-    type Error = syn::Error;
+    type Error = Error;
 
     fn try_from(field: Field) -> Result<Self, Self::Error> {
         assert_no_opts(&field.attrs, "fields")?;

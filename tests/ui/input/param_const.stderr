@@ -1,5 +1,5 @@
 error: cannot implement FuncMap over const generic
- --> tests/ui/opts/param_const.rs:4:18
+ --> tests/ui/input/param_const.rs:4:18
   |
 4 | #[funcmap(params(N))]
   |                  ^

@@ -1,5 +1,5 @@
 error: #[funcmap] helper attribute is not supported for fields
- --> tests/ui/opts/attr_on_field.rs:4:16
+ --> tests/ui/input/attr_on_field.rs:4:16
   |
 4 | struct Test<T>(#[funcmap] T);
   |                ^^^^^^^^^^

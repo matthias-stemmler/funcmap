@@ -1,3 +1,4 @@
+use crate::error::{Error, ResultExt};
 use crate::idents::*;
 use crate::input::{FuncMapInput, Structish};
 use crate::map_expr::map_expr;
@@ -14,7 +15,7 @@ use syn::{
     WherePredicate,
 };
 
-pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, syn::Error> {
+pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Error> {
     let input: FuncMapInput = input.try_into()?;
     let mut ident_collector = input.meta.ident_collector;
 
@@ -24,6 +25,8 @@ pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, syn::Error> {
     let fn_var_ident = Ident::new("f", Span::mixed_site());
 
     let all_params = &input.generics.params;
+
+    let mut error = Error::new();
 
     let impls = input
         .mapped_type_params
@@ -108,15 +111,17 @@ pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, syn::Error> {
                     predicate => predicate,
                 };
 
-                unique_predicates.add(
-                    predicate
-                        .clone()
-                        .subs_type(&mapped_type_param.type_param.ident, &src_type_ident),
-                )?;
+                unique_predicates
+                    .add(
+                        predicate
+                            .clone()
+                            .subs_type(&mapped_type_param.type_param.ident, &src_type_ident),
+                    )
+                    .combine_err_with(&mut error);
 
-                unique_predicates.add(
-                    predicate.subs_type(&mapped_type_param.type_param.ident, &dst_type_ident),
-                )?;
+                unique_predicates
+                    .add(predicate.subs_type(&mapped_type_param.type_param.ident, &dst_type_ident))
+                    .combine_err_with(&mut error);
             }
 
             let mut arms = Vec::new();
@@ -138,7 +143,7 @@ pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, syn::Error> {
                     let ident = format_ident!("field_{}", member, span = Span::mixed_site());
                     let pattern = quote!(#member: #ident);
 
-                    let (mapped, predicates) = map_expr(
+                    if let Some((mapped, predicates)) = map_expr(
                         ident,
                         &field.ty,
                         &mapped_type_param.type_param,
@@ -146,14 +151,18 @@ pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, syn::Error> {
                         &dst_type_ident,
                         &fn_var_ident,
                         &input.meta.crate_path,
-                    )?;
+                    )
+                    .combine_err_with(&mut error)
+                    {
+                        for predicate in predicates.into_iter() {
+                            unique_predicates
+                                .add(predicate)
+                                .combine_err_with(&mut error);
+                        }
 
-                    for predicate in predicates.into_iter() {
-                        unique_predicates.add(predicate)?;
+                        patterns.push(pattern);
+                        mappings.push(quote!(#member: #mapped));
                     }
-
-                    patterns.push(pattern);
-                    mappings.push(quote!(#member: #mapped));
                 }
 
                 let (pat_path, output_path) = match variant_ident {
@@ -174,7 +183,7 @@ pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, syn::Error> {
             let where_clause = unique_predicates.into_where_clause();
             let type_param_idx = mapped_type_param.type_param_idx;
 
-            Ok(quote! {
+            quote! {
                 #[allow(bare_trait_objects)]
                 #[allow(non_camel_case_types)]
                 #[automatically_derived]
@@ -201,9 +210,11 @@ pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, syn::Error> {
                         }
                     }
                 }
-            })
+            }
         })
-        .collect::<Result<Vec<_>, syn::Error>>()?;
+        .collect::<Vec<_>>();
+
+    error.ok()?;
 
     Ok(quote!(#(#impls)*))
 }
