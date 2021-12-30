@@ -11,14 +11,3 @@ debug = ["funcmap_derive/debug"]
 
 [dependencies]
 "funcmap_derive" = { path = "../funcmap_derive" }
-
-[dev-dependencies]
-trybuild = "1"
-
-[[test]]
-name = "edition2015"
-edition = "2015"
-
-[[test]]
-name = "edition2018"
-edition = "2018"

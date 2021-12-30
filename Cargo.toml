@@ -2,4 +2,5 @@
 members = [
     "funcmap",
     "funcmap_derive",
+    "test_suite",
 ]
