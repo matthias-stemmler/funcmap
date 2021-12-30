@@ -169,14 +169,20 @@ struct ArgParams(Vec<Param>);
 impl Parse for ArgParams {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         input.parse::<kw::params>()?;
+
         let content;
         parenthesized!(content in input);
-        Ok(Self(
-            content
-                .call(Punctuated::<_, Token![,]>::parse_terminated)?
-                .into_iter()
-                .collect(),
-        ))
+
+        let params: Vec<_> = content
+            .call(Punctuated::<_, Token![,]>::parse_terminated)?
+            .into_iter()
+            .collect();
+
+        if params.is_empty() {
+            return Err(input.error("expected name of generic parameter"));
+        }
+
+        Ok(Self(params))
     }
 }
 

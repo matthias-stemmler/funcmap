@@ -23,7 +23,6 @@ mod syn_ext;
 // TODO MSRV policy?
 // TODO expand tests (see serde)
 // TODO dummy impl?
-// TODO reject params()
 
 // TODO CI: cargo msrv --verify, cargo nono check
 
