@@ -1,5 +1,5 @@
 error: mapping over slice type is not supported
- --> tests/ui/structure/07_slice_type.rs:4:16
+ --> tests/ui/structure/slice_type.rs:4:16
   |
 4 | struct Test<T>([T]);
   |                ^^^

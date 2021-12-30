@@ -1,5 +1,5 @@
 error: mapping over type with associated item is not supported
- --> tests/ui/structure/04_self_type.rs:8:17
+ --> tests/ui/structure/self_type.rs:8:17
   |
 8 | struct Test<T>(<T as TestTrait>::Assoc)
   |                 ^

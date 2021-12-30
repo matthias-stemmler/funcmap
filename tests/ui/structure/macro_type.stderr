@@ -1,5 +1,5 @@
 error: `derive` cannot be used on items with type macros
-  --> tests/ui/structure/09_macro_type.rs:10:16
+  --> tests/ui/structure/macro_type.rs:10:16
    |
 10 | struct Test<T>(test_type!());
    |                ^^^^^^^^^^^^

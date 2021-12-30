@@ -1,5 +1,5 @@
 error: expected name of generic parameter
- --> tests/ui/opts/13_params_arg_with_invalid_param.rs:4:18
+ --> tests/ui/opts/params_arg_with_invalid_param.rs:4:18
   |
 4 | #[funcmap(params(!))]
   |                  ^

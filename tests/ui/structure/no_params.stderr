@@ -1,5 +1,5 @@
 error: expected at least one type parameter, found none
- --> tests/ui/structure/01_no_params.rs:4:8
+ --> tests/ui/structure/no_params.rs:4:8
   |
 4 | struct Test;
   |        ^^^^

@@ -1,5 +1,5 @@
 error: unexpected end of input, expected at least one argument
- --> tests/ui/opts/02_no_args.rs:4:10
+ --> tests/ui/opts/no_args.rs:4:10
   |
 4 | #[funcmap()]
   |          ^^

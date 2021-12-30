@@ -1,5 +1,5 @@
 error: duplicate crate path
- --> tests/ui/opts/09_duplicate_crate_arg_same_attr.rs:4:45
+ --> tests/ui/opts/duplicate_crate_arg_same_attr.rs:4:45
   |
 4 | #[funcmap(crate = "fake_funcmap_1", crate = "fake_funcmap_2")]
   |                                             ^^^^^^^^^^^^^^^^

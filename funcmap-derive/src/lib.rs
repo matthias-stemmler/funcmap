@@ -21,6 +21,8 @@ mod syn_ext;
 // TODO allow more lints?
 // TODO MSRV policy?
 // TODO expand tests (see serde)
+// TODO dummy impl?
+// TODO collect multiple errors?
 
 // TODO CI: cargo msrv --verify, cargo nono check
 

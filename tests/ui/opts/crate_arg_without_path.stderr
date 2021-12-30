@@ -1,5 +1,5 @@
 error: unexpected end of input, expected string literal
- --> tests/ui/opts/06_crate_arg_without_path.rs:4:10
+ --> tests/ui/opts/crate_arg_without_path.rs:4:10
   |
 4 | #[funcmap(crate =)]
   |          ^^^^^^^^^
