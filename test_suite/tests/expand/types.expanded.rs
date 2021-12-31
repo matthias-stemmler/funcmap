@@ -10,12 +10,12 @@ struct Test<T> {
 #[automatically_derived]
 impl<A, B> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A>
 where
-    Foo<A, A>: ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>, Output = Foo<B, A>>,
-    Foo<B, A>: ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<1usize>, Output = Foo<B, B>>,
+    [A; 1]: ::funcmap::FuncMap<A, B, Output = [B; 1]>,
     Foo<Bar<A>>:
         ::funcmap::FuncMap<Bar<A>, Bar<B>, ::funcmap::TypeParam<0usize>, Output = Foo<Bar<B>>>,
-    [A; 1]: ::funcmap::FuncMap<A, B, Output = [B; 1]>,
     Bar<A>: ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>, Output = Bar<B>>,
+    Foo<A, A>: ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>, Output = Foo<B, A>>,
+    Foo<B, A>: ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<1usize>, Output = Foo<B, B>>,
 {
     type Output = Test<B>;
     fn func_map<F>(self, mut f: F) -> Self::Output
