@@ -8,7 +8,7 @@ rust-version = "1.56"
 proc-macro = true
 
 [dependencies]
-indexmap = "1"
+indexmap = { version = "1", features = ["std"] }
 proc-macro2 = "1"
 quote = "1"
 syn = { version = "1", features = ["extra-traits", "fold", "visit"] }

@@ -17,7 +17,8 @@ fn main() {
     };
 
     let base_path = "my_project";
-    let absolute_paths = relative_paths.func_map(|relative_path| relative_path.to_absolute(base_path));
+    let absolute_paths =
+        relative_paths.func_map(|relative_path| relative_path.to_absolute(base_path));
 
     println!("{:?}", absolute_paths);
 }

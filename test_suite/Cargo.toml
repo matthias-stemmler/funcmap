@@ -12,6 +12,7 @@ toolchain_find = "0.2"
 
 [dev-dependencies]
 macrotest = "1"
+rustversion = "1"
 trybuild = "1"
 
 [[test]]
