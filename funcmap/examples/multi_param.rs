@@ -20,7 +20,7 @@ impl<L, M> Measurements<L, M> {
         L: Into<Meter>,
         M: Into<Kilogram>,
     {
-        // use `func_map_over` to tell the type parameter of `Measurements`
+        // use `func_map_over` to specify the type parameter of `Measurements`
         // over which the mapping is to be performed
         self.func_map_over(LENGTH_PARAM, Into::into)
             .func_map_over(MASS_PARAM, Into::into)

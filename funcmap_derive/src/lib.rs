@@ -14,11 +14,11 @@ mod predicates;
 mod syn_ext;
 
 // TODO check auto-impl/structopt/serde
-// TODO use fuzzing tests?
 // TODO docs
 // TODO unit tests
 // TODO deny some lints (missing docs)
 // TODO impl more standard types (HashMap, ...) + (optional) popular crates?
+// --> std: HashMap (+IntoIter), HashSet (+IntoIter), BufReader, BufWriter, Chain, Cursor, LineWriter, Take, Empty, Mutex, RwLock
 // TODO allow more lints?
 // TODO MSRV policy?
 // TODO no_std test (-> Serde)
@@ -30,7 +30,7 @@ pub fn derive_func_map(item: TokenStream) -> TokenStream {
 
     match derive::derive_func_map(derive_input) {
         Ok(output) => output,
-        Err(err) => err.to_compile_error(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }

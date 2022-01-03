@@ -76,7 +76,9 @@ impl<'ast> Mapper<'ast> {
 
                 Ok(quote!(#crate_path::#TRAIT_IDENT::#FN_IDENT(#mappable, #closure)))
             }
+
             Type::Paren(TypeParen { elem: inner_ty, .. }) => self.map(mappable, inner_ty),
+
             Type::Path(type_path) => {
                 let TypePath {
                     qself,
@@ -102,6 +104,7 @@ impl<'ast> Mapper<'ast> {
 
                 let (prefix, ident, arguments) = {
                     let mut prefix = segments.clone();
+
                     match prefix.pop() {
                         Some(Pair::End(PathSegment { ident, arguments })) => {
                             (prefix, ident, arguments)
@@ -147,7 +150,9 @@ impl<'ast> Mapper<'ast> {
                         let mapping_fn_ident = self.mapping_fn_ident;
                         return Ok(quote!(#mapping_fn_ident(#mappable)));
                     }
+
                     PathArguments::AngleBracketed(angle_bracketed) => angle_bracketed,
+
                     PathArguments::Parenthesized(..) => {
                         return Err(syn::Error::new_spanned(
                             ty,
@@ -228,6 +233,7 @@ impl<'ast> Mapper<'ast> {
 
                 Ok(mappable)
             }
+
             Type::Tuple(type_tuple) => {
                 let mapped = type_tuple
                     .elems
@@ -242,29 +248,35 @@ impl<'ast> Mapper<'ast> {
 
                 Ok(quote!((#(#mapped),*)))
             }
+
             Type::BareFn(..) => Err(syn::Error::new_spanned(
                 ty,
                 "mapping over function type is not supported",
             )
             .into()),
+
             Type::Ptr(..) => Err(syn::Error::new_spanned(
                 ty,
                 "mapping over pointer type is not supported",
             )
             .into()),
+
             Type::Reference(..) => Err(syn::Error::new_spanned(
                 ty,
                 "mapping over reference type is not supported",
             )
             .into()),
+
             Type::Slice(..) => {
                 Err(syn::Error::new_spanned(ty, "mapping over slice type is not supported").into())
             }
+
             Type::TraitObject(..) => Err(syn::Error::new_spanned(
                 ty,
                 "mapping over trait object type is not supported",
             )
             .into()),
+
             _ => Err(syn::Error::new_spanned(ty, "mapping over this type is not supported").into()),
         }
     }

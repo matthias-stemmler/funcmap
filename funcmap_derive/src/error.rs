@@ -20,22 +20,21 @@ impl Error {
         }
     }
 
-    pub fn combine<E>(&mut self, another: E)
+    pub fn combine<E>(&mut self, other: E)
     where
         E: Into<Self>,
     {
-        if let Self(Some(another)) = another.into() {
+        if let Self(Some(other)) = other.into() {
             match &mut self.0 {
-                Some(err) => err.combine(another),
-                None => self.0 = Some(another),
+                Some(err) => err.combine(other),
+                None => self.0 = Some(other),
             }
         }
     }
 
-    pub fn to_compile_error(&self) -> TokenStream {
+    pub fn into_compile_error(self) -> TokenStream {
         self.0
-            .as_ref()
-            .map(syn::Error::to_compile_error)
+            .map(syn::Error::into_compile_error)
             .unwrap_or_else(TokenStream::new)
     }
 }
@@ -44,16 +43,12 @@ impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match &self.0 {
             Some(err) => err.fmt(f),
-            None => Ok(()),
+            None => write!(f, "no error"),
         }
     }
 }
 
-impl error::Error for Error {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        self.0.as_ref().map(error::Error::source).flatten()
-    }
-}
+impl error::Error for Error {}
 
 impl<E> Extend<E> for Error
 where
@@ -86,6 +81,25 @@ where
         let mut err = Self::new();
         err.extend(iter);
         err
+    }
+}
+
+pub struct IntoIter(Option<<syn::Error as IntoIterator>::IntoIter>);
+
+impl Iterator for IntoIter {
+    type Item = <syn::Error as IntoIterator>::Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.iter_mut().flat_map(Iterator::next).next()
+    }
+}
+
+impl IntoIterator for Error {
+    type Item = <syn::Error as IntoIterator>::Item;
+    type IntoIter = IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter(self.0.map(IntoIterator::into_iter))
     }
 }
 
@@ -135,7 +149,7 @@ where
     fn err_combined_with(self, mut error: Error) -> Result<T, Error> {
         let result = self.combine_err_with(&mut error);
         error.ok()?;
-        Ok(result.unwrap())
+        Ok(result.unwrap()) // `result` must be `Ok(..)` or else `error.ok()?` would have returned
     }
 }
 
@@ -143,11 +157,92 @@ where
 mod tests {
     use super::*;
 
+    use std::iter;
+
     use proc_macro2::Span;
+    use syn::{parse_quote, Block};
 
     #[test]
-    fn collect_combining_errors_success() {
-        let results: Vec<Result<&str, Error>> = vec![Ok("Value 1"), Ok("Value 2")];
+    fn new_error_is_ok() {
+        let error = Error::new();
+
+        assert!(error.ok().is_ok());
+    }
+
+    #[test]
+    fn error_from_syn_error_is_not_ok() {
+        let error: Error = syn_error("Error").into();
+
+        assert!(error.ok().is_err());
+    }
+
+    #[test]
+    fn new_error_displays_no_error() {
+        let error = Error::new();
+
+        assert_eq!(error.to_string(), "no error");
+    }
+
+    #[test]
+    fn error_from_syn_error_displays_its_message() {
+        let error: Error = syn_error("Error").into();
+
+        assert_eq!(error.to_string(), "Error");
+    }
+
+    #[test]
+    fn new_error_is_empty() {
+        let error = Error::new();
+
+        assert!(messages(error).is_empty());
+    }
+
+    #[test]
+    fn combined_error_contains_all_errors() {
+        let mut error: Error = syn_error("Error 1").into();
+        error.combine(syn_error("Error 2"));
+
+        assert_eq!(messages(error), ["Error 1", "Error 2"]);
+    }
+
+    #[test]
+    fn new_error_produces_no_compile_error() {
+        let error = Error::new();
+
+        assert!(error.into_compile_error().is_empty());
+    }
+
+    #[test]
+    fn combined_error_produces_combined_compile_errors() {
+        let mut error: Error = syn_error("Error 1").into();
+        error.combine(syn_error("Error 2"));
+
+        let compile_error = error.into_compile_error();
+        let compile_errors: Block = parse_quote!({ #compile_error });
+
+        assert_eq!(compile_errors.stmts.len(), 2);
+    }
+
+    #[test]
+    fn empty_iterator_collects_into_no_error() {
+        let error: Error = iter::empty::<syn::Error>().collect();
+
+        assert!(error.ok().is_ok());
+    }
+
+    #[test]
+    fn non_empty_iterator_collects_into_all_errors() {
+        let error: Error = [syn_error("Error 1"), syn_error("Error 2")]
+            .into_iter()
+            .collect();
+
+        assert_eq!(messages(error), ["Error 1", "Error 2"]);
+    }
+
+    #[test]
+    fn all_ok_results_collect_into_all_values() {
+        let results: [Result<&str, Error>; 2] = [Ok("Value 1"), Ok("Value 2")];
+
         let collected: Result<Vec<_>, _> = results.into_iter().collect_combining_errors();
 
         assert!(collected.is_ok());
@@ -155,25 +250,80 @@ mod tests {
     }
 
     #[test]
-    fn collect_combining_errors_failure() {
-        let results = vec![
+    fn not_all_ok_results_collect_into_all_errors() {
+        let results = [
             Ok("Value 1"),
-            Err(syn::Error::new(Span::call_site(), "Error 1")),
+            Err(syn_error("Error 1")),
             Ok("Value 2"),
-            Err(syn::Error::new(Span::call_site(), "Error 2")),
+            Err(syn_error("Error 2")),
         ];
+
         let collected: Result<Vec<_>, _> = results.into_iter().collect_combining_errors();
 
         assert!(collected.is_err());
-        assert_eq!(
-            collected
-                .unwrap_err()
-                .0
-                .unwrap()
-                .into_iter()
-                .map(|err| err.to_string())
-                .collect::<Vec<_>>(),
-            ["Error 1", "Error 2"]
-        );
+        assert_eq!(messages(collected.unwrap_err()), ["Error 1", "Error 2"]);
+    }
+
+    #[test]
+    fn combining_ok_result_adds_no_error_and_yields_value() {
+        let mut error = Error::new();
+        let result: Result<_, syn::Error> = Ok("Value");
+
+        let value = result.combine_err_with(&mut error);
+
+        assert!(error.ok().is_ok());
+        assert_eq!(value, Some("Value"));
+    }
+
+    #[test]
+    fn combining_err_result_adds_error_and_yields_none() {
+        let mut error = Error::new();
+        let result: Result<(), _> = Err(syn_error("Error"));
+
+        let value = result.combine_err_with(&mut error);
+
+        assert_eq!(messages(error), ["Error"]);
+        assert!(value.is_none());
+    }
+
+    #[test]
+    fn ok_result_combined_with_no_error_is_ok() {
+        let error = Error::new();
+        let result: Result<_, syn::Error> = Ok("Value");
+
+        let combined = result.err_combined_with(error);
+
+        assert!(combined.is_ok());
+        assert_eq!(combined.unwrap(), "Value");
+    }
+
+    #[test]
+    fn ok_result_combined_with_some_error_is_err() {
+        let error: Error = syn_error("Error").into();
+        let result: Result<_, syn::Error> = Ok("Value");
+
+        let combined = result.err_combined_with(error);
+
+        assert!(combined.is_err());
+        assert_eq!(messages(combined.unwrap_err()), ["Error"]);
+    }
+
+    #[test]
+    fn err_result_combined_with_no_error_is_err() {
+        let error = Error::new();
+        let result: Result<(), _> = Err(syn_error("Error"));
+
+        let combined = result.err_combined_with(error);
+
+        assert!(combined.is_err());
+        assert_eq!(messages(combined.unwrap_err()), ["Error"]);
+    }
+
+    fn syn_error(message: impl Display) -> syn::Error {
+        syn::Error::new(Span::call_site(), message)
+    }
+
+    fn messages(into_iter: impl IntoIterator<Item = impl Display>) -> Vec<String> {
+        into_iter.into_iter().map(|item| item.to_string()).collect()
     }
 }
