@@ -22,7 +22,6 @@ mod syn_ext;
 // TODO MSRV policy?
 // TODO no_std test (-> Serde)
 // TODO GitHub Actions: cargo msrv --verify, cargo nono check, dependabot (see Serde)
-// TODO bugfix: idents starting with r# cause panic
 // TODO pub -> pub(crate) (https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html#unreachable-pub)
 
 #[proc_macro_derive(FuncMap, attributes(funcmap))]

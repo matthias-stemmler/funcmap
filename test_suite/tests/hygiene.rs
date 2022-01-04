@@ -67,3 +67,21 @@ fn trait_methods_are_not_confused_with_methods_of_other_traits() {
     #[derive(FuncMap)]
     struct Test<T, const N: usize>(Inner<T>, [T; N]);
 }
+
+#[test]
+fn raw_identifiers_are_supported() {
+    #![allow(non_camel_case_types)]
+    #![allow(non_upper_case_globals)]
+
+    use funcmap as r#break;
+
+    #[derive(FuncMap)]
+    struct r#continue<r#else>(r#else);
+
+    #[derive(r#break::FuncMap)]
+    #[funcmap(crate = "r#break", params(r#extern))]
+    enum r#false<r#extern, const r#for: usize> {
+        r#if { r#in: r#continue<r#extern> },
+        r#let,
+    }
+}

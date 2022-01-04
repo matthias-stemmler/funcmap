@@ -135,12 +135,24 @@ pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Error> {
                 let mut patterns = Vec::new();
 
                 for (field_idx, field) in fields.iter().enumerate() {
-                    let member: Member = match &field.ident {
-                        Some(field_ident) => field_ident.clone().into(),
-                        None => field_idx.into(),
+                    let (member, ident) = match &field.ident {
+                        Some(field_ident) => {
+                            let member: Member = field_ident.clone().into();
+                            let ident = format_ident!(
+                                "field_{}",
+                                field_ident.clone(),
+                                span = Span::mixed_site()
+                            );
+                            (member, ident)
+                        }
+                        None => {
+                            let member: Member = field_idx.into();
+                            let ident =
+                                format_ident!("field_{}", field_idx, span = Span::mixed_site());
+                            (member, ident)
+                        }
                     };
 
-                    let ident = format_ident!("field_{}", member, span = Span::mixed_site());
                     let pattern = quote!(#member: #ident);
 
                     if let Some((mapped, predicates)) = map_expr(
