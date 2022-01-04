@@ -19,7 +19,6 @@ mod syn_ext;
 // TODO deny some lints (missing docs)
 // TODO impl more standard types (HashMap, ...) + (optional) popular crates?
 // --> std: HashMap (+IntoIter), HashSet (+IntoIter), BufReader, BufWriter, Chain, Cursor, LineWriter, Take, Empty, Mutex, RwLock
-// TODO allow more lints? (native ones are handled, consider clippy)
 // TODO MSRV policy?
 // TODO no_std test (-> Serde)
 // TODO GitHub Actions: cargo msrv --verify, cargo nono check, dependabot (see Serde)

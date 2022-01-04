@@ -193,6 +193,8 @@ pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Error> {
                 #[allow(non_camel_case_types)]
                 #[allow(trivial_bounds)]
                 #[allow(unused_qualifications)]
+                #[allow(clippy::disallowed_method)]
+                #[allow(clippy::disallowed_type)]
                 #[automatically_derived]
                 impl<#(#impl_params),*>
                     #crate_path::#TRAIT_IDENT<

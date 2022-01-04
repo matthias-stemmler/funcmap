@@ -53,3 +53,21 @@ fn dyn_drop() {
     where
         for<'a> &'a dyn Drop: Copy;
 }
+
+#[test]
+fn clippy_disallowed_method() {
+    #![deny(clippy::disallowed_method)]
+
+    #[allow(clippy::disallowed_method)]
+    #[derive(FuncMap)]
+    struct Test<T>(Option<T>);
+}
+
+#[test]
+fn clippy_disallowed_type() {
+    #![deny(clippy::disallowed_type)]
+
+    #[allow(clippy::disallowed_type)]
+    #[derive(FuncMap)]
+    struct Test<T>(Option<T>);
+}
