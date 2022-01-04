@@ -67,12 +67,3 @@ fn trait_methods_are_not_confused_with_methods_of_other_traits() {
     #[derive(FuncMap)]
     struct Test<T, const N: usize>(Inner<T>, [T; N]);
 }
-
-#[test]
-fn lints_are_not_denied_in_emitted_code() {
-    #![deny(non_camel_case_types)]
-
-    #[allow(non_camel_case_types)]
-    #[derive(FuncMap)]
-    struct Test<s, t>(s, t);
-}

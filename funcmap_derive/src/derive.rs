@@ -184,8 +184,15 @@ pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Error> {
             let type_param_idx = mapped_type_param.type_param_idx;
 
             quote! {
+                #[allow(absolute_paths_not_starting_with_crate)]
                 #[allow(bare_trait_objects)]
+                #[allow(deprecated)]
+                #[allow(drop_bounds)]
+                #[allow(dyn_drop)]
+                #[allow(keyword_idents)]
                 #[allow(non_camel_case_types)]
+                #[allow(trivial_bounds)]
+                #[allow(unused_qualifications)]
                 #[automatically_derived]
                 impl<#(#impl_params),*>
                     #crate_path::#TRAIT_IDENT<
