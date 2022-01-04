@@ -5,8 +5,9 @@ edition = "2021"
 rust-version = "1.56"
 
 [features]
-default = ["alloc"]
+default = ["std"]
 alloc = []
+std = ["alloc"]
 
 [dependencies]
 "funcmap_derive" = { path = "../funcmap_derive" }

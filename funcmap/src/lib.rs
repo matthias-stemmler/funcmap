@@ -6,6 +6,9 @@ mod impls_core;
 #[cfg(feature = "alloc")]
 mod impls_alloc;
 
+#[cfg(feature = "std")]
+mod impls_std;
+
 #[doc(hidden)]
 pub use funcmap_derive::*;
 

@@ -17,12 +17,12 @@ mod syn_ext;
 // TODO docs
 // TODO unit tests
 // TODO deny some lints (missing docs)
-// TODO impl more standard types (HashMap, ...) + (optional) popular crates?
-// --> std: HashMap (+IntoIter), HashSet (+IntoIter), BufReader, BufWriter, Chain, Cursor, LineWriter, Take, Empty, Mutex, RwLock
+// TODO impl types from popular crates?
 // TODO MSRV policy?
 // TODO no_std test (-> Serde)
 // TODO GitHub Actions: cargo msrv --verify, cargo nono check, dependabot (see Serde)
 // TODO pub -> pub(crate) (https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html#unreachable-pub)
+// TODO TryFuncMap ? (impl for BufWriter, LineWriter, Mutex, RwLock)
 
 #[proc_macro_derive(FuncMap, attributes(funcmap))]
 pub fn derive_func_map(item: TokenStream) -> TokenStream {
