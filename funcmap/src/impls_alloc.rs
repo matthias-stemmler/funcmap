@@ -15,9 +15,9 @@ where
 {
     type Output = BinaryHeap<B>;
 
-    fn func_map<F>(self, f: F) -> Self::Output
+    fn try_func_map<F, E>(self, f: F) -> Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: FnMut(A) -> Result<B, E>,
     {
         self.into_iter().map(f).collect()
     }
@@ -29,22 +29,24 @@ where
 {
     type Output = binary_heap::IntoIter<B>;
 
-    fn func_map<F>(self, f: F) -> Self::Output
+    fn try_func_map<F, E>(self, f: F) -> Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: FnMut(A) -> Result<B, E>,
     {
-        self.map(f).collect::<BinaryHeap<_>>().into_iter()
+        self.map(f)
+            .collect::<Result<BinaryHeap<_>, _>>()
+            .map(IntoIterator::into_iter)
     }
 }
 
 impl<A, B> FuncMap<A, B> for Box<A> {
     type Output = Box<B>;
 
-    fn func_map<F>(self, mut f: F) -> Self::Output
+    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: FnMut(A) -> Result<B, E>,
     {
-        Box::new(f(*self))
+        Ok(f(*self)?.into())
     }
 }
 
@@ -54,11 +56,11 @@ where
 {
     type Output = BTreeMap<B, V>;
 
-    fn func_map<F>(self, mut f: F) -> Self::Output
+    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: FnMut(A) -> Result<B, E>,
     {
-        self.into_iter().map(|(k, v)| (f(k), v)).collect()
+        self.into_iter().map(|(k, v)| Ok((f(k)?, v))).collect()
     }
 }
 
@@ -68,11 +70,11 @@ where
 {
     type Output = BTreeMap<K, B>;
 
-    fn func_map<F>(self, mut f: F) -> Self::Output
+    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: FnMut(A) -> Result<B, E>,
     {
-        self.into_iter().map(|(k, v)| (k, f(v))).collect()
+        self.into_iter().map(|(k, v)| Ok((k, f(v)?))).collect()
     }
 }
 
@@ -82,13 +84,13 @@ where
 {
     type Output = btree_map::IntoIter<B, V>;
 
-    fn func_map<F>(self, mut f: F) -> Self::Output
+    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: FnMut(A) -> Result<B, E>,
     {
-        self.map(|(k, v)| (f(k), v))
-            .collect::<BTreeMap<_, _>>()
-            .into_iter()
+        self.map(|(k, v)| Ok((f(k)?, v)))
+            .collect::<Result<BTreeMap<_, _>, _>>()
+            .map(IntoIterator::into_iter)
     }
 }
 
@@ -98,13 +100,13 @@ where
 {
     type Output = btree_map::IntoIter<K, B>;
 
-    fn func_map<F>(self, mut f: F) -> Self::Output
+    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: FnMut(A) -> Result<B, E>,
     {
-        self.map(|(k, v)| (k, f(v)))
-            .collect::<BTreeMap<_, _>>()
-            .into_iter()
+        self.map(|(k, v)| Ok((k, f(v)?)))
+            .collect::<Result<BTreeMap<_, _>, _>>()
+            .map(IntoIterator::into_iter)
     }
 }
 
@@ -114,9 +116,9 @@ where
 {
     type Output = BTreeSet<B>;
 
-    fn func_map<F>(self, f: F) -> Self::Output
+    fn try_func_map<F, E>(self, f: F) -> Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: FnMut(A) -> Result<B, E>,
     {
         self.into_iter().map(f).collect()
     }
@@ -128,20 +130,22 @@ where
 {
     type Output = btree_set::IntoIter<B>;
 
-    fn func_map<F>(self, f: F) -> Self::Output
+    fn try_func_map<F, E>(self, f: F) -> Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: FnMut(A) -> Result<B, E>,
     {
-        self.map(f).collect::<BTreeSet<_>>().into_iter()
+        self.map(f)
+            .collect::<Result<BTreeSet<_>, _>>()
+            .map(IntoIterator::into_iter)
     }
 }
 
 impl<A, B> FuncMap<A, B> for LinkedList<A> {
     type Output = LinkedList<B>;
 
-    fn func_map<F>(self, f: F) -> Self::Output
+    fn try_func_map<F, E>(self, f: F) -> Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: FnMut(A) -> Result<B, E>,
     {
         self.into_iter().map(f).collect()
     }
@@ -150,20 +154,22 @@ impl<A, B> FuncMap<A, B> for LinkedList<A> {
 impl<A, B> FuncMap<A, B> for linked_list::IntoIter<A> {
     type Output = linked_list::IntoIter<B>;
 
-    fn func_map<F>(self, f: F) -> Self::Output
+    fn try_func_map<F, E>(self, f: F) -> Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: FnMut(A) -> Result<B, E>,
     {
-        self.map(f).collect::<LinkedList<_>>().into_iter()
+        self.map(f)
+            .collect::<Result<LinkedList<_>, _>>()
+            .map(IntoIterator::into_iter)
     }
 }
 
 impl<A, B> FuncMap<A, B> for Vec<A> {
     type Output = Vec<B>;
 
-    fn func_map<F>(self, f: F) -> Self::Output
+    fn try_func_map<F, E>(self, f: F) -> Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: FnMut(A) -> Result<B, E>,
     {
         self.into_iter().map(f).collect()
     }
@@ -172,20 +178,22 @@ impl<A, B> FuncMap<A, B> for Vec<A> {
 impl<A, B> FuncMap<A, B> for vec::IntoIter<A> {
     type Output = vec::IntoIter<B>;
 
-    fn func_map<F>(self, f: F) -> Self::Output
+    fn try_func_map<F, E>(self, f: F) -> Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: FnMut(A) -> Result<B, E>,
     {
-        self.map(f).collect::<Vec<_>>().into_iter()
+        self.map(f)
+            .collect::<Result<Vec<_>, _>>()
+            .map(IntoIterator::into_iter)
     }
 }
 
 impl<A, B> FuncMap<A, B> for VecDeque<A> {
     type Output = VecDeque<B>;
 
-    fn func_map<F>(self, f: F) -> Self::Output
+    fn try_func_map<F, E>(self, f: F) -> Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: FnMut(A) -> Result<B, E>,
     {
         self.into_iter().map(f).collect()
     }
@@ -194,10 +202,12 @@ impl<A, B> FuncMap<A, B> for VecDeque<A> {
 impl<A, B> FuncMap<A, B> for vec_deque::IntoIter<A> {
     type Output = vec_deque::IntoIter<B>;
 
-    fn func_map<F>(self, f: F) -> Self::Output
+    fn try_func_map<F, E>(self, f: F) -> Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: FnMut(A) -> Result<B, E>,
     {
-        self.map(f).collect::<VecDeque<_>>().into_iter()
+        self.map(f)
+            .collect::<Result<VecDeque<_>, _>>()
+            .map(IntoIterator::into_iter)
     }
 }

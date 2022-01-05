@@ -17,18 +17,18 @@ struct Test<T> {
 #[automatically_derived]
 impl<A, B> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A> {
     type Output = Test<B>;
-    fn func_map<F>(self, mut f: F) -> Self::Output
+    fn try_func_map<F, E>(self, mut f: F) -> ::core::result::Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: ::core::ops::FnMut(A) -> ::core::result::Result<B, E>,
     {
-        match self {
+        ::core::result::Result::Ok(match self {
             Self {
                 mapped_field: field_mapped_field,
                 unmapped_field: field_unmapped_field,
             } => Self::Output {
-                mapped_field: f(field_mapped_field),
+                mapped_field: f(field_mapped_field)?,
                 unmapped_field: field_unmapped_field,
             },
-        }
+        })
     }
 }

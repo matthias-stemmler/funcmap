@@ -21,26 +21,26 @@ enum Test<T> {
 #[automatically_derived]
 impl<A, B> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A> {
     type Output = Test<B>;
-    fn func_map<F>(self, mut f: F) -> Self::Output
+    fn try_func_map<F, E>(self, mut f: F) -> ::core::result::Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: ::core::ops::FnMut(A) -> ::core::result::Result<B, E>,
     {
-        match self {
+        ::core::result::Result::Ok(match self {
             Self::UnitVariant {} => Self::Output::UnitVariant {},
             Self::TupleVariant {
                 0: field_0,
                 1: field_1,
             } => Self::Output::TupleVariant {
-                0: f(field_0),
+                0: f(field_0)?,
                 1: field_1,
             },
             Self::StructVariant {
                 mapped_field: field_mapped_field,
                 unmapped_field: field_unmapped_field,
             } => Self::Output::StructVariant {
-                mapped_field: f(field_mapped_field),
+                mapped_field: f(field_mapped_field)?,
                 unmapped_field: field_unmapped_field,
             },
-        }
+        })
     }
 }

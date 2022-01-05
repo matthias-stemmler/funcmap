@@ -22,6 +22,7 @@ pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Error> {
     let src_type_ident = ident_collector.reserve_uppercase_letter('A', Span::mixed_site());
     let dst_type_ident = ident_collector.reserve_uppercase_letter('B', Span::mixed_site());
     let fn_type_ident = ident_collector.reserve_uppercase_letter('F', Span::mixed_site());
+    let err_type_ident = ident_collector.reserve_uppercase_letter('E', Span::mixed_site());
     let fn_var_ident = Ident::new("f", Span::mixed_site());
 
     let all_params = &input.generics.params;
@@ -219,16 +220,19 @@ pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Error> {
                 {
                     type #OUTPUT_TYPE_IDENT = #ident<#(#dst_args),*>;
 
-                    fn #FN_IDENT<#fn_type_ident>(
+                    fn #FN_IDENT<#fn_type_ident, #err_type_ident>(
                         self,
                         mut #fn_var_ident: #fn_type_ident
-                    ) -> Self::#OUTPUT_TYPE_IDENT
+                    ) -> ::core::result::Result<Self::#OUTPUT_TYPE_IDENT, #err_type_ident>
                     where
-                        #fn_type_ident: FnMut(#src_type_ident) -> #dst_type_ident
+                        #fn_type_ident:
+                            ::core::ops::FnMut(
+                                #src_type_ident
+                            ) -> ::core::result::Result<#dst_type_ident, #err_type_ident>
                     {
-                        match self {
+                        ::core::result::Result::Ok(match self {
                             #(#arms,)*
-                        }
+                        })
                     }
                 }
             }

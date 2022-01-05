@@ -21,8 +21,8 @@ mod syn_ext;
 // TODO MSRV policy?
 // TODO no_std test (-> Serde)
 // TODO GitHub Actions: cargo msrv --verify, cargo nono check, dependabot (see Serde)
-// TODO pub -> pub(crate) (https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html#unreachable-pub)
-// TODO TryFuncMap ? (impl for BufWriter, LineWriter, Mutex, RwLock)
+// TODO pub -> pub(crate) (https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html#unreachable-pub) (or not -> see Clippy)
+// TODO MIRI test for unsafe
 
 #[proc_macro_derive(FuncMap, attributes(funcmap))]
 pub fn derive_func_map(item: TokenStream) -> TokenStream {

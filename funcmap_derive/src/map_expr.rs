@@ -74,7 +74,7 @@ impl<'ast> Mapper<'ast> {
 
                 let closure = self.map_closure(inner_ty)?;
 
-                Ok(quote!(#crate_path::#TRAIT_IDENT::#FN_IDENT(#mappable, #closure)))
+                Ok(quote!(#crate_path::#TRAIT_IDENT::#FN_IDENT(#mappable, #closure)?))
             }
 
             Type::Paren(TypeParen { elem: inner_ty, .. }) => self.map(mappable, inner_ty),
@@ -148,7 +148,7 @@ impl<'ast> Mapper<'ast> {
                 let angle_bracketed = match arguments {
                     PathArguments::None => {
                         let mapping_fn_ident = self.mapping_fn_ident;
-                        return Ok(quote!(#mapping_fn_ident(#mappable)));
+                        return Ok(quote!(#mapping_fn_ident(#mappable)?));
                     }
 
                     PathArguments::AngleBracketed(angle_bracketed) => angle_bracketed,
@@ -227,7 +227,7 @@ impl<'ast> Mapper<'ast> {
                     let closure = self.map_closure(arg_type)?;
 
                     mappable = quote! {
-                        #crate_path::#TRAIT_IDENT::#FN_IDENT_WITH_MARKER(#mappable, #crate_path::#MARKER_TYPE_IDENT::<#type_idx>, #closure)
+                        #crate_path::#TRAIT_IDENT::#FN_IDENT_WITH_MARKER(#mappable, #crate_path::#MARKER_TYPE_IDENT::<#type_idx>, #closure)?
                     }
                 }
 
@@ -284,7 +284,7 @@ impl<'ast> Mapper<'ast> {
     fn map_closure(&mut self, ty: &Type) -> Result<TokenStream, Error> {
         let closure_arg = Ident::new("value", Span::mixed_site());
         let mapped = self.map(closure_arg.clone().into_token_stream(), ty)?;
-        Ok(quote!(|#closure_arg| #mapped))
+        Ok(quote!(|#closure_arg| ::core::result::Result::Ok(#mapped)))
     }
 
     fn subs_src_type(&self, ty: Type) -> Type {

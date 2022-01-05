@@ -27,40 +27,42 @@ where
     Foo<B, A>: ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<1usize>, Output = Foo<B, B>>,
 {
     type Output = Test<B>;
-    fn func_map<F>(self, mut f: F) -> Self::Output
+    fn try_func_map<F, E>(self, mut f: F) -> ::core::result::Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: ::core::ops::FnMut(A) -> ::core::result::Result<B, E>,
     {
-        match self {
+        ::core::result::Result::Ok(match self {
             Self {
                 tuple: field_tuple,
                 array: field_array,
                 nested: field_nested,
                 repeated: field_repeated,
             } => Self::Output {
-                tuple: (f(field_tuple.0), field_tuple.1),
-                array: ::funcmap::FuncMap::func_map(field_array, |value| f(value)),
-                nested: ::funcmap::FuncMap::func_map_over(
+                tuple: (f(field_tuple.0)?, field_tuple.1),
+                array: ::funcmap::FuncMap::try_func_map(field_array, |value| {
+                    ::core::result::Result::Ok(f(value)?)
+                })?,
+                nested: ::funcmap::FuncMap::try_func_map_over(
                     field_nested,
                     ::funcmap::TypeParam::<0usize>,
                     |value| {
-                        ::funcmap::FuncMap::func_map_over(
+                        ::core::result::Result::Ok(::funcmap::FuncMap::try_func_map_over(
                             value,
                             ::funcmap::TypeParam::<0usize>,
-                            |value| f(value),
-                        )
+                            |value| ::core::result::Result::Ok(f(value)?),
+                        )?)
                     },
-                ),
-                repeated: ::funcmap::FuncMap::func_map_over(
-                    ::funcmap::FuncMap::func_map_over(
+                )?,
+                repeated: ::funcmap::FuncMap::try_func_map_over(
+                    ::funcmap::FuncMap::try_func_map_over(
                         field_repeated,
                         ::funcmap::TypeParam::<0usize>,
-                        |value| f(value),
-                    ),
+                        |value| ::core::result::Result::Ok(f(value)?),
+                    )?,
                     ::funcmap::TypeParam::<1usize>,
-                    |value| f(value),
-                ),
+                    |value| ::core::result::Result::Ok(f(value)?),
+                )?,
             },
-        }
+        })
     }
 }

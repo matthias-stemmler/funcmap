@@ -14,21 +14,21 @@ struct Test<S, T>(S, T, i32);
 #[automatically_derived]
 impl<A, B, T> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A, T> {
     type Output = Test<B, T>;
-    fn func_map<F>(self, mut f: F) -> Self::Output
+    fn try_func_map<F, E>(self, mut f: F) -> ::core::result::Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: ::core::ops::FnMut(A) -> ::core::result::Result<B, E>,
     {
-        match self {
+        ::core::result::Result::Ok(match self {
             Self {
                 0: field_0,
                 1: field_1,
                 2: field_2,
             } => Self::Output {
-                0: f(field_0),
+                0: f(field_0)?,
                 1: field_1,
                 2: field_2,
             },
-        }
+        })
     }
 }
 #[allow(absolute_paths_not_starting_with_crate)]
@@ -45,20 +45,20 @@ impl<A, B, T> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A,
 #[automatically_derived]
 impl<S, A, B> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<1usize>> for Test<S, A> {
     type Output = Test<S, B>;
-    fn func_map<F>(self, mut f: F) -> Self::Output
+    fn try_func_map<F, E>(self, mut f: F) -> ::core::result::Result<Self::Output, E>
     where
-        F: FnMut(A) -> B,
+        F: ::core::ops::FnMut(A) -> ::core::result::Result<B, E>,
     {
-        match self {
+        ::core::result::Result::Ok(match self {
             Self {
                 0: field_0,
                 1: field_1,
                 2: field_2,
             } => Self::Output {
                 0: field_0,
-                1: f(field_1),
+                1: f(field_1)?,
                 2: field_2,
             },
-        }
+        })
     }
 }

@@ -5,8 +5,8 @@ use quote::ToTokens;
 
 pub const CRATE_IDENT: StaticIdent = StaticIdent("funcmap");
 pub const TRAIT_IDENT: StaticIdent = StaticIdent("FuncMap");
-pub const FN_IDENT: StaticIdent = StaticIdent("func_map");
-pub const FN_IDENT_WITH_MARKER: StaticIdent = StaticIdent("func_map_over");
+pub const FN_IDENT: StaticIdent = StaticIdent("try_func_map");
+pub const FN_IDENT_WITH_MARKER: StaticIdent = StaticIdent("try_func_map_over");
 pub const OUTPUT_TYPE_IDENT: StaticIdent = StaticIdent("Output");
 pub const MARKER_TYPE_IDENT: StaticIdent = StaticIdent("TypeParam");
 pub const ATTR_IDENT: StaticIdent = StaticIdent("funcmap");

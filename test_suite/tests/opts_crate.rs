@@ -31,9 +31,9 @@ mod fake_funcmap {
     pub trait FuncMap<A, B, P = TypeParam<0>> {
         type Output;
 
-        fn func_map<F>(self, _: F) -> Self::Output
+        fn try_func_map<F, E>(self, _: F) -> Result<Self::Output, E>
         where
-            F: FnMut(A) -> B;
+            F: FnMut(A) -> Result<B, E>;
     }
 
     pub fn assert<T, A, B, P>()
