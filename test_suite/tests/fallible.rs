@@ -3,7 +3,7 @@ use funcmap::FuncMap;
 use std::convert::{TryFrom, TryInto};
 
 #[test]
-fn mapping_succeeds_if_function_succeeds() {
+fn mapping_succeeds_when_function_succeeds() {
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<T>(T, T, T);
 
@@ -14,7 +14,7 @@ fn mapping_succeeds_if_function_succeeds() {
 }
 
 #[test]
-fn mapping_fails_with_first_error_if_function_fails() {
+fn mapping_fails_with_first_error_when_function_fails() {
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<T>(T, T, T);
 
