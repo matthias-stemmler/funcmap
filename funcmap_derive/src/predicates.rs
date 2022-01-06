@@ -33,10 +33,10 @@ impl Extend<TypeParamBound> for UniqueTypeBounds {
 }
 
 #[derive(Debug, Default)]
-pub struct UniqueLifetimeBounds(IndexSet<Lifetime>);
+struct UniqueLifetimeBounds(IndexSet<Lifetime>);
 
 impl UniqueLifetimeBounds {
-    pub fn into_bounds(self) -> Punctuated<Lifetime, Token![+]> {
+    fn into_bounds(self) -> Punctuated<Lifetime, Token![+]> {
         self.0.into_iter().collect()
     }
 }
@@ -134,5 +134,86 @@ impl UniquePredicates {
             where_token: Default::default(),
             predicates: self.into_iter().collect(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use proc_macro2::{Ident, Span};
+    use syn::parse_quote;
+
+    #[test]
+    fn unique_type_bounds_produces_bounds_in_insertion_order() {
+        let mut unique_bounds = UniqueTypeBounds::new();
+        unique_bounds.extend(
+            [
+                parse_quote!(TestTrait1),
+                parse_quote!((TestTrait2)),
+                parse_quote!(?Sized),
+                parse_quote!(for<'a> TestTrait3<'a>),
+                parse_quote!('b),
+            ]
+            .into_iter(),
+        );
+
+        assert_eq!(
+            unique_bounds.into_bounds(),
+            parse_quote!(TestTrait1 + (TestTrait2) + ?Sized + for<'a> TestTrait3<'a> + 'b)
+        );
+    }
+
+    #[test]
+    fn unique_type_bounds_eliminates_duplicates_regardless_of_span() {
+        let trait_ident1 = Ident::new("TestTrait", Span::call_site());
+        let trait_ident2 = Ident::new("TestTrait", Span::mixed_site());
+
+        let mut unique_bounds = UniqueTypeBounds::new();
+        unique_bounds
+            .extend([parse_quote!(#trait_ident1), parse_quote!(#trait_ident2)].into_iter());
+
+        assert_eq!(unique_bounds.into_bounds(), parse_quote!(TestTrait));
+    }
+
+    #[test]
+    fn unique_predicates_produces_predicates_in_insertion_order_except_lifetimes_first() {
+        let mut unique_predicates = UniquePredicates::new();
+        for predicate in [
+            parse_quote!(for<'a> TestType1: TestTrait1<'a>),
+            parse_quote!('b: 'c),
+            parse_quote!(for<'d> TestType2: TestTrait2<'d>),
+            parse_quote!('e: 'f),
+        ] {
+            unique_predicates.add(predicate).unwrap();
+        }
+
+        assert_eq!(
+            unique_predicates.into_where_clause(),
+            parse_quote!(where 'b: 'c, 'e: 'f, for<'a> TestType1: TestTrait1<'a>, for<'d> TestType2: TestTrait2<'d>)
+        );
+    }
+
+    #[test]
+    fn unique_predicates_eliminates_duplicates_regardless_of_span() {
+        let type_ident1 = Ident::new("TestType", Span::call_site());
+        let type_ident2 = Ident::new("TestType", Span::mixed_site());
+        let lifetime1 = Lifetime::new("'b", Span::call_site());
+        let lifetime2 = Lifetime::new("'b", Span::mixed_site());
+
+        let mut unique_predicates = UniquePredicates::new();
+        for predicate in [
+            parse_quote!(for<'a> #type_ident1: TestTrait<'a>),
+            parse_quote!(#lifetime1: 'c),
+            parse_quote!(for<'a> #type_ident2: TestTrait<'a>),
+            parse_quote!(#lifetime2: 'c),
+        ] {
+            unique_predicates.add(predicate).unwrap();
+        }
+
+        assert_eq!(
+            unique_predicates.into_where_clause(),
+            parse_quote!(where 'b: 'c, for<'a> TestType: TestTrait<'a>)
+        );
     }
 }
