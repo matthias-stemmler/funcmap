@@ -9,7 +9,7 @@ use syn::{
     WherePredicate,
 };
 
-pub trait DependencyOnType {
+pub(crate) trait DependencyOnType {
     fn dependency_on_type<'ast>(&'ast self, type_ident: &'ast Ident) -> Option<&'ast Ident>;
 }
 
@@ -52,7 +52,7 @@ impl<'ast> Visit<'ast> for DependencyOnTypeVisitor<'ast> {
     fn visit_path(&mut self, path: &'ast Path) {
         match (self.dependency, path.leading_colon, path.segments.first()) {
             (None, None, Some(PathSegment { ident, .. })) if ident == self.type_ident => {
-                self.dependency = Some(ident)
+                self.dependency = Some(ident);
             }
             (None, ..) => visit::visit_path(self, path),
             _ => (),
@@ -60,7 +60,7 @@ impl<'ast> Visit<'ast> for DependencyOnTypeVisitor<'ast> {
     }
 }
 
-pub trait SubsType {
+pub(crate) trait SubsType {
     fn subs_type(self, ident: &Ident, subs_ident: &Ident) -> Self;
 }
 
@@ -127,7 +127,7 @@ impl FindIdent for Type {
     }
 }
 
-pub trait IntoGenericArgument {
+pub(crate) trait IntoGenericArgument {
     fn into_generic_argument(self) -> GenericArgument;
 }
 
@@ -145,7 +145,7 @@ impl IntoGenericArgument for GenericParam {
     }
 }
 
-pub trait IntoType {
+pub(crate) trait IntoType {
     fn into_type(self) -> Type;
 }
 
@@ -158,7 +158,7 @@ impl IntoType for Ident {
     }
 }
 
-pub trait ToNonEmptyTokens {
+pub(crate) trait ToNonEmptyTokens {
     fn to_non_empty_token_stream(&self) -> Option<TokenStream>;
 }
 
@@ -174,7 +174,7 @@ where
     }
 }
 
-pub trait WithoutAttrs {
+pub(crate) trait WithoutAttrs {
     fn without_attrs(self) -> Self;
 }
 
@@ -220,7 +220,7 @@ impl Fold for WithoutAttrsFolder {
     }
 }
 
-pub trait WithoutDefault {
+pub(crate) trait WithoutDefault {
     fn without_default(self) -> Self;
 }
 
@@ -234,7 +234,7 @@ impl WithoutDefault for ConstParam {
     }
 }
 
-pub trait WithoutMaybeBounds {
+pub(crate) trait WithoutMaybeBounds {
     fn without_maybe_bounds(self) -> Self;
 }
 

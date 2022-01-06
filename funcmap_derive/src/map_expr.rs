@@ -1,5 +1,7 @@
 use crate::error::Error;
-use crate::idents::*;
+use crate::idents::{
+    FN_IDENT, FN_IDENT_WITH_MARKER, MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT, TRAIT_IDENT,
+};
 use crate::predicates::UniquePredicates;
 use crate::syn_ext::{DependencyOnType, SubsType};
 
@@ -11,7 +13,7 @@ use syn::{
     PathArguments, PathSegment, QSelf, Type, TypeArray, TypeParam, TypePath,
 };
 
-pub fn map_expr(
+pub(crate) fn map_expr(
     mappable: impl ToTokens,
     ty: &Type,
     type_param: &TypeParam,
@@ -29,8 +31,8 @@ pub fn map_expr(
         unique_predicates: UniquePredicates::new(),
     };
 
-    let mapped = mapper.map(mappable.into_token_stream(), ty)?;
-    Ok((mapped, mapper.unique_predicates))
+    let mapped_expr = mapper.map(mappable.into_token_stream(), ty)?;
+    Ok((mapped_expr, mapper.unique_predicates))
 }
 
 #[derive(Debug)]
@@ -43,7 +45,7 @@ struct Mapper<'ast> {
     unique_predicates: UniquePredicates,
 }
 
-impl<'ast> Mapper<'ast> {
+impl Mapper<'_> {
     fn map(&mut self, mappable: TokenStream, ty: &Type) -> Result<TokenStream, Error> {
         if let Type::Macro(..) = ty {
             return Err(syn::Error::new_spanned(

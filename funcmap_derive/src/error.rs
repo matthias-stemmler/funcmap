@@ -6,21 +6,21 @@ use std::{
 use proc_macro2::TokenStream;
 
 #[derive(Debug, Default)]
-pub struct Error(Option<syn::Error>);
+pub(crate) struct Error(Option<syn::Error>);
 
 impl Error {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 
-    pub fn ok(self) -> Result<(), Self> {
+    pub(crate) fn ok(self) -> Result<(), Self> {
         match &self.0 {
             Some(..) => Err(self),
             None => Ok(()),
         }
     }
 
-    pub fn combine<E>(&mut self, other: E)
+    pub(crate) fn combine<E>(&mut self, other: E)
     where
         E: Into<Self>,
     {
@@ -32,10 +32,9 @@ impl Error {
         }
     }
 
-    pub fn into_compile_error(self) -> TokenStream {
+    pub(crate) fn into_compile_error(self) -> TokenStream {
         self.0
-            .map(syn::Error::into_compile_error)
-            .unwrap_or_else(TokenStream::new)
+            .map_or_else(TokenStream::new, syn::Error::into_compile_error)
     }
 }
 
@@ -59,7 +58,7 @@ where
         I: IntoIterator<Item = E>,
     {
         for err in iter {
-            self.combine(err)
+            self.combine(err);
         }
     }
 }
@@ -84,13 +83,13 @@ where
     }
 }
 
-pub struct IntoIter(Option<<syn::Error as IntoIterator>::IntoIter>);
+pub(crate) struct IntoIter(Option<<syn::Error as IntoIterator>::IntoIter>);
 
 impl Iterator for IntoIter {
     type Item = <syn::Error as IntoIterator>::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.iter_mut().flat_map(Iterator::next).next()
+        self.0.iter_mut().find_map(Iterator::next)
     }
 }
 
@@ -103,7 +102,7 @@ impl IntoIterator for Error {
     }
 }
 
-pub trait IteratorExt<C> {
+pub(crate) trait IteratorExt<C> {
     fn collect_combining_errors(self) -> Result<C, Error>;
 }
 
@@ -126,7 +125,7 @@ where
     }
 }
 
-pub trait ResultExt<T> {
+pub(crate) trait ResultExt<T> {
     fn combine_err_with(self, error: &mut Error) -> Option<T>;
 
     fn err_combined_with(self, error: Error) -> Result<T, Error>;

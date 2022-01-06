@@ -16,9 +16,9 @@ mod kw {
 }
 
 #[derive(Debug)]
-pub struct FuncMapOpts {
-    pub crate_path: Option<Path>,
-    pub params: Vec<Param>,
+pub(crate) struct FuncMapOpts {
+    pub(crate) crate_path: Option<Path>,
+    pub(crate) params: Vec<Param>,
 }
 
 impl TryFrom<Vec<Attribute>> for FuncMapOpts {
@@ -39,7 +39,7 @@ impl TryFrom<Vec<Attribute>> for FuncMapOpts {
                     for arg in args {
                         match arg {
                             Arg::Crate(ArgCrate(value)) if crate_path.is_none() => {
-                                crate_path = Some(value)
+                                crate_path = Some(value);
                             }
 
                             Arg::Crate(ArgCrate(value)) => error
@@ -135,6 +135,7 @@ impl Parse for ArgCrate {
     }
 }
 
+#[derive(Debug)]
 struct PathParser;
 
 impl Parser for PathParser {
@@ -204,14 +205,17 @@ impl PartialEq<GenericParam> for Param {
     fn eq(&self, other: &GenericParam) -> bool {
         match (self, other) {
             (Self::Lifetime(l), GenericParam::Lifetime(LifetimeDef { lifetime: r, .. })) => l == r,
-            (Self::TypeOrConst(l), GenericParam::Type(TypeParam { ident: r, .. })) => l == r,
-            (Self::TypeOrConst(l), GenericParam::Const(ConstParam { ident: r, .. })) => l == r,
+            (
+                Self::TypeOrConst(l),
+                GenericParam::Type(TypeParam { ident: r, .. })
+                | GenericParam::Const(ConstParam { ident: r, .. }),
+            ) => l == r,
             _ => false,
         }
     }
 }
 
-pub fn assert_no_opts(attrs: &[Attribute], name: &str) -> Result<(), Error> {
+pub(crate) fn assert_absent(attrs: &[Attribute], name: &str) -> Result<(), Error> {
     attrs
         .iter()
         .filter(|attr| attr.path.is_ident(&ATTR_IDENT))

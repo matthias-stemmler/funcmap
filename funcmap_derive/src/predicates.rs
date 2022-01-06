@@ -7,18 +7,18 @@ use syn::{
 };
 
 #[derive(Debug, Default)]
-pub struct UniqueTypeBounds(IndexSet<TypeParamBound>);
+pub(crate) struct UniqueTypeBounds(IndexSet<TypeParamBound>);
 
 impl UniqueTypeBounds {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 
-    pub fn add(&mut self, bound: TypeParamBound) {
+    pub(crate) fn add(&mut self, bound: TypeParamBound) {
         self.0.insert(bound);
     }
 
-    pub fn into_bounds(self) -> Punctuated<TypeParamBound, Token![+]> {
+    pub(crate) fn into_bounds(self) -> Punctuated<TypeParamBound, Token![+]> {
         self.0.into_iter().collect()
     }
 }
@@ -28,7 +28,7 @@ impl Extend<TypeParamBound> for UniqueTypeBounds {
     where
         I: IntoIterator<Item = TypeParamBound>,
     {
-        self.0.extend(iter)
+        self.0.extend(iter);
     }
 }
 
@@ -46,7 +46,7 @@ impl Extend<Lifetime> for UniqueLifetimeBounds {
     where
         I: IntoIterator<Item = Lifetime>,
     {
-        self.0.extend(iter)
+        self.0.extend(iter);
     }
 }
 
@@ -57,17 +57,17 @@ struct TypePredicateLhs {
 }
 
 #[derive(Debug, Default)]
-pub struct UniquePredicates {
+pub(crate) struct UniquePredicates {
     for_types: IndexMap<TypePredicateLhs, UniqueTypeBounds>,
     for_lifetimes: IndexMap<Lifetime, UniqueLifetimeBounds>,
 }
 
 impl UniquePredicates {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 
-    pub fn add(&mut self, predicate: WherePredicate) -> Result<(), Error> {
+    pub(crate) fn add(&mut self, predicate: WherePredicate) -> Result<(), Error> {
         match predicate {
             WherePredicate::Type(predicate_type) => self
                 .for_types
@@ -98,40 +98,38 @@ impl UniquePredicates {
         Ok(())
     }
 
-    pub fn into_iter(self) -> impl Iterator<Item = WherePredicate> {
+    pub(crate) fn into_iter(self) -> impl Iterator<Item = WherePredicate> {
         let for_lifetimes = self.for_lifetimes.into_iter().filter_map(|(lhs, rhs)| {
             let bounds = rhs.into_bounds();
 
-            match bounds.is_empty() {
-                true => None,
-                false => Some(WherePredicate::Lifetime(PredicateLifetime {
+            (!bounds.is_empty()).then(|| {
+                WherePredicate::Lifetime(PredicateLifetime {
                     lifetime: lhs,
-                    colon_token: Default::default(),
+                    colon_token: <Token![:]>::default(),
                     bounds,
-                })),
-            }
+                })
+            })
         });
 
         let for_types = self.for_types.into_iter().filter_map(|(lhs, rhs)| {
             let bounds = rhs.into_bounds();
 
-            match bounds.is_empty() {
-                true => None,
-                false => Some(WherePredicate::Type(PredicateType {
+            (!bounds.is_empty()).then(|| {
+                WherePredicate::Type(PredicateType {
                     lifetimes: lhs.lifetimes,
                     bounded_ty: lhs.bounded_ty,
-                    colon_token: Default::default(),
+                    colon_token: <Token![:]>::default(),
                     bounds,
-                })),
-            }
+                })
+            })
         });
 
         for_lifetimes.chain(for_types)
     }
 
-    pub fn into_where_clause(self) -> WhereClause {
+    pub(crate) fn into_where_clause(self) -> WhereClause {
         WhereClause {
-            where_token: Default::default(),
+            where_token: <Token![where]>::default(),
             predicates: self.into_iter().collect(),
         }
     }

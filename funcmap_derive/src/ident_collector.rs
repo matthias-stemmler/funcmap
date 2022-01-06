@@ -4,19 +4,19 @@ use proc_macro2::{Ident, Span};
 use syn::visit::Visit;
 
 #[derive(Debug, Default)]
-pub struct IdentCollector {
+pub(crate) struct IdentCollector {
     idents: HashSet<String>,
 }
 
 #[derive(Debug, Default)]
-pub struct VisitingIdentCollector(IdentCollector);
+pub(crate) struct VisitingIdentCollector(IdentCollector);
 
 impl IdentCollector {
-    pub fn new_visiting() -> VisitingIdentCollector {
+    pub(crate) fn new_visiting() -> VisitingIdentCollector {
         VisitingIdentCollector::default()
     }
 
-    pub fn reserve_uppercase_letter(&mut self, desired_letter: char, span: Span) -> Ident {
+    pub(crate) fn reserve_uppercase_letter(&mut self, desired_letter: char, span: Span) -> Ident {
         let letter = self.find_uppercase_letter(desired_letter);
         let ident = Ident::new(&letter, span);
         self.idents.insert(letter);
@@ -28,7 +28,7 @@ impl IdentCollector {
             panic!("{} is not an uppercase letter", desired_letter);
         }
 
-        (0..)
+        (0..=usize::MAX)
             .flat_map(|iteration| {
                 (desired_letter..='Z').chain('A'..=desired_letter).map(
                     move |letter| match iteration {
@@ -44,7 +44,7 @@ impl IdentCollector {
 }
 
 impl VisitingIdentCollector {
-    pub fn into_reserved(self) -> IdentCollector {
+    pub(crate) fn into_reserved(self) -> IdentCollector {
         self.0
     }
 }

@@ -1,5 +1,21 @@
 #![no_std]
+#![deny(warnings)]
+#![deny(missing_copy_implementations)]
 #![deny(missing_debug_implementations)]
+// #![deny(missing_docs)] // TODO uncomment
+#![deny(unreachable_pub)]
+#![deny(unused_crate_dependencies)]
+#![deny(unused_extern_crates)]
+#![deny(unused_lifetimes)]
+#![deny(unused_qualifications)]
+#![deny(clippy::all)]
+#![deny(clippy::pedantic)]
+// #![deny(clippy::cargo_common_metadata)] // TODO uncomment
+#![deny(clippy::multiple_crate_versions)]
+#![deny(clippy::rest_pat_in_fully_bound_structs)]
+#![deny(clippy::use_debug)]
+#![allow(clippy::module_name_repetitions)]
+#![allow(clippy::missing_errors_doc)] // TODO remove
 
 mod array;
 mod impls_core;

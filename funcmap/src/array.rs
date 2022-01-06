@@ -3,18 +3,13 @@ use core::{
     ptr,
 };
 
-pub fn try_map_array<A, B, E, F, const N: usize>(array: [A; N], mut f: F) -> Result<[B; N], E>
+pub(crate) fn try_map_array<A, B, E, F, const N: usize>(
+    array: [A; N],
+    mut f: F,
+) -> Result<[B; N], E>
 where
     F: FnMut(A) -> Result<B, E>,
 {
-    if N == 0 {
-        // SAFETY: an empty array is zero-sized and hence has no invalid bit patterns
-        return Ok(unsafe { mem::zeroed() });
-    }
-
-    // SAFETY: an array of `MaybeUninit<_>` is always initialized
-    let mut mapped: [MaybeUninit<B>; N] = unsafe { MaybeUninit::uninit().assume_init() };
-
     // invariants:
     // - `init_until_idx <= N`
     // - the slice `array_mut[..init_until_idx]` is initialized
@@ -33,12 +28,20 @@ where
             let init_slice = unsafe { self.array_mut.get_unchecked_mut(..self.init_until_idx) };
 
             // SAFETY: the slice is initialized by invariant
-            let init_slice = unsafe { &mut *(init_slice as *mut _ as *mut T) };
+            let init_slice = unsafe { &mut *(init_slice as *mut [MaybeUninit<T>]).cast::<T>() };
 
             // SAFETY: `self.array_mut` is not used after `Self` is dropped
             unsafe { ptr::drop_in_place(init_slice) };
         }
     }
+
+    if N == 0 {
+        // SAFETY: an empty array is zero-sized and hence has no invalid bit patterns
+        return Ok(unsafe { mem::zeroed() });
+    }
+
+    // SAFETY: an array of `MaybeUninit<_>` is always initialized
+    let mut mapped: [MaybeUninit<B>; N] = unsafe { MaybeUninit::uninit().assume_init() };
 
     let mut guard = Guard {
         array_mut: &mut mapped,
@@ -63,7 +66,11 @@ where
     mem::forget(guard);
 
     // SAFETY: all elements are initialized at this point
-    let mapped = unsafe { (&mapped as *const _ as *const [B; N]).read() };
+    let mapped = unsafe {
+        (&mapped as *const [MaybeUninit<B>; N])
+            .cast::<[B; N]>()
+            .read()
+    };
 
     Ok(mapped)
 }
@@ -131,10 +138,11 @@ mod tests {
     }
 
     mod dropping {
+        extern crate std;
+
         use super::*;
         use drop_trace::*;
 
-        extern crate std;
         use std::boxed::Box;
         use std::panic::{self, AssertUnwindSafe};
         use std::vec::Vec;
@@ -255,14 +263,14 @@ mod tests {
             use std::vec::{self, Vec};
 
             #[derive(Debug)]
-            pub struct DropTrace<T>(RefCell<Vec<T>>);
+            pub(super) struct DropTrace<T>(RefCell<Vec<T>>);
 
             impl<T> DropTrace<T> {
-                pub fn new() -> Self {
+                pub(super) fn new() -> Self {
                     Self::default()
                 }
 
-                pub fn guard(&self, payload: T) -> DropTraceGuard<T> {
+                pub(super) fn guard(&self, payload: T) -> DropTraceGuard<T> {
                     DropTraceGuard {
                         drop_trace: self,
                         payload: Some(payload),
@@ -286,7 +294,7 @@ mod tests {
             }
 
             #[derive(Debug)]
-            pub struct DropTraceGuard<'a, T> {
+            pub(super) struct DropTraceGuard<'a, T> {
                 drop_trace: &'a DropTrace<T>,
                 payload: Option<T>,
             }

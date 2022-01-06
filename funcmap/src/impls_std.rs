@@ -5,7 +5,7 @@ use crate::{FuncMap, TypeParam};
 use core::hash::Hash;
 use std::collections::{hash_map, hash_set, HashMap, HashSet};
 
-impl<A, B, V> FuncMap<A, B, TypeParam<0>> for HashMap<A, V>
+impl<A, B, V, S> FuncMap<A, B, TypeParam<0>> for HashMap<A, V, S>
 where
     B: Eq + Hash,
 {
@@ -19,7 +19,7 @@ where
     }
 }
 
-impl<K, A, B> FuncMap<A, B, TypeParam<1>> for HashMap<K, A>
+impl<K, A, B, S> FuncMap<A, B, TypeParam<1>> for HashMap<K, A, S>
 where
     K: Eq + Hash,
 {
@@ -65,7 +65,7 @@ where
     }
 }
 
-impl<A, B> FuncMap<A, B> for HashSet<A>
+impl<A, B, S> FuncMap<A, B> for HashSet<A, S>
 where
     B: Eq + Hash,
 {

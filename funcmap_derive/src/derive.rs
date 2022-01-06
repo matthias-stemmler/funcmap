@@ -1,5 +1,5 @@
 use crate::error::{Error, ResultExt};
-use crate::idents::*;
+use crate::idents::{FN_IDENT, MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT, TRAIT_IDENT};
 use crate::input::{FuncMapInput, Structish};
 use crate::map_expr::map_expr;
 use crate::predicates::{UniquePredicates, UniqueTypeBounds};
@@ -15,7 +15,7 @@ use syn::{
     WherePredicate,
 };
 
-pub fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Error> {
+pub(crate) fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Error> {
     let input: FuncMapInput = input.try_into()?;
     let mut ident_collector = input.meta.ident_collector;
 
@@ -263,7 +263,7 @@ fn subs_type_in_bounds<'ast>(
                     ));
                 }
             }
-            bound => unique_type_bounds.add(bound.clone()),
+            bound @ TypeParamBound::Lifetime(..) => unique_type_bounds.add(bound.clone()),
         };
     }
 

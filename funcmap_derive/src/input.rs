@@ -1,8 +1,8 @@
 use crate::{
     error::{Error, IteratorExt, ResultExt},
     ident_collector::IdentCollector,
-    idents::*,
-    opts::{assert_no_opts, FuncMapOpts, Param},
+    idents::{CRATE_IDENT, TRAIT_IDENT},
+    opts::{self, FuncMapOpts, Param},
     syn_ext::ToNonEmptyTokens,
 };
 
@@ -12,41 +12,41 @@ use proc_macro2::Ident;
 use quote::ToTokens;
 use syn::{
     visit::Visit, Data, DataEnum, DataStruct, DataUnion, DeriveInput, Field, GenericParam,
-    Generics, Path, Type, TypeParam, Variant,
+    Generics, Path, Token, Type, TypeParam, Variant,
 };
 
 #[derive(Debug)]
-pub struct FuncMapInput {
-    pub meta: FuncMapMeta,
-    pub ident: Ident,
-    pub generics: Generics,
-    pub mapped_type_params: Vec<MappedTypeParam>,
-    pub variants: Vec<Structish>,
+pub(crate) struct FuncMapInput {
+    pub(crate) meta: FuncMapMeta,
+    pub(crate) ident: Ident,
+    pub(crate) generics: Generics,
+    pub(crate) mapped_type_params: Vec<MappedTypeParam>,
+    pub(crate) variants: Vec<Structish>,
 }
 
 #[derive(Debug)]
-pub struct FuncMapMeta {
-    pub crate_path: Path,
-    pub ident_collector: IdentCollector,
+pub(crate) struct FuncMapMeta {
+    pub(crate) crate_path: Path,
+    pub(crate) ident_collector: IdentCollector,
 }
 
 #[derive(Debug)]
-pub struct MappedTypeParam {
-    pub param_idx: usize,
-    pub type_param_idx: usize,
-    pub type_param: TypeParam,
+pub(crate) struct MappedTypeParam {
+    pub(crate) param_idx: usize,
+    pub(crate) type_param_idx: usize,
+    pub(crate) type_param: TypeParam,
 }
 
 #[derive(Debug)]
-pub struct Structish {
-    pub variant_ident: Option<Ident>,
-    pub fields: Vec<Fieldish>,
+pub(crate) struct Structish {
+    pub(crate) variant_ident: Option<Ident>,
+    pub(crate) fields: Vec<Fieldish>,
 }
 
 #[derive(Debug)]
-pub struct Fieldish {
-    pub ident: Option<Ident>,
-    pub ty: Type,
+pub(crate) struct Fieldish {
+    pub(crate) ident: Option<Ident>,
+    pub(crate) ty: Type,
 }
 
 impl TryFrom<DeriveInput> for FuncMapInput {
@@ -66,7 +66,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
                 let path = CRATE_IDENT.to_ident().into();
 
                 Path {
-                    leading_colon: Some(Default::default()),
+                    leading_colon: Some(<Token![::]>::default()),
                     ..path
                 }
             }),
@@ -186,7 +186,7 @@ impl TryFrom<Variant> for Structish {
     fn try_from(variant: Variant) -> Result<Self, Self::Error> {
         let mut error = Error::new();
 
-        assert_no_opts(&variant.attrs, "variants").combine_err_with(&mut error);
+        opts::assert_absent(&variant.attrs, "variants").combine_err_with(&mut error);
 
         Ok(Self {
             variant_ident: Some(variant.ident),
@@ -204,7 +204,7 @@ impl TryFrom<Field> for Fieldish {
     type Error = Error;
 
     fn try_from(field: Field) -> Result<Self, Self::Error> {
-        assert_no_opts(&field.attrs, "fields")?;
+        opts::assert_absent(&field.attrs, "fields")?;
 
         Ok(Self {
             ident: field.ident,

@@ -3,19 +3,19 @@ use std::fmt::{self, Display, Formatter};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::ToTokens;
 
-pub const CRATE_IDENT: StaticIdent = StaticIdent("funcmap");
-pub const TRAIT_IDENT: StaticIdent = StaticIdent("FuncMap");
-pub const FN_IDENT: StaticIdent = StaticIdent("try_func_map");
-pub const FN_IDENT_WITH_MARKER: StaticIdent = StaticIdent("try_func_map_over");
-pub const OUTPUT_TYPE_IDENT: StaticIdent = StaticIdent("Output");
-pub const MARKER_TYPE_IDENT: StaticIdent = StaticIdent("TypeParam");
-pub const ATTR_IDENT: StaticIdent = StaticIdent("funcmap");
+pub(crate) const CRATE_IDENT: StaticIdent = StaticIdent("funcmap");
+pub(crate) const TRAIT_IDENT: StaticIdent = StaticIdent("FuncMap");
+pub(crate) const FN_IDENT: StaticIdent = StaticIdent("try_func_map");
+pub(crate) const FN_IDENT_WITH_MARKER: StaticIdent = StaticIdent("try_func_map_over");
+pub(crate) const OUTPUT_TYPE_IDENT: StaticIdent = StaticIdent("Output");
+pub(crate) const MARKER_TYPE_IDENT: StaticIdent = StaticIdent("TypeParam");
+pub(crate) const ATTR_IDENT: StaticIdent = StaticIdent("funcmap");
 
 #[derive(Debug)]
-pub struct StaticIdent(&'static str);
+pub(crate) struct StaticIdent(&'static str);
 
 impl StaticIdent {
-    pub fn to_ident(&self) -> Ident {
+    pub(crate) fn to_ident(&self) -> Ident {
         Ident::new(self.0, Span::call_site())
     }
 }
@@ -34,6 +34,6 @@ impl Display for StaticIdent {
 
 impl ToTokens for StaticIdent {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        self.to_ident().to_tokens(tokens)
+        self.to_ident().to_tokens(tokens);
     }
 }
