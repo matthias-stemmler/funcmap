@@ -9,7 +9,7 @@
 #![deny(unused_qualifications)]
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
-// #![deny(clippy::cargo_common_metadata)] // TODO uncomment
+#![deny(clippy::cargo_common_metadata)]
 #![deny(clippy::multiple_crate_versions)]
 #![deny(clippy::rest_pat_in_fully_bound_structs)]
 #![deny(clippy::use_debug)]
@@ -30,15 +30,15 @@ mod opts;
 mod predicates;
 mod syn_ext;
 
-// TODO check auto-impl/structopt/serde
-// TODO docs
+// TODO check auto-impl/structopt/serde (serde: crates-io.md, html_root_url, explicit "include" in Cargo.toml)
+// TODO docs (including root README), resolve TODOs
 // TODO unit tests
-// TODO impl types from popular crates?
 // TODO MSRV policy?
 // TODO no_std test (-> Serde)
 // TODO GitHub Actions: cargo msrv --verify, cargo nono check, dependabot (see Serde)
 // TODO MIRI test for unsafe
 // TODO resolve TODOs
+// TODO test publishing (https://github.com/rust-lang/cargo/wiki/Third-party-registries)
 
 #[proc_macro_derive(FuncMap, attributes(funcmap))]
 pub fn derive_func_map(item: TokenStream) -> TokenStream {

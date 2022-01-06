@@ -1,4 +1,4 @@
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 #![deny(warnings)]
 #![deny(missing_copy_implementations)]
 #![deny(missing_debug_implementations)]
@@ -10,7 +10,7 @@
 #![deny(unused_qualifications)]
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
-// #![deny(clippy::cargo_common_metadata)] // TODO uncomment
+#![deny(clippy::cargo_common_metadata)]
 #![deny(clippy::multiple_crate_versions)]
 #![deny(clippy::rest_pat_in_fully_bound_structs)]
 #![deny(clippy::use_debug)]
