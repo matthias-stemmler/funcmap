@@ -1,5 +1,3 @@
-extern crate std;
-
 use crate::{FuncMap, TypeParam};
 
 use core::hash::Hash;

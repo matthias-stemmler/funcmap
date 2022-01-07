@@ -1,3 +1,4 @@
+// Builtin lints
 #![deny(warnings)]
 #![deny(missing_copy_implementations)]
 #![deny(missing_debug_implementations)]
@@ -7,6 +8,7 @@
 #![deny(unused_extern_crates)]
 #![deny(unused_lifetimes)]
 #![deny(unused_qualifications)]
+// Clippy lints
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 #![deny(clippy::cargo_common_metadata)]
@@ -16,6 +18,13 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::missing_errors_doc)] // TODO remove
 #![allow(clippy::too_many_lines)]
+// Rustdoc lints
+#![deny(rustdoc::broken_intra_doc_links)]
+#![deny(rustdoc::private_intra_doc_links)]
+#![deny(rustdoc::private_doc_tests)]
+#![deny(rustdoc::invalid_codeblock_attributes)]
+#![deny(rustdoc::invalid_rust_codeblocks)]
+#![deny(rustdoc::bare_urls)]
 
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput};

@@ -138,8 +138,6 @@ mod tests {
     }
 
     mod dropping {
-        extern crate std;
-
         use super::*;
         use drop_trace::*;
 
@@ -228,18 +226,12 @@ mod tests {
                 }
             }
 
-            fn with_mapping_state(self, mapping_state: MappingState) -> Self {
-                Self {
-                    mapping_state,
-                    ..self
-                }
-            }
-
             fn map(self) -> Result<Self, MappingError> {
                 match self.mapping_state {
-                    MappingState::Mappable => {
-                        Ok(self.with_mapping_state(MappingState::MappingPanics))
-                    }
+                    MappingState::Mappable => Ok(Self {
+                        mapping_state: MappingState::MappingPanics,
+                        ..self
+                    }),
                     MappingState::MappingPanics => panic!("panic during mapping"),
                     MappingState::NotMappable => Err(MappingError),
                 }
@@ -257,8 +249,6 @@ mod tests {
         }
 
         mod drop_trace {
-            extern crate std;
-
             use std::cell::RefCell;
             use std::vec::{self, Vec};
 

@@ -19,7 +19,6 @@ struct Test<T> {
 #[automatically_derived]
 impl<A, B> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A>
 where
-    [A; 1]: ::funcmap::FuncMap<A, B, Output = [B; 1]>,
     Foo<Bar<A>>:
         ::funcmap::FuncMap<Bar<A>, Bar<B>, ::funcmap::TypeParam<0usize>, Output = Foo<Bar<B>>>,
     Bar<A>: ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>, Output = Bar<B>>,
@@ -42,24 +41,24 @@ where
                 array: ::funcmap::FuncMap::try_func_map(field_array, |value| {
                     ::core::result::Result::Ok(f(value)?)
                 })?,
-                nested: ::funcmap::FuncMap::try_func_map_over(
+                nested: ::funcmap::FuncMap::<_, _, ::funcmap::TypeParam<0usize>>::try_func_map(
                     field_nested,
-                    ::funcmap::TypeParam::<0usize>,
                     |value| {
-                        ::core::result::Result::Ok(::funcmap::FuncMap::try_func_map_over(
+                        ::core::result::Result::Ok(::funcmap::FuncMap::<
+                            _,
+                            _,
+                            ::funcmap::TypeParam<0usize>,
+                        >::try_func_map(
                             value,
-                            ::funcmap::TypeParam::<0usize>,
                             |value| ::core::result::Result::Ok(f(value)?),
                         )?)
                     },
                 )?,
-                repeated: ::funcmap::FuncMap::try_func_map_over(
-                    ::funcmap::FuncMap::try_func_map_over(
+                repeated: ::funcmap::FuncMap::<_, _, ::funcmap::TypeParam<1usize>>::try_func_map(
+                    ::funcmap::FuncMap::<_, _, ::funcmap::TypeParam<0usize>>::try_func_map(
                         field_repeated,
-                        ::funcmap::TypeParam::<0usize>,
                         |value| ::core::result::Result::Ok(f(value)?),
                     )?,
-                    ::funcmap::TypeParam::<1usize>,
                     |value| ::core::result::Result::Ok(f(value)?),
                 )?,
             },

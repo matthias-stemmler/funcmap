@@ -1,7 +1,5 @@
 use crate::error::Error;
-use crate::idents::{
-    FN_IDENT, FN_IDENT_WITH_MARKER, MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT, TRAIT_IDENT,
-};
+use crate::idents::{FN_IDENT, MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT, TRAIT_IDENT};
 use crate::predicates::UniquePredicates;
 use crate::syn_ext::{DependencyOnType, SubsType};
 
@@ -63,19 +61,7 @@ impl Mapper<'_> {
 
         match ty {
             Type::Array(TypeArray { elem: inner_ty, .. }) => {
-                let (src_type, dst_type) = self.subs_types(ty.clone());
-                let (inner_src_type, inner_dst_type) = self.subs_types(Type::clone(inner_ty));
-
-                self.unique_predicates.add(parse_quote! {
-                    #src_type: #crate_path::#TRAIT_IDENT<
-                        #inner_src_type,
-                        #inner_dst_type,
-                        #OUTPUT_TYPE_IDENT = #dst_type
-                    >
-                })?;
-
                 let closure = self.map_closure(inner_ty)?;
-
                 Ok(quote!(#crate_path::#TRAIT_IDENT::#FN_IDENT(#mappable, #closure)?))
             }
 
@@ -229,7 +215,7 @@ impl Mapper<'_> {
                     let closure = self.map_closure(arg_type)?;
 
                     mappable = quote! {
-                        #crate_path::#TRAIT_IDENT::#FN_IDENT_WITH_MARKER(#mappable, #crate_path::#MARKER_TYPE_IDENT::<#type_idx>, #closure)?
+                        #crate_path::#TRAIT_IDENT::<_, _, #crate_path::#MARKER_TYPE_IDENT::<#type_idx>>::#FN_IDENT(#mappable, #closure)?
                     }
                 }
 
