@@ -220,7 +220,7 @@ pub(crate) fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Error> 
                 {
                     type #OUTPUT_TYPE_IDENT = #ident<#(#dst_args),*>;
 
-                    fn #FN_IDENT<#fn_type_ident, #err_type_ident>(
+                    fn #FN_IDENT<#err_type_ident, #fn_type_ident>(
                         self,
                         mut #fn_var_ident: #fn_type_ident
                     ) -> ::core::result::Result<Self::#OUTPUT_TYPE_IDENT, #err_type_ident>

@@ -8,7 +8,7 @@ fn attributes_on_generics_are_supported() {
     struct Test<#[cfg(test)] S, #[cfg(test)] T>(S, T);
 
     let src = Test(T1, T1);
-    let dst = src.func_map_over(TypeParam::<0>, |_| T2);
+    let dst = src.func_map_over::<TypeParam<0>, _>(|_| T2);
 
     assert_eq!(dst, Test(T2, T1));
 }
@@ -19,7 +19,7 @@ fn defaults_on_generics_are_supported() {
     struct Test<S, T = T1>(S, T);
 
     let src = Test(T1, T1);
-    let dst = src.func_map_over(TypeParam::<0>, |_| T2);
+    let dst = src.func_map_over::<TypeParam<0>, _>(|_| T2);
 
     assert_eq!(dst, Test(T2, T1));
 }
@@ -35,7 +35,7 @@ fn impl_is_restricted_to_trait_bounds_on_generics_of_original_type() {
     struct Test<S: TestTrait, T: TestTrait>(S, T);
 
     let src = Test(T1, T1);
-    let dst = src.func_map_over(TypeParam::<0>, |_| T2);
+    let dst = src.func_map_over::<TypeParam<0>, _>(|_| T2);
 
     assert_eq!(dst, Test(T2, T1));
 }
@@ -58,7 +58,7 @@ fn impl_is_restricted_to_self_dependent_trait_bounds_on_generics_of_original_typ
     struct Test<S: TestTrait<S, Assoc = S>, T: TestTrait<T, Assoc = T>>(S, T);
 
     let src = Test(T1, T1);
-    let dst = src.func_map_over(TypeParam::<0>, |_| T2);
+    let dst = src.func_map_over::<TypeParam<0>, _>(|_| T2);
 
     assert_eq!(dst, Test(T2, T1));
 }
@@ -81,7 +81,7 @@ fn impl_is_restricted_to_cross_dependent_trait_bounds_on_generics_of_original_ty
     struct Test<S: TestTrait<T, Assoc = T>, T: TestTrait<S, Assoc = S>>(S, T);
 
     let src = Test(T1, T1);
-    let dst = src.func_map_over(TypeParam::<0>, |_| T2);
+    let dst = src.func_map_over::<TypeParam<0>, _>(|_| T2);
 
     assert_eq!(dst, Test(T2, T1));
 }
@@ -101,7 +101,7 @@ fn impl_is_restricted_to_maybe_sized_bound_on_unmapped_generic_of_original_type(
     struct Test<S: ?Sized, T: ?Sized + TestTrait<S>>(PhantomData<S>, PhantomData<T>);
 
     let src = Test::<T1, Unsized>(PhantomData, PhantomData);
-    let dst = src.func_map_over(TypeParam::<0>, |_: T1| T2);
+    let dst = src.func_map_over::<TypeParam<0>, _>(|_: T1| T2);
 
     assert_eq!(dst, Test(PhantomData, PhantomData));
 }
@@ -131,7 +131,7 @@ fn impl_is_restricted_to_trait_bounds_in_where_clause_on_original_type() {
         T: TestTrait;
 
     let src = Test(T1, T1);
-    let dst = src.func_map_over(TypeParam::<0>, |_| T2);
+    let dst = src.func_map_over::<TypeParam<0>, _>(|_| T2);
 
     assert_eq!(dst, Test(T2, T1));
 }
@@ -157,7 +157,7 @@ fn impl_is_restricted_to_self_dependent_trait_bounds_in_where_clause_on_original
         T: TestTrait<T, Assoc = T>;
 
     let src = Test(T1, T1);
-    let dst = src.func_map_over(TypeParam::<0>, |_| T2);
+    let dst = src.func_map_over::<TypeParam<0>, _>(|_| T2);
 
     assert_eq!(dst, Test(T2, T1));
 }
@@ -183,7 +183,7 @@ fn impl_is_restricted_to_cross_dependent_trait_bounds_in_where_clause_on_origina
         T: TestTrait<S, Assoc = S>;
 
     let src = Test(T1, T1);
-    let dst = src.func_map_over(TypeParam::<0>, |_| T2);
+    let dst = src.func_map_over::<TypeParam<0>, _>(|_| T2);
 
     assert_eq!(dst, Test(T2, T1));
 }
@@ -210,7 +210,7 @@ fn impl_is_restricted_to_arbitrary_trait_bounds_in_where_clause_on_original_type
         <<S as TestTrait<T>>::Assoc as TestTrait<S>>::Assoc: TestTrait<T>;
 
     let src = Test(T1, T1);
-    let dst = src.func_map_over(TypeParam::<0>, |_| T2);
+    let dst = src.func_map_over::<TypeParam<0>, _>(|_| T2);
 
     assert_eq!(dst, Test(T2, T1));
 }
@@ -228,7 +228,7 @@ fn impl_is_restricted_to_trait_bounds_with_bound_lifetimes_in_where_clause_on_or
         for<'a> T: TestTrait<'a>;
 
     let src = Test(T1, T1);
-    let dst = src.func_map_over(TypeParam::<0>, |_| T2);
+    let dst = src.func_map_over::<TypeParam<0>, _>(|_| T2);
 
     assert_eq!(dst, Test(T2, T1));
 }
@@ -251,7 +251,7 @@ fn impl_is_restricted_to_maybe_sized_bound_on_unmapped_generic_in_where_clause_o
         T: ?Sized + TestTrait<S>;
 
     let src = Test::<T1, Unsized>(PhantomData, PhantomData);
-    let dst = src.func_map_over(TypeParam::<0>, |_: T1| T2);
+    let dst = src.func_map_over::<TypeParam<0>, _>(|_: T1| T2);
 
     assert_eq!(dst, Test(PhantomData, PhantomData));
 }
@@ -278,7 +278,7 @@ fn impl_is_restricted_to_allow_mapping_of_inner_type() {
     impl FuncMap<T1, T2> for Inner<T1> {
         type Output = Inner<T2>;
 
-        fn try_func_map<F, E>(self, _: F) -> Result<Self::Output, E>
+        fn try_func_map<E, F>(self, _: F) -> Result<Self::Output, E>
         where
             F: FnMut(T1) -> Result<T2, E>,
         {

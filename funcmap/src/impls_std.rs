@@ -9,7 +9,7 @@ where
 {
     type Output = HashMap<B, V>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -23,7 +23,7 @@ where
 {
     type Output = HashMap<K, B>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -37,7 +37,7 @@ where
 {
     type Output = hash_map::IntoIter<B, V>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -53,7 +53,7 @@ where
 {
     type Output = hash_map::IntoIter<K, B>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -69,7 +69,7 @@ where
 {
     type Output = HashSet<B>;
 
-    fn try_func_map<F, E>(self, f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -83,7 +83,7 @@ where
 {
     type Output = hash_set::IntoIter<B>;
 
-    fn try_func_map<F, E>(self, f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {

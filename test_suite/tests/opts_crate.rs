@@ -31,7 +31,7 @@ mod fake_funcmap {
     pub trait FuncMap<A, B, P = TypeParam<0>> {
         type Output;
 
-        fn try_func_map<F, E>(self, _: F) -> Result<Self::Output, E>
+        fn try_func_map<E, F>(self, _: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>;
     }

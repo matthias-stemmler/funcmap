@@ -9,10 +9,10 @@ struct Measurements<L, M> {
     masses: Vec<M>,
 }
 
-/// Markers for the two type parameters of [Measurements]
+/// Aliases for the markers for the two type parameters of [Measurements]
 /// These are abstractions over the concrete indices `0` and `1`
-const LENGTH_PARAM: TypeParam<0> = TypeParam;
-const MASS_PARAM: TypeParam<1> = TypeParam;
+type LengthParam = TypeParam<0>;
+type MassParam = TypeParam<1>;
 
 impl<L, M> Measurements<L, M> {
     fn into_base(self) -> Measurements<Meter, Kilogram>
@@ -22,8 +22,8 @@ impl<L, M> Measurements<L, M> {
     {
         // use `func_map_over` to specify the type parameter of `Measurements`
         // over which the mapping is to be performed
-        self.func_map_over(LENGTH_PARAM, Into::into)
-            .func_map_over(MASS_PARAM, Into::into)
+        self.func_map_over::<LengthParam, _>(Into::into)
+            .func_map_over::<MassParam, _>(Into::into)
     }
 }
 

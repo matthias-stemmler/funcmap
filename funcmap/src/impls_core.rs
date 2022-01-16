@@ -10,7 +10,7 @@ use core::{option, result};
 impl<A, B, const N: usize> FuncMap<A, B> for [A; N] {
     type Output = [B; N];
 
-    fn try_func_map<F, E>(self, f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -21,7 +21,7 @@ impl<A, B, const N: usize> FuncMap<A, B> for [A; N] {
 impl<A, B> FuncMap<A, B> for Bound<A> {
     type Output = Bound<B>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -36,7 +36,7 @@ impl<A, B> FuncMap<A, B> for Bound<A> {
 impl<A, B> FuncMap<A, B> for Cell<A> {
     type Output = Cell<B>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -47,7 +47,7 @@ impl<A, B> FuncMap<A, B> for Cell<A> {
 impl<T, U, C> FuncMap<T, U, TypeParam<0>> for ControlFlow<T, C> {
     type Output = ControlFlow<U, C>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(T) -> Result<U, E>,
     {
@@ -61,7 +61,7 @@ impl<T, U, C> FuncMap<T, U, TypeParam<0>> for ControlFlow<T, C> {
 impl<B, T, U> FuncMap<T, U, TypeParam<1>> for ControlFlow<B, T> {
     type Output = ControlFlow<B, U>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(T) -> Result<U, E>,
     {
@@ -75,7 +75,7 @@ impl<B, T, U> FuncMap<T, U, TypeParam<1>> for ControlFlow<B, T> {
 impl<A, B> FuncMap<A, B> for Option<A> {
     type Output = Option<B>;
 
-    fn try_func_map<F, E>(self, f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -86,7 +86,7 @@ impl<A, B> FuncMap<A, B> for Option<A> {
 impl<A, B> FuncMap<A, B> for option::IntoIter<A> {
     type Output = option::IntoIter<B>;
 
-    fn try_func_map<F, E>(mut self, f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(mut self, f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -97,7 +97,7 @@ impl<A, B> FuncMap<A, B> for option::IntoIter<A> {
 impl<A, B> FuncMap<A, B> for PhantomData<A> {
     type Output = PhantomData<B>;
 
-    fn try_func_map<F, E>(self, _: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, _: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -108,7 +108,7 @@ impl<A, B> FuncMap<A, B> for PhantomData<A> {
 impl<A, B> FuncMap<A, B> for Poll<A> {
     type Output = Poll<B>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -122,7 +122,7 @@ impl<A, B> FuncMap<A, B> for Poll<A> {
 impl<A, B> FuncMap<A, B> for Range<A> {
     type Output = Range<B>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -133,7 +133,7 @@ impl<A, B> FuncMap<A, B> for Range<A> {
 impl<A, B> FuncMap<A, B> for RangeFrom<A> {
     type Output = RangeFrom<B>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -144,7 +144,7 @@ impl<A, B> FuncMap<A, B> for RangeFrom<A> {
 impl<A, B> FuncMap<A, B> for RangeInclusive<A> {
     type Output = RangeInclusive<B>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -156,7 +156,7 @@ impl<A, B> FuncMap<A, B> for RangeInclusive<A> {
 impl<A, B> FuncMap<A, B> for RangeTo<A> {
     type Output = RangeTo<B>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -167,7 +167,7 @@ impl<A, B> FuncMap<A, B> for RangeTo<A> {
 impl<A, B> FuncMap<A, B> for RangeToInclusive<A> {
     type Output = RangeToInclusive<B>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -178,7 +178,7 @@ impl<A, B> FuncMap<A, B> for RangeToInclusive<A> {
 impl<A, B> FuncMap<A, B> for RefCell<A> {
     type Output = RefCell<B>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -189,7 +189,7 @@ impl<A, B> FuncMap<A, B> for RefCell<A> {
 impl<A, B, U> FuncMap<A, B, TypeParam<0>> for Result<A, U> {
     type Output = Result<B, U>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -203,7 +203,7 @@ impl<A, B, U> FuncMap<A, B, TypeParam<0>> for Result<A, U> {
 impl<T, A, B> FuncMap<A, B, TypeParam<1>> for Result<T, A> {
     type Output = Result<T, B>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -217,7 +217,7 @@ impl<T, A, B> FuncMap<A, B, TypeParam<1>> for Result<T, A> {
 impl<A, B> FuncMap<A, B> for result::IntoIter<A> {
     type Output = result::IntoIter<B>;
 
-    fn try_func_map<F, E>(mut self, f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(mut self, f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {
@@ -228,7 +228,7 @@ impl<A, B> FuncMap<A, B> for result::IntoIter<A> {
 impl<A, B> FuncMap<A, B> for UnsafeCell<A> {
     type Output = UnsafeCell<B>;
 
-    fn try_func_map<F, E>(self, mut f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
     {

@@ -14,7 +14,7 @@ struct Test<S, T>(S, T, i32);
 #[automatically_derived]
 impl<A, B, T> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A, T> {
     type Output = Test<B, T>;
-    fn try_func_map<F, E>(self, mut f: F) -> ::core::result::Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> ::core::result::Result<Self::Output, E>
     where
         F: ::core::ops::FnMut(A) -> ::core::result::Result<B, E>,
     {
@@ -45,7 +45,7 @@ impl<A, B, T> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A,
 #[automatically_derived]
 impl<S, A, B> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<1usize>> for Test<S, A> {
     type Output = Test<S, B>;
-    fn try_func_map<F, E>(self, mut f: F) -> ::core::result::Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> ::core::result::Result<Self::Output, E>
     where
         F: ::core::ops::FnMut(A) -> ::core::result::Result<B, E>,
     {

@@ -174,19 +174,19 @@
 //!
 //! # Multiple Type Parameters
 //!
-//! [TypeParam] marker, for config refer to config section
-//! Recommend `const` alias for [TypeParam]
+//! [`TypeParam`] marker, for config refer to config section
+//! Recommend `const` alias for [`TypeParam`]
 //! `func_map_over`
 //!
 //! # Configuration
 //!
 //! `crate`, `params`
 //!
-//! # Manually Implementing [FuncMap]
+//! # Manually Implementing [`FuncMap`]
 //!
 //! Implement only `try_func_map`, others are provided
 //!
-//! # no_std
+//! # `no_std`
 //!
 //! Explain how to use with `#![no_std]`
 //!
@@ -238,25 +238,20 @@ mod impls_alloc;
 mod impls_std;
 
 use core::convert::Infallible;
-
-/// Derive macro generating an impl of the trait [`FuncMap`]
-pub use funcmap_derive::FuncMap;
-
-/// Marker type specifying one of multiple type parameters to map over
-#[derive(Copy, Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct TypeParam<const N: usize>;
+use core::fmt::{self, Display, Formatter};
 
 /// Functorial mapping of a generic type over any of its type parameters
 pub trait FuncMap<A, B, P = TypeParam<0>>: Sized {
     type Output;
 
-    fn try_func_map<F, E>(self, f: F) -> Result<Self::Output, E>
+    fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>;
 
-    fn try_func_map_over<F, E>(self, _: P, f: F) -> Result<Self::Output, E>
+    fn try_func_map_over<Q, E, F>(self, f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
+        Q: Equals<P>,
     {
         self.try_func_map(f)
     }
@@ -265,14 +260,63 @@ pub trait FuncMap<A, B, P = TypeParam<0>>: Sized {
     where
         F: FnMut(A) -> B,
     {
-        self.try_func_map::<_, Infallible>(|value| Ok(f(value)))
+        self.try_func_map::<Infallible, _>(|value| Ok(f(value)))
             .unwrap()
     }
 
-    fn func_map_over<F>(self, _: P, f: F) -> Self::Output
+    fn func_map_over<Q, F>(self, f: F) -> Self::Output
     where
         F: FnMut(A) -> B,
+        Q: Equals<P>,
     {
         self.func_map(f)
     }
+}
+
+/// Derive macro generating an impl of the trait [`FuncMap`]
+pub use funcmap_derive::FuncMap;
+
+/// Marker type specifying one of multiple type parameters to map over
+///
+/// The const generic `N` is the zero-based index of the type parameter, not
+/// counting lifetime parameters[^const-generics].
+///
+/// For example, for a type `Foo<'a, S, T>`,
+/// - [`TypeParam<0>`] refers to `S` and
+/// - [`TypeParam<1>`] refers to `T`.
+///
+/// [^const-generics]: While lifetime parameters are explicitly not counted,
+/// this is not relevant for const generics as they must be declared *after*
+/// type parameters and hence do not affect the indices of type parameters.
+#[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum TypeParam<const N: usize> {}
+
+impl<const N: usize> Display for TypeParam<N> {
+    fn fmt(&self, _: &mut Formatter<'_>) -> fmt::Result {
+        match *self {}
+    }
+}
+
+/// Marker trait for type equality
+///
+/// For any two types `P` and `Q`, the trait bound `P: Equals<Q>` is satisfied
+/// if and only if `P == Q`.
+///
+/// This trait is sealed and cannot be implemented outside of `funcmap`.
+pub trait Equals<T>: private::Sealed<T> {}
+
+// Note that from `Q: Equals<P>`
+// - if `Q` is known, then the compiler can infer `P`
+// - if `P` is known, then the compiler *cannot* infer `Q`
+//
+// This way, we force the user to make `Q` explicit when using
+// [`FuncMap::func_map_over`] because that is the whole purpose of this method.
+// If `Q` could be inferred, then it wouldn't be needed and using
+// [`FuncMap::func_map`] would be more idiomatic.
+impl<T> Equals<T> for T {}
+
+mod private {
+    pub trait Sealed<T> {}
+
+    impl<T> Sealed<T> for T {}
 }

@@ -1,0 +1,11 @@
+error[E0277]: the trait bound `T1: funcmap::private::Sealed<T2>` is not satisfied
+   --> tests/ui/compat/equals_sealed.rs:6:6
+    |
+6   | impl Equals<T2> for T1 {}
+    |      ^^^^^^^^^^ the trait `funcmap::private::Sealed<T2>` is not implemented for `T1`
+    |
+note: required by a bound in `Equals`
+   --> $WORKSPACE/funcmap/src/lib.rs
+    |
+    | pub trait Equals<T>: private::Sealed<T> {}
+    |                      ^^^^^^^^^^^^^^^^^^ required by this bound in `Equals`

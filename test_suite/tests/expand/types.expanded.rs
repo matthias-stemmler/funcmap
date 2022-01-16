@@ -26,7 +26,7 @@ where
     Foo<B, A>: ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<1usize>, Output = Foo<B, B>>,
 {
     type Output = Test<B>;
-    fn try_func_map<F, E>(self, mut f: F) -> ::core::result::Result<Self::Output, E>
+    fn try_func_map<E, F>(self, mut f: F) -> ::core::result::Result<Self::Output, E>
     where
         F: ::core::ops::FnMut(A) -> ::core::result::Result<B, E>,
     {

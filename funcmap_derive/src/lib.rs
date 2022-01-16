@@ -48,6 +48,9 @@ mod syn_ext;
 // TODO MIRI test for unsafe
 // TODO resolve TODOs
 // TODO test publishing (https://github.com/rust-lang/cargo/wiki/Third-party-registries)
+// TODO https://rust-lang.github.io/api-guidelines
+// TODO split FuncMap/TryFuncMap where TryFuncMap: FuncMap, make both derivable
+// https://doc.rust-lang.org/rustdoc/the-doc-attribute.html
 
 #[proc_macro_derive(FuncMap, attributes(funcmap))]
 pub fn derive_func_map(item: TokenStream) -> TokenStream {

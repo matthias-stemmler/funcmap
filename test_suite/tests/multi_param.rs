@@ -8,11 +8,11 @@ fn struct_with_multiple_generics_is_mapped() {
     struct Test<S, T>(S, i32, T);
 
     let src = Test(T1, 42, T1);
-    let dst = src.func_map_over(TypeParam::<0>, |_| T2);
+    let dst = src.func_map_over::<TypeParam<0>, _>(|_| T2);
     assert_eq!(dst, Test(T2, 42, T1));
 
     let src = Test(T1, 42, T1);
-    let dst = src.func_map_over(TypeParam::<1>, |_| T2);
+    let dst = src.func_map_over::<TypeParam<1>, _>(|_| T2);
     assert_eq!(dst, Test(T1, 42, T2));
 }
 
@@ -36,11 +36,11 @@ fn field_of_generic_type_is_mapped() {
     struct Test<'a, S, T, const N: usize>(Inner<'a, S, T, N>);
 
     let src = Test::<'_, _, _, 42>(Inner(T1, T1, PhantomData));
-    let dst = src.func_map_over(TypeParam::<0>, |_| T2);
+    let dst = src.func_map_over::<TypeParam<0>, _>(|_| T2);
     assert_eq!(dst, Test::<'_, _, _, 42>(Inner(T2, T1, PhantomData)));
 
     let src = Test::<'_, _, _, 42>(Inner(T1, T1, PhantomData));
-    let dst = src.func_map_over(TypeParam::<1>, |_| T2);
+    let dst = src.func_map_over::<TypeParam<1>, _>(|_| T2);
     assert_eq!(dst, Test::<'_, _, _, 42>(Inner(T1, T2, PhantomData)));
 }
 
