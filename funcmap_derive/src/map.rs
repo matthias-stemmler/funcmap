@@ -1,5 +1,9 @@
 use crate::error::Error;
-use crate::idents::{FN_IDENT, MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT, TRAIT_IDENT};
+use crate::idents::{
+    FALLIBLE_FN_IDENT, FALLIBLE_TRAIT_IDENT, FN_IDENT, MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT,
+    TRAIT_IDENT,
+};
+use crate::mode::Mode;
 use crate::predicates::UniquePredicates;
 use crate::syn_ext::{DependencyOnType, SubsType};
 
@@ -11,39 +15,42 @@ use syn::{
     PathArguments, PathSegment, QSelf, Type, TypeArray, TypeParam, TypePath,
 };
 
-pub(crate) fn map_expr(
-    mappable: impl ToTokens,
-    ty: &Type,
-    type_param: &TypeParam,
-    src_type_ident: &Ident,
-    dst_type_ident: &Ident,
-    mapping_fn_ident: &Ident,
-    crate_path: &Path,
-) -> Result<(TokenStream, UniquePredicates), Error> {
-    let mut mapper = Mapper {
-        type_param,
-        src_type_ident,
-        dst_type_ident,
-        mapping_fn_ident,
-        crate_path,
-        unique_predicates: UniquePredicates::new(),
-    };
+#[derive(Copy, Clone, Debug)]
+pub(crate) struct Mapping<'ast> {
+    pub(crate) type_param: &'ast TypeParam,
+    pub(crate) src_type_ident: &'ast Ident,
+    pub(crate) dst_type_ident: &'ast Ident,
+    pub(crate) fn_ident: &'ast Ident,
+    pub(crate) crate_path: &'ast Path,
+    pub(crate) mode: Mode,
+}
 
-    let mapped_expr = mapper.map(mappable.into_token_stream(), ty)?;
-    Ok((mapped_expr, mapper.unique_predicates))
+impl Mapping<'_> {
+    pub(crate) fn map(
+        self,
+        mappable: impl ToTokens,
+        ty: &Type,
+    ) -> Result<(TokenStream, UniquePredicates), Error> {
+        let mut mapper = Mapper::new(self);
+        let mapped_tokens = mapper.map(mappable.into_token_stream(), ty)?;
+        Ok((mapped_tokens, mapper.unique_predicates))
+    }
 }
 
 #[derive(Debug)]
 struct Mapper<'ast> {
-    type_param: &'ast TypeParam,
-    src_type_ident: &'ast Ident,
-    dst_type_ident: &'ast Ident,
-    mapping_fn_ident: &'ast Ident,
-    crate_path: &'ast Path,
+    mapping: Mapping<'ast>,
     unique_predicates: UniquePredicates,
 }
 
-impl Mapper<'_> {
+impl<'ast> Mapper<'ast> {
+    fn new(mapping: Mapping<'ast>) -> Self {
+        Self {
+            mapping,
+            unique_predicates: UniquePredicates::new(),
+        }
+    }
+
     fn map(&mut self, mappable: TokenStream, ty: &Type) -> Result<TokenStream, Error> {
         if let Type::Macro(..) = ty {
             return Err(syn::Error::new_spanned(
@@ -53,16 +60,26 @@ impl Mapper<'_> {
             .into());
         }
 
-        if ty.dependency_on_type(&self.type_param.ident).is_none() {
+        if ty
+            .dependency_on_type(&self.mapping.type_param.ident)
+            .is_none()
+        {
             return Ok(mappable);
         }
 
-        let crate_path = self.crate_path;
+        let crate_path = self.mapping.crate_path;
+        let (trait_ident, fn_ident) = match self.mapping.mode {
+            Mode::Standard => (TRAIT_IDENT, FN_IDENT),
+            Mode::Fallible => (FALLIBLE_TRAIT_IDENT, FALLIBLE_FN_IDENT),
+        };
 
         match ty {
             Type::Array(TypeArray { elem: inner_ty, .. }) => {
                 let closure = self.map_closure(inner_ty)?;
-                Ok(quote!(#crate_path::#TRAIT_IDENT::#FN_IDENT(#mappable, #closure)?))
+                Ok(self
+                    .mapping
+                    .mode
+                    .bind(quote!(#crate_path::#trait_ident::#fn_ident(#mappable, #closure))))
             }
 
             Type::Paren(TypeParen { elem: inner_ty, .. }) => self.map(mappable, inner_ty),
@@ -79,7 +96,7 @@ impl Mapper<'_> {
 
                 if let Some(QSelf { ty: inner_ty, .. }) = &qself {
                     if inner_ty
-                        .dependency_on_type(&self.type_param.ident)
+                        .dependency_on_type(&self.mapping.type_param.ident)
                         .is_some()
                     {
                         return Err(syn::Error::new_spanned(
@@ -123,7 +140,7 @@ impl Mapper<'_> {
                 });
 
                 if prefix_type
-                    .dependency_on_type(&self.type_param.ident)
+                    .dependency_on_type(&self.mapping.type_param.ident)
                     .is_some()
                 {
                     return Err(syn::Error::new_spanned(
@@ -135,8 +152,8 @@ impl Mapper<'_> {
 
                 let angle_bracketed = match arguments {
                     PathArguments::None => {
-                        let mapping_fn_ident = self.mapping_fn_ident;
-                        return Ok(quote!(#mapping_fn_ident(#mappable)?));
+                        let mapping_fn_ident = self.mapping.fn_ident;
+                        return Ok(self.mapping.mode.bind(quote!(#mapping_fn_ident(#mappable))));
                     }
 
                     PathArguments::AngleBracketed(angle_bracketed) => angle_bracketed,
@@ -161,7 +178,7 @@ impl Mapper<'_> {
 
                 for (type_idx, arg_type) in arg_types.enumerate() {
                     if arg_type
-                        .dependency_on_type(&self.type_param.ident)
+                        .dependency_on_type(&self.mapping.type_param.ident)
                         .is_none()
                     {
                         continue;
@@ -204,7 +221,7 @@ impl Mapper<'_> {
                     let dst_type = make_type(type_idx + 1);
 
                     self.unique_predicates.add(parse_quote! {
-                        #src_type: #crate_path::#TRAIT_IDENT<
+                        #src_type: #crate_path::#trait_ident<
                             #inner_src_type,
                             #inner_dst_type,
                             #crate_path::#MARKER_TYPE_IDENT<#type_idx>,
@@ -214,9 +231,13 @@ impl Mapper<'_> {
 
                     let closure = self.map_closure(arg_type)?;
 
-                    mappable = quote! {
-                        #crate_path::#TRAIT_IDENT::<_, _, #crate_path::#MARKER_TYPE_IDENT::<#type_idx>>::#FN_IDENT(#mappable, #closure)?
-                    }
+                    mappable = self.mapping.mode.bind(quote! {
+                        #crate_path::#trait_ident::<
+                            _,
+                            _,
+                            #crate_path::#MARKER_TYPE_IDENT::<#type_idx>
+                        >::#fn_ident(#mappable, #closure)
+                    });
                 }
 
                 Ok(mappable)
@@ -272,15 +293,16 @@ impl Mapper<'_> {
     fn map_closure(&mut self, ty: &Type) -> Result<TokenStream, Error> {
         let closure_arg = Ident::new("value", Span::mixed_site());
         let mapped = self.map(closure_arg.clone().into_token_stream(), ty)?;
-        Ok(quote!(|#closure_arg| ::core::result::Result::Ok(#mapped)))
+        let expr = self.mapping.mode.unit(mapped);
+        Ok(quote!(|#closure_arg| #expr))
     }
 
     fn subs_src_type(&self, ty: Type) -> Type {
-        ty.subs_type(&self.type_param.ident, self.src_type_ident)
+        ty.subs_type(&self.mapping.type_param.ident, self.mapping.src_type_ident)
     }
 
     fn subs_dst_type(&self, ty: Type) -> Type {
-        ty.subs_type(&self.type_param.ident, self.dst_type_ident)
+        ty.subs_type(&self.mapping.type_param.ident, self.mapping.dst_type_ident)
     }
 
     fn subs_types(&self, ty: Type) -> (Type, Type) {

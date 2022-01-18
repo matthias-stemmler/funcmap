@@ -1,6 +1,6 @@
-use funcmap::FuncMap;
+use funcmap::{FuncMap, TryFuncMap};
 
-#[derive(FuncMap)]
+#[derive(FuncMap, TryFuncMap)]
 struct Test<T> {
     mapped_field: T,
     unmapped_field: i32,

@@ -1,6 +1,6 @@
-use funcmap::FuncMap;
+use funcmap::{FuncMap, TryFuncMap};
 
-#[derive(FuncMap)]
+#[derive(FuncMap, TryFuncMap)]
 struct Test<T> {
     tuple: (T, i32),
     array: [T; 1],

@@ -278,11 +278,11 @@ fn impl_is_restricted_to_allow_mapping_of_inner_type() {
     impl FuncMap<T1, T2> for Inner<T1> {
         type Output = Inner<T2>;
 
-        fn try_func_map<E, F>(self, _: F) -> Result<Self::Output, E>
+        fn func_map<F>(self, _: F) -> Self::Output
         where
-            F: FnMut(T1) -> Result<T2, E>,
+            F: FnMut(T1) -> T2,
         {
-            Ok(Inner(T2))
+            Inner(T2)
         }
     }
 

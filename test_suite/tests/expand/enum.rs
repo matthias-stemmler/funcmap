@@ -1,6 +1,6 @@
-use funcmap::FuncMap;
+use funcmap::{FuncMap, TryFuncMap};
 
-#[derive(FuncMap)]
+#[derive(FuncMap, TryFuncMap)]
 enum Test<T> {
     UnitVariant,
     TupleVariant(T, i32),

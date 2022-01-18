@@ -142,14 +142,14 @@
 //!
 //! The closure you pass to the
 //! [`func_map`](FuncMap::func_map) method must not fail. If you have a closure
-//! that can fail, you can use the [`try_func_map`](FuncMap::try_func_map)
+//! that can fail, you can use the [`try_func_map`](TryFuncMap::try_func_map)
 //! method instead. This method takes a closure returning a [`Result<B, E>`] for
 //! some error type `E` and returns a result with the same error type `E`:
 //! ```
-//! # use funcmap::FuncMap;
+//! # use funcmap::{FuncMap, TryFuncMap};
 //! # use std::num::{IntErrorKind, ParseIntError};
 //! # #[derive(Debug)]
-//! #[derive(FuncMap)]
+//! #[derive(FuncMap, TryFuncMap)]
 //! struct Foo<T> {
 //!     value1: T,
 //!     value2: T,
@@ -169,8 +169,8 @@
 //! ```
 //!
 //! As you can see in the example, when there are multiple errors,
-//! [`try_func_map`](FuncMap::try_func_map) returns the first one according to
-//! the order of the fields in the definition of `Foo<T>`.
+//! [`try_func_map`](TryFuncMap::try_func_map) returns the first one according
+//! to the order of the fields in the definition of `Foo<T>`.
 //!
 //! # Multiple Type Parameters
 //!
@@ -237,13 +237,28 @@ mod impls_alloc;
 #[cfg(feature = "std")]
 mod impls_std;
 
-use core::convert::Infallible;
 use core::fmt::{self, Display, Formatter};
 
 /// Functorial mapping of a generic type over any of its type parameters
 pub trait FuncMap<A, B, P = TypeParam<0>>: Sized {
     type Output;
 
+    fn func_map<F>(self, f: F) -> Self::Output
+    where
+        F: FnMut(A) -> B;
+
+    fn func_map_over<Q, F>(self, f: F) -> Self::Output
+    where
+        F: FnMut(A) -> B,
+        Q: Equals<P>,
+    {
+        self.func_map(f)
+    }
+}
+
+/// Fallible functorial mapping of a generic type over any of its type
+/// parameters
+pub trait TryFuncMap<A, B, P = TypeParam<0>>: FuncMap<A, B, P> {
     fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>;
@@ -255,26 +270,13 @@ pub trait FuncMap<A, B, P = TypeParam<0>>: Sized {
     {
         self.try_func_map(f)
     }
-
-    fn func_map<F>(self, mut f: F) -> Self::Output
-    where
-        F: FnMut(A) -> B,
-    {
-        self.try_func_map::<Infallible, _>(|value| Ok(f(value)))
-            .unwrap()
-    }
-
-    fn func_map_over<Q, F>(self, f: F) -> Self::Output
-    where
-        F: FnMut(A) -> B,
-        Q: Equals<P>,
-    {
-        self.func_map(f)
-    }
 }
 
 /// Derive macro generating an impl of the trait [`FuncMap`]
 pub use funcmap_derive::FuncMap;
+
+/// Derive macro generating an impl of the trait [`TryFuncMap`]
+pub use funcmap_derive::TryFuncMap;
 
 /// Marker type specifying one of multiple type parameters to map over
 ///

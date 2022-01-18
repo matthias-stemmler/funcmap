@@ -1,7 +1,11 @@
 use crate::error::{Error, ResultExt};
-use crate::idents::{FN_IDENT, MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT, TRAIT_IDENT};
+use crate::idents::{
+    FALLIBLE_FN_IDENT, FALLIBLE_TRAIT_IDENT, FN_IDENT, MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT,
+    TRAIT_IDENT,
+};
 use crate::input::{FuncMapInput, Structish};
-use crate::map_expr::map_expr;
+use crate::map::Mapping;
+use crate::mode::Mode;
 use crate::predicates::{UniquePredicates, UniqueTypeBounds};
 use crate::syn_ext::{
     IntoGenericArgument, IntoType, SubsType, WithoutAttrs, WithoutDefault, WithoutMaybeBounds,
@@ -15,7 +19,15 @@ use syn::{
     WherePredicate,
 };
 
-pub(crate) fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Error> {
+pub(crate) fn derive(item: TokenStream, mode: Mode) -> TokenStream {
+    match try_derive(item, mode) {
+        Ok(output) => output,
+        Err(err) => err.into_compile_error(),
+    }
+}
+
+pub(crate) fn try_derive(item: TokenStream, mode: Mode) -> Result<TokenStream, Error> {
+    let input: DeriveInput = syn::parse2(item)?;
     let input: FuncMapInput = input.try_into()?;
     let mut ident_collector = input.meta.ident_collector;
 
@@ -156,16 +168,17 @@ pub(crate) fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Error> 
 
                     let pattern = quote!(#member: #ident);
 
-                    if let Some((mapped, predicates)) = map_expr(
-                        ident,
-                        &field.ty,
-                        &mapped_type_param.type_param,
-                        &src_type_ident,
-                        &dst_type_ident,
-                        &fn_var_ident,
-                        &input.meta.crate_path,
-                    )
-                    .combine_err_with(&mut error)
+                    let mapping = Mapping {
+                        type_param: &mapped_type_param.type_param,
+                        src_type_ident: &src_type_ident,
+                        dst_type_ident: &dst_type_ident,
+                        fn_ident: &fn_var_ident,
+                        crate_path: &input.meta.crate_path,
+                        mode,
+                    };
+
+                    if let Some((mapped, predicates)) =
+                        mapping.map(ident, &field.ty).combine_err_with(&mut error)
                     {
                         for predicate in predicates.into_iter() {
                             unique_predicates
@@ -196,7 +209,7 @@ pub(crate) fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Error> 
             let where_clause = unique_predicates.into_where_clause();
             let type_param_idx = mapped_type_param.type_param_idx;
 
-            quote! {
+            let attrs = quote! {
                 #[allow(absolute_paths_not_starting_with_crate)]
                 #[allow(bare_trait_objects)]
                 #[allow(deprecated)]
@@ -209,32 +222,62 @@ pub(crate) fn derive_func_map(input: DeriveInput) -> Result<TokenStream, Error> 
                 #[allow(clippy::disallowed_method)]
                 #[allow(clippy::disallowed_type)]
                 #[automatically_derived]
-                impl<#(#impl_params),*>
-                    #crate_path::#TRAIT_IDENT<
-                        #src_type_ident,
-                        #dst_type_ident,
-                        #crate_path::#MARKER_TYPE_IDENT<#type_param_idx>
-                    >
-                    for #ident<#(#src_args),*>
-                    #where_clause
-                {
-                    type #OUTPUT_TYPE_IDENT = #ident<#(#dst_args),*>;
+            };
 
-                    fn #FN_IDENT<#err_type_ident, #fn_type_ident>(
-                        self,
-                        mut #fn_var_ident: #fn_type_ident
-                    ) -> ::core::result::Result<Self::#OUTPUT_TYPE_IDENT, #err_type_ident>
-                    where
-                        #fn_type_ident:
-                            ::core::ops::FnMut(
-                                #src_type_ident
-                            ) -> ::core::result::Result<#dst_type_ident, #err_type_ident>
+            match mode {
+                Mode::Standard => quote! {
+                    #attrs
+                    impl<#(#impl_params),*>
+                        #crate_path::#TRAIT_IDENT<
+                            #src_type_ident,
+                            #dst_type_ident,
+                            #crate_path::#MARKER_TYPE_IDENT<#type_param_idx>
+                        >
+                        for #ident<#(#src_args),*>
+                        #where_clause
                     {
-                        ::core::result::Result::Ok(match self {
-                            #(#arms,)*
-                        })
+                        type #OUTPUT_TYPE_IDENT = #ident<#(#dst_args),*>;
+
+                        fn #FN_IDENT<#fn_type_ident>(
+                            self,
+                            mut #fn_var_ident: #fn_type_ident
+                        ) -> Self::#OUTPUT_TYPE_IDENT
+                        where
+                            #fn_type_ident: ::core::ops::FnMut(#src_type_ident) -> #dst_type_ident
+                        {
+                            match self {
+                                #(#arms,)*
+                            }
+                        }
                     }
-                }
+                },
+                Mode::Fallible => quote! {
+                    #attrs
+                    impl<#(#impl_params),*>
+                        #crate_path::#FALLIBLE_TRAIT_IDENT<
+                            #src_type_ident,
+                            #dst_type_ident,
+                            #crate_path::#MARKER_TYPE_IDENT<#type_param_idx>
+                        >
+                        for #ident<#(#src_args),*>
+                        #where_clause
+                    {
+                        fn #FALLIBLE_FN_IDENT<#err_type_ident, #fn_type_ident>(
+                            self,
+                            mut #fn_var_ident: #fn_type_ident
+                        ) -> ::core::result::Result<Self::#OUTPUT_TYPE_IDENT, #err_type_ident>
+                        where
+                            #fn_type_ident:
+                                ::core::ops::FnMut(
+                                    #src_type_ident
+                                ) -> ::core::result::Result<#dst_type_ident, #err_type_ident>
+                        {
+                            ::core::result::Result::Ok(match self {
+                                #(#arms,)*
+                            })
+                        }
+                    }
+                },
             }
         })
         .collect::<Vec<_>>();

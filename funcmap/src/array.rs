@@ -3,10 +3,7 @@ use core::{
     ptr,
 };
 
-pub(crate) fn try_map_array<A, B, E, F, const N: usize>(
-    array: [A; N],
-    mut f: F,
-) -> Result<[B; N], E>
+pub(crate) fn try_map<A, B, E, F, const N: usize>(array: [A; N], mut f: F) -> Result<[B; N], E>
 where
     F: FnMut(A) -> Result<B, E>,
 {
@@ -86,7 +83,7 @@ mod tests {
         fn mapping_empty_array_succeeds_even_when_function_always_fails() {
             let array: [T1; 0] = [];
 
-            let result: Result<[T2; 0], _> = try_map_array(array, |_| Err(MappingError));
+            let result: Result<[T2; 0], _> = try_map(array, |_| Err(MappingError));
 
             assert!(result.is_ok());
         }
@@ -95,7 +92,7 @@ mod tests {
         fn mapping_non_empty_array_succeeds_when_function_succeeds() {
             let array = [T1::Mappable, T1::Mappable, T1::Mappable];
 
-            let result: Result<[T2; 3], _> = try_map_array(array, TryInto::try_into);
+            let result: Result<[T2; 3], _> = try_map(array, TryInto::try_into);
 
             assert_eq!(result, Ok([T2, T2, T2]));
         }
@@ -108,7 +105,7 @@ mod tests {
                 T1::NotMappable("Second Error"),
             ];
 
-            let result: Result<[T2; 3], _> = try_map_array(array, TryInto::try_into);
+            let result: Result<[T2; 3], _> = try_map(array, TryInto::try_into);
 
             assert_eq!(result, Err(MappingError("First Error")));
         }
@@ -155,7 +152,7 @@ mod tests {
                 Item::new("Mappable 3", MappingState::Mappable, &drop_trace),
             ];
 
-            let result = try_map_array(array, Item::map);
+            let result = try_map(array, Item::map);
 
             assert!(result.is_ok());
             drop(result);
@@ -176,7 +173,7 @@ mod tests {
                 Item::new("Mappable 2", MappingState::Mappable, &drop_trace),
             ];
 
-            let result = try_map_array(array, Item::map);
+            let result = try_map(array, Item::map);
 
             assert!(result.is_err());
             drop(result);
@@ -197,7 +194,7 @@ mod tests {
                 Item::new("Mappable 2", MappingState::Mappable, &drop_trace),
             ];
 
-            assert_panic(|| try_map_array(array, Item::map));
+            assert_panic(|| try_map(array, Item::map));
 
             assert_eq!(
                 drop_trace.into_iter().collect::<Vec<_>>(),

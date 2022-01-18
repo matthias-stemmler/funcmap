@@ -1,4 +1,4 @@
-use funcmap::FuncMap;
+use funcmap::{FuncMap, TryFuncMap};
 
-#[derive(FuncMap)]
+#[derive(FuncMap, TryFuncMap)]
 struct Test<T>(T, i32);

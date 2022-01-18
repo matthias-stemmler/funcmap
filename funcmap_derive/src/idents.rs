@@ -5,7 +5,9 @@ use quote::ToTokens;
 
 pub(crate) const CRATE_IDENT: StaticIdent = StaticIdent("funcmap");
 pub(crate) const TRAIT_IDENT: StaticIdent = StaticIdent("FuncMap");
-pub(crate) const FN_IDENT: StaticIdent = StaticIdent("try_func_map");
+pub(crate) const FALLIBLE_TRAIT_IDENT: StaticIdent = StaticIdent("TryFuncMap");
+pub(crate) const FN_IDENT: StaticIdent = StaticIdent("func_map");
+pub(crate) const FALLIBLE_FN_IDENT: StaticIdent = StaticIdent("try_func_map");
 pub(crate) const OUTPUT_TYPE_IDENT: StaticIdent = StaticIdent("Output");
 pub(crate) const MARKER_TYPE_IDENT: StaticIdent = StaticIdent("TypeParam");
 pub(crate) const ATTR_IDENT: StaticIdent = StaticIdent("funcmap");

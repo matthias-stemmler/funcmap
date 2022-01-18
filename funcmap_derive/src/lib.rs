@@ -1,4 +1,3 @@
-// Builtin lints
 #![deny(warnings)]
 #![deny(missing_copy_implementations)]
 #![deny(missing_debug_implementations)]
@@ -8,7 +7,6 @@
 #![deny(unused_extern_crates)]
 #![deny(unused_lifetimes)]
 #![deny(unused_qualifications)]
-// Clippy lints
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 #![deny(clippy::cargo_common_metadata)]
@@ -18,7 +16,6 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::missing_errors_doc)] // TODO remove
 #![allow(clippy::too_many_lines)]
-// Rustdoc lints
 #![deny(rustdoc::broken_intra_doc_links)]
 #![deny(rustdoc::private_intra_doc_links)]
 #![deny(rustdoc::private_doc_tests)]
@@ -26,15 +23,17 @@
 #![deny(rustdoc::invalid_rust_codeblocks)]
 #![deny(rustdoc::bare_urls)]
 
+use mode::Mode;
+
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, DeriveInput};
 
 mod derive;
 mod error;
 mod ident_collector;
 mod idents;
 mod input;
-mod map_expr;
+mod map;
+mod mode;
 mod opts;
 mod predicates;
 mod syn_ext;
@@ -49,16 +48,15 @@ mod syn_ext;
 // TODO resolve TODOs
 // TODO test publishing (https://github.com/rust-lang/cargo/wiki/Third-party-registries)
 // TODO https://rust-lang.github.io/api-guidelines
-// TODO split FuncMap/TryFuncMap where TryFuncMap: FuncMap, make both derivable
-// https://doc.rust-lang.org/rustdoc/the-doc-attribute.html
+// TODO https://doc.rust-lang.org/rustdoc/the-doc-attribute.html
+// TODO more fallible tests, fallible examples
 
 #[proc_macro_derive(FuncMap, attributes(funcmap))]
 pub fn derive_func_map(item: TokenStream) -> TokenStream {
-    let derive_input = parse_macro_input!(item as DeriveInput);
+    derive::derive(item.into(), Mode::Standard).into()
+}
 
-    match derive::derive_func_map(derive_input) {
-        Ok(output) => output,
-        Err(err) => err.into_compile_error(),
-    }
-    .into()
+#[proc_macro_derive(TryFuncMap, attributes(funcmap))]
+pub fn derive_try_func_map(item: TokenStream) -> TokenStream {
+    derive::derive(item.into(), Mode::Fallible).into()
 }
