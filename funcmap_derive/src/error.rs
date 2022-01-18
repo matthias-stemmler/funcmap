@@ -9,7 +9,7 @@ use proc_macro2::TokenStream;
 pub(crate) struct Error(Option<syn::Error>);
 
 impl Error {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn empty() -> Self {
         Self::default()
     }
 
@@ -77,7 +77,7 @@ where
     where
         I: IntoIterator<Item = E>,
     {
-        let mut err = Self::new();
+        let mut err = Self::empty();
         err.extend(iter);
         err
     }
@@ -113,7 +113,7 @@ where
     I: Iterator<Item = Result<T, E>>,
 {
     fn collect_combining_errors(self) -> Result<C, Error> {
-        let mut error = Error::new();
+        let mut error = Error::empty();
 
         let values = self
             .filter_map(|result| result.combine_err_with(&mut error))
@@ -163,7 +163,7 @@ mod tests {
 
     #[test]
     fn new_error_is_ok() {
-        let error = Error::new();
+        let error = Error::empty();
 
         assert!(error.ok().is_ok());
     }
@@ -177,7 +177,7 @@ mod tests {
 
     #[test]
     fn new_error_displays_no_error() {
-        let error = Error::new();
+        let error = Error::empty();
 
         assert_eq!(error.to_string(), "no error");
     }
@@ -191,7 +191,7 @@ mod tests {
 
     #[test]
     fn new_error_is_empty() {
-        let error = Error::new();
+        let error = Error::empty();
 
         assert!(messages(error).is_empty());
     }
@@ -206,7 +206,7 @@ mod tests {
 
     #[test]
     fn new_error_produces_no_compile_error() {
-        let error = Error::new();
+        let error = Error::empty();
 
         assert!(error.into_compile_error().is_empty());
     }
@@ -265,7 +265,7 @@ mod tests {
 
     #[test]
     fn combining_ok_result_adds_no_error_and_yields_value() {
-        let mut error = Error::new();
+        let mut error = Error::empty();
         let result: Result<_, syn::Error> = Ok("Value");
 
         let value = result.combine_err_with(&mut error);
@@ -276,7 +276,7 @@ mod tests {
 
     #[test]
     fn combining_err_result_adds_error_and_yields_none() {
-        let mut error = Error::new();
+        let mut error = Error::empty();
         let result: Result<(), _> = Err(syn_error("Error"));
 
         let value = result.combine_err_with(&mut error);
@@ -287,7 +287,7 @@ mod tests {
 
     #[test]
     fn ok_result_combined_with_no_error_is_ok() {
-        let error = Error::new();
+        let error = Error::empty();
         let result: Result<_, syn::Error> = Ok("Value");
 
         let combined = result.err_combined_with(error);
@@ -309,7 +309,7 @@ mod tests {
 
     #[test]
     fn err_result_combined_with_no_error_is_err() {
-        let error = Error::new();
+        let error = Error::empty();
         let result: Result<(), _> = Err(syn_error("Error"));
 
         let combined = result.err_combined_with(error);

@@ -27,7 +27,7 @@ impl TryFrom<Vec<Attribute>> for FuncMapOpts {
     fn try_from(attrs: Vec<Attribute>) -> Result<Self, Self::Error> {
         let mut crate_path = None;
         let mut params = Vec::new();
-        let mut error = Error::new();
+        let mut error = Error::empty();
 
         for args_result in attrs
             .into_iter()

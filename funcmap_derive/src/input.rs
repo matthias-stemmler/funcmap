@@ -75,7 +75,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
         };
 
         let mut mapped_type_param_idents = HashSet::new();
-        let mut error = Error::new();
+        let mut error = Error::empty();
 
         for param in opts.params {
             match (
@@ -184,7 +184,7 @@ impl TryFrom<Variant> for Structish {
     type Error = Error;
 
     fn try_from(variant: Variant) -> Result<Self, Self::Error> {
-        let mut error = Error::new();
+        let mut error = Error::empty();
 
         opts::assert_absent(&variant.attrs, "variants").combine_err_with(&mut error);
 

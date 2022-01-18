@@ -39,7 +39,7 @@ pub(crate) fn try_derive(item: TokenStream, mode: Mode) -> Result<TokenStream, E
 
     let all_params = &input.generics.params;
 
-    let mut error = Error::new();
+    let mut error = Error::empty();
 
     let impls = input
         .mapped_type_params
