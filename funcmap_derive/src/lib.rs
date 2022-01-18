@@ -1,4 +1,3 @@
-#![deny(warnings)]
 #![deny(missing_copy_implementations)]
 #![deny(missing_debug_implementations)]
 // #![deny(missing_docs)] // TODO uncomment
@@ -23,17 +22,17 @@
 #![deny(rustdoc::invalid_rust_codeblocks)]
 #![deny(rustdoc::bare_urls)]
 
-use mode::Mode;
+use derivable::Derivable;
 
 use proc_macro::TokenStream;
 
+mod derivable;
 mod derive;
 mod error;
+mod ident;
 mod ident_collector;
-mod idents;
 mod input;
 mod map;
-mod mode;
 mod opts;
 mod predicates;
 mod syn_ext;
@@ -53,10 +52,10 @@ mod syn_ext;
 
 #[proc_macro_derive(FuncMap, attributes(funcmap))]
 pub fn derive_func_map(item: TokenStream) -> TokenStream {
-    derive::derive(item.into(), Mode::Standard).into()
+    derive::derive(item.into(), Derivable::Standard).into()
 }
 
 #[proc_macro_derive(TryFuncMap, attributes(funcmap))]
 pub fn derive_try_func_map(item: TokenStream) -> TokenStream {
-    derive::derive(item.into(), Mode::Fallible).into()
+    derive::derive(item.into(), Derivable::Fallible).into()
 }

@@ -1,4 +1,4 @@
-use crate::{error::Error, idents::ATTR_IDENT};
+use crate::{error::Error, ident::ATTR_IDENT};
 
 use std::vec;
 

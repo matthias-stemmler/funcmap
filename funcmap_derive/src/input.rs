@@ -1,7 +1,7 @@
 use crate::{
     error::{Error, IteratorExt, ResultExt},
+    ident::{CRATE_IDENT, TRAIT_IDENT},
     ident_collector::IdentCollector,
-    idents::{CRATE_IDENT, TRAIT_IDENT},
     opts::{self, FuncMapOpts, Param},
     syn_ext::ToNonEmptyTokens,
 };
@@ -63,7 +63,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
 
         let meta = FuncMapMeta {
             crate_path: opts.crate_path.unwrap_or_else(|| {
-                let path = CRATE_IDENT.to_ident().into();
+                let path = CRATE_IDENT.into();
 
                 Path {
                     leading_colon: Some(<Token![::]>::default()),

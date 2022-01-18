@@ -1,9 +1,6 @@
+use crate::derivable::Derivable;
 use crate::error::Error;
-use crate::idents::{
-    FALLIBLE_FN_IDENT, FALLIBLE_TRAIT_IDENT, FN_IDENT, MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT,
-    TRAIT_IDENT,
-};
-use crate::mode::Mode;
+use crate::ident::{MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT};
 use crate::predicates::UniquePredicates;
 use crate::syn_ext::{DependencyOnType, SubsType};
 
@@ -22,7 +19,7 @@ pub(crate) struct Mapping<'ast> {
     pub(crate) dst_type_ident: &'ast Ident,
     pub(crate) fn_ident: &'ast Ident,
     pub(crate) crate_path: &'ast Path,
-    pub(crate) mode: Mode,
+    pub(crate) derivable: Derivable,
 }
 
 impl Mapping<'_> {
@@ -68,18 +65,16 @@ impl<'ast> Mapper<'ast> {
         }
 
         let crate_path = self.mapping.crate_path;
-        let (trait_ident, fn_ident) = match self.mapping.mode {
-            Mode::Standard => (TRAIT_IDENT, FN_IDENT),
-            Mode::Fallible => (FALLIBLE_TRAIT_IDENT, FALLIBLE_FN_IDENT),
-        };
+        let trait_ident = self.mapping.derivable.trait_ident();
+        let fn_ident = self.mapping.derivable.fn_ident();
 
         match ty {
             Type::Array(TypeArray { elem: inner_ty, .. }) => {
                 let closure = self.map_closure(inner_ty)?;
                 Ok(self
                     .mapping
-                    .mode
-                    .bind(quote!(#crate_path::#trait_ident::#fn_ident(#mappable, #closure))))
+                    .derivable
+                    .bind_expr(quote!(#crate_path::#trait_ident::#fn_ident(#mappable, #closure))))
             }
 
             Type::Paren(TypeParen { elem: inner_ty, .. }) => self.map(mappable, inner_ty),
@@ -153,7 +148,10 @@ impl<'ast> Mapper<'ast> {
                 let angle_bracketed = match arguments {
                     PathArguments::None => {
                         let mapping_fn_ident = self.mapping.fn_ident;
-                        return Ok(self.mapping.mode.bind(quote!(#mapping_fn_ident(#mappable))));
+                        return Ok(self
+                            .mapping
+                            .derivable
+                            .bind_expr(quote!(#mapping_fn_ident(#mappable))));
                     }
 
                     PathArguments::AngleBracketed(angle_bracketed) => angle_bracketed,
@@ -231,7 +229,7 @@ impl<'ast> Mapper<'ast> {
 
                     let closure = self.map_closure(arg_type)?;
 
-                    mappable = self.mapping.mode.bind(quote! {
+                    mappable = self.mapping.derivable.bind_expr(quote! {
                         #crate_path::#trait_ident::<
                             _,
                             _,
@@ -293,7 +291,7 @@ impl<'ast> Mapper<'ast> {
     fn map_closure(&mut self, ty: &Type) -> Result<TokenStream, Error> {
         let closure_arg = Ident::new("value", Span::mixed_site());
         let mapped = self.map(closure_arg.clone().into_token_stream(), ty)?;
-        let expr = self.mapping.mode.unit(mapped);
+        let expr = self.mapping.derivable.unit_expr(mapped);
         Ok(quote!(|#closure_arg| #expr))
     }
 

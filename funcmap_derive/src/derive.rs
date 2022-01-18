@@ -1,11 +1,11 @@
+use crate::derivable::Derivable;
 use crate::error::{Error, ResultExt};
-use crate::idents::{
+use crate::ident::{
     FALLIBLE_FN_IDENT, FALLIBLE_TRAIT_IDENT, FN_IDENT, MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT,
     TRAIT_IDENT,
 };
 use crate::input::{FuncMapInput, Structish};
 use crate::map::Mapping;
-use crate::mode::Mode;
 use crate::predicates::{UniquePredicates, UniqueTypeBounds};
 use crate::syn_ext::{
     IntoGenericArgument, IntoType, SubsType, WithoutAttrs, WithoutDefault, WithoutMaybeBounds,
@@ -19,14 +19,14 @@ use syn::{
     WherePredicate,
 };
 
-pub(crate) fn derive(item: TokenStream, mode: Mode) -> TokenStream {
-    match try_derive(item, mode) {
+pub(crate) fn derive(item: TokenStream, derivable: Derivable) -> TokenStream {
+    match try_derive(item, derivable) {
         Ok(output) => output,
         Err(err) => err.into_compile_error(),
     }
 }
 
-pub(crate) fn try_derive(item: TokenStream, mode: Mode) -> Result<TokenStream, Error> {
+pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<TokenStream, Error> {
     let input: DeriveInput = syn::parse2(item)?;
     let input: FuncMapInput = input.try_into()?;
     let mut ident_collector = input.meta.ident_collector;
@@ -174,7 +174,7 @@ pub(crate) fn try_derive(item: TokenStream, mode: Mode) -> Result<TokenStream, E
                         dst_type_ident: &dst_type_ident,
                         fn_ident: &fn_var_ident,
                         crate_path: &input.meta.crate_path,
-                        mode,
+                        derivable,
                     };
 
                     if let Some((mapped, predicates)) =
@@ -224,8 +224,8 @@ pub(crate) fn try_derive(item: TokenStream, mode: Mode) -> Result<TokenStream, E
                 #[automatically_derived]
             };
 
-            match mode {
-                Mode::Standard => quote! {
+            match derivable {
+                Derivable::Standard => quote! {
                     #attrs
                     impl<#(#impl_params),*>
                         #crate_path::#TRAIT_IDENT<
@@ -251,7 +251,7 @@ pub(crate) fn try_derive(item: TokenStream, mode: Mode) -> Result<TokenStream, E
                         }
                     }
                 },
-                Mode::Fallible => quote! {
+                Derivable::Fallible => quote! {
                     #attrs
                     impl<#(#impl_params),*>
                         #crate_path::#FALLIBLE_TRAIT_IDENT<
