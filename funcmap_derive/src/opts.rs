@@ -152,32 +152,21 @@ struct ArgParams(Vec<Param>);
 impl Parse for ArgParams {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         input.parse::<kw::params>()?;
+
         let content;
         parenthesized!(content in input);
-        Ok(Self(content.parse::<TerminatedParams>()?.into()))
-    }
-}
+        let params = content.call(Punctuated::<Param, Token![,]>::parse_terminated)?;
 
-#[derive(Debug)]
-struct TerminatedParams(Vec<Param>);
-
-impl Parse for TerminatedParams {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        match input.call(Punctuated::<_, Token![,]>::parse_separated_nonempty) {
-            Ok(params) if input.is_empty() => Ok(Self(params.into_iter().collect())),
-            _ => Err(input.error("expected name of generic parameter")),
+        if params.is_empty() {
+            Err(content.error("expected name of generic parameter"))
+        } else {
+            Ok(Self(params.into_iter().collect()))
         }
     }
 }
 
-impl From<TerminatedParams> for Vec<Param> {
-    fn from(terminated_params: TerminatedParams) -> Self {
-        terminated_params.0
-    }
-}
-
 #[derive(Debug, Eq, Hash, PartialEq)]
-pub enum Param {
+pub(crate) enum Param {
     Lifetime(Lifetime),
     TypeOrConst(Ident),
 }

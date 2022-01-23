@@ -1,3 +1,4 @@
 # funcmap
 
-TODO
+MSRV policy
+License (-> add license files)
