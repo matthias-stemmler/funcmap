@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::result::Error;
 
 use indexmap::{IndexMap, IndexSet};
 use syn::{

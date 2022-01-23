@@ -28,13 +28,13 @@ use proc_macro::TokenStream;
 
 mod derivable;
 mod derive;
-mod error;
 mod ident;
 mod ident_collector;
 mod input;
 mod map;
 mod opts;
 mod predicates;
+mod result;
 mod syn_ext;
 
 // TODO check auto-impl/structopt/serde (serde: crates-io.md, html_root_url, explicit "include" in Cargo.toml)

@@ -1,7 +1,7 @@
 use crate::derivable::Derivable;
-use crate::error::Error;
 use crate::ident::{MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT};
 use crate::predicates::UniquePredicates;
+use crate::result::Error;
 use crate::syn_ext::{DependencyOnType, SubsType};
 
 use proc_macro2::{Ident, Span, TokenStream};

@@ -1,5 +1,4 @@
 use crate::derivable::Derivable;
-use crate::error::{Error, ResultExt};
 use crate::ident::{
     FALLIBLE_FN_IDENT, FALLIBLE_TRAIT_IDENT, FN_IDENT, MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT,
     TRAIT_IDENT,
@@ -7,6 +6,7 @@ use crate::ident::{
 use crate::input::{FuncMapInput, Structish};
 use crate::map::Mapping;
 use crate::predicates::{UniquePredicates, UniqueTypeBounds};
+use crate::result::{self, Error, ResultExt};
 use crate::syn_ext::{
     IntoGenericArgument, IntoType, SubsType, WithoutAttrs, WithoutDefault, WithoutMaybeBounds,
 };
@@ -39,7 +39,7 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
 
     let all_params = &input.generics.params;
 
-    let mut error = Error::empty();
+    let mut result_builder = result::Builder::new();
 
     let impls = input
         .mapped_type_params
@@ -130,11 +130,11 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
                             .clone()
                             .subs_type(&mapped_type_param.type_param.ident, &src_type_ident),
                     )
-                    .combine_err_with(&mut error);
+                    .add_err_to(&mut result_builder);
 
                 unique_predicates
                     .add(predicate.subs_type(&mapped_type_param.type_param.ident, &dst_type_ident))
-                    .combine_err_with(&mut error);
+                    .add_err_to(&mut result_builder);
             }
 
             let mut arms = Vec::new();
@@ -177,13 +177,14 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
                         derivable,
                     };
 
-                    if let Some((mapped, predicates)) =
-                        mapping.map(ident, &field.ty).combine_err_with(&mut error)
+                    if let Some((mapped, predicates)) = mapping
+                        .map(ident, &field.ty)
+                        .add_err_to(&mut result_builder)
                     {
                         for predicate in predicates.into_iter() {
                             unique_predicates
                                 .add(predicate)
-                                .combine_err_with(&mut error);
+                                .add_err_to(&mut result_builder);
                         }
 
                         patterns.push(pattern);
@@ -282,9 +283,9 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
         })
         .collect::<Vec<_>>();
 
-    error.ok()?;
-
-    Ok(quote!(#(#impls)*))
+    result_builder.err_or(quote! {
+        #(#impls)*
+    })
 }
 
 fn subs_type_in_bounds<'ast>(

@@ -1,8 +1,8 @@
 use crate::{
-    error::{Error, IteratorExt, ResultExt},
     ident::{CRATE_IDENT, TRAIT_IDENT},
     ident_collector::IdentCollector,
     opts::{self, FuncMapOpts, Param},
+    result::{self, Error, IteratorExt, ResultExt},
     syn_ext::ToNonEmptyTokens,
 };
 
@@ -75,7 +75,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
         };
 
         let mut mapped_type_param_idents = HashSet::new();
-        let mut error = Error::empty();
+        let mut result_builder = result::Builder::new();
 
         for param in opts.params {
             match (
@@ -86,19 +86,20 @@ impl TryFrom<DeriveInput> for FuncMapInput {
                     mapped_type_param_idents.insert(ident);
                 }
                 (Some(GenericParam::Lifetime(..)), param) => {
-                    error.combine(syn::Error::new_spanned(
+                    result_builder.add_err(syn::Error::new_spanned(
                         param,
                         format!("cannot implement {} over lifetime parameter", TRAIT_IDENT),
                     ));
                 }
                 (Some(GenericParam::Const(..)), param) => {
-                    error.combine(syn::Error::new_spanned(
+                    result_builder.add_err(syn::Error::new_spanned(
                         param,
                         format!("cannot implement {} over const generic", TRAIT_IDENT),
                     ));
                 }
                 (_, param) => {
-                    error.combine(syn::Error::new_spanned(param, "unknown generic parameter"));
+                    result_builder
+                        .add_err(syn::Error::new_spanned(param, "unknown generic parameter"));
                 }
             }
         }
@@ -128,7 +129,7 @@ impl TryFrom<DeriveInput> for FuncMapInput {
             .collect();
 
         if mapped_type_params.is_empty() {
-            error.combine(syn::Error::new_spanned(
+            result_builder.add_err(syn::Error::new_spanned(
                 derive_input
                     .generics
                     .to_non_empty_token_stream()
@@ -138,22 +139,20 @@ impl TryFrom<DeriveInput> for FuncMapInput {
         }
 
         let variants = match derive_input.data {
-            Data::Struct(data_struct) => {
-                iter::once(data_struct.try_into()).collect_combining_errors()
-            }
+            Data::Struct(data_struct) => iter::once(data_struct.try_into()).collect_with_errors(),
 
             Data::Enum(DataEnum { variants, .. }) => variants
                 .into_iter()
                 .map(TryInto::try_into)
-                .collect_combining_errors(),
+                .collect_with_errors(),
 
             Data::Union(DataUnion { union_token, .. }) => iter::once(Err(syn::Error::new_spanned(
                 union_token,
                 "expected a struct or an enum, found a union",
             )))
-            .collect_combining_errors(),
+            .collect_with_errors(),
         }
-        .err_combined_with(error)?;
+        .with_error_from(result_builder)?;
 
         Ok(Self {
             meta,
@@ -175,7 +174,7 @@ impl TryFrom<DataStruct> for Structish {
                 .fields
                 .into_iter()
                 .map(TryInto::try_into)
-                .collect_combining_errors()?,
+                .collect_with_errors()?,
         })
     }
 }
@@ -184,9 +183,9 @@ impl TryFrom<Variant> for Structish {
     type Error = Error;
 
     fn try_from(variant: Variant) -> Result<Self, Self::Error> {
-        let mut error = Error::empty();
+        let mut result_builder = result::Builder::new();
 
-        opts::assert_absent(&variant.attrs, "variants").combine_err_with(&mut error);
+        opts::assert_absent(&variant.attrs, "variants").add_err_to(&mut result_builder);
 
         Ok(Self {
             variant_ident: Some(variant.ident),
@@ -194,8 +193,8 @@ impl TryFrom<Variant> for Structish {
                 .fields
                 .into_iter()
                 .map(TryInto::try_into)
-                .collect_combining_errors()
-                .err_combined_with(error)?,
+                .collect_with_errors()
+                .with_error_from(result_builder)?,
         })
     }
 }

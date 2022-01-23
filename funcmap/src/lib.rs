@@ -432,7 +432,7 @@
 //! funcmap = { version = "...", default-features = false, features = ["alloc"] }
 //! ```
 //!
-//! This will provide implementatios for many types in the [`alloc`] library.
+//! This will provide implementations for many types in the [`alloc`] library.
 //!
 //! # Functional Programming Background
 //!
@@ -463,6 +463,9 @@
 
 mod array;
 mod impls_core;
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
 
 #[cfg(feature = "alloc")]
 mod impls_alloc;

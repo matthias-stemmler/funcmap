@@ -1,4 +1,5 @@
-use crate::{error::Error, ident::ATTR_IDENT};
+use crate::ident::ATTR_IDENT;
+use crate::result::{self, Error};
 
 use std::vec;
 
@@ -27,7 +28,7 @@ impl TryFrom<Vec<Attribute>> for FuncMapOpts {
     fn try_from(attrs: Vec<Attribute>) -> Result<Self, Self::Error> {
         let mut crate_path = None;
         let mut params = Vec::new();
-        let mut error = Error::empty();
+        let mut result_builder = result::Builder::new();
 
         for args_result in attrs
             .into_iter()
@@ -42,13 +43,17 @@ impl TryFrom<Vec<Attribute>> for FuncMapOpts {
                                 crate_path = Some(value);
                             }
 
-                            Arg::Crate(ArgCrate(value)) => error
-                                .combine(syn::Error::new_spanned(value, "duplicate crate path")),
+                            Arg::Crate(ArgCrate(value)) => {
+                                result_builder.add_err(syn::Error::new_spanned(
+                                    value,
+                                    "duplicate crate path",
+                                ));
+                            }
 
                             Arg::Params(ArgParams(values)) => {
                                 for value in values {
                                     if params.contains(&value) {
-                                        error.combine(syn::Error::new_spanned(
+                                        result_builder.add_err(syn::Error::new_spanned(
                                             value,
                                             "duplicate parameter",
                                         ));
@@ -61,13 +66,13 @@ impl TryFrom<Vec<Attribute>> for FuncMapOpts {
                     }
                 }
 
-                Err(err) => error.combine(err),
+                Err(err) => {
+                    result_builder.add_err(err);
+                }
             }
         }
 
-        error.ok()?;
-
-        Ok(Self { crate_path, params })
+        result_builder.err_or(Self { crate_path, params })
     }
 }
 
@@ -217,6 +222,6 @@ pub(crate) fn assert_absent(attrs: &[Attribute], name: &str) -> Result<(), Error
                 ),
             )
         })
-        .collect::<Error>()
-        .ok()
+        .collect::<result::Builder>()
+        .err_or(())
 }
