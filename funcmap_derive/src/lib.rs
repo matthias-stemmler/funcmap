@@ -17,7 +17,6 @@
 #![allow(clippy::too_many_lines)]
 #![deny(rustdoc::broken_intra_doc_links)]
 #![deny(rustdoc::private_intra_doc_links)]
-#![deny(rustdoc::private_doc_tests)]
 #![deny(rustdoc::invalid_codeblock_attributes)]
 #![deny(rustdoc::invalid_rust_codeblocks)]
 #![deny(rustdoc::bare_urls)]
@@ -41,9 +40,7 @@ mod syn_ext;
 // TODO docs (including root README), resolve TODOs
 // TODO unit tests
 // TODO MSRV policy?
-// TODO no_std test (-> Serde)
-// TODO GitHub Actions: cargo msrv --verify, cargo nono check, dependabot (see Serde)
-// TODO MIRI test for unsafe
+// TODO GitHub Actions: cargo msrv --verify, cargo nono check, dependabot (see Serde), cargo +nightly miri test --lib -p funcmap
 // TODO resolve TODOs
 // TODO test publishing (https://github.com/rust-lang/cargo/wiki/Third-party-registries)
 // TODO https://rust-lang.github.io/api-guidelines

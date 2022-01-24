@@ -1,3 +1,5 @@
+//! Provides static identifiers referring to items from the `funcmap` crate
+
 use std::fmt::{self, Display, Formatter};
 
 use proc_macro2::{Ident, Span, TokenStream};

@@ -1,8 +1,27 @@
+//! Provides functionality for parsing options configured via `#[funcmap]`
+//! helper attributes
+//! 
+//! Note that this is implemented using custom parsing logic rather than using
+//! [`Attribute::parse_meta`] in order to support syntax such as
+//! `#[funcmap(params('a, 'b))]` where one or more of the given parameters are
+//! lifetimes. This wouldn't be possible with
+//! [`parse_meta`](`syn::Attribute::parse_meta`) because the elements of a list
+//! would be parsed as [`NestedMeta`](syn::NestedMeta) and hence would have to
+//! be literals or paths, not lifetimes.
+//! 
+//! This is necessary despite the fact that lifetimes aren't actually supported
+//! *semantically* in this position in order to produce more consistent error
+//! messages: If lifetimes were already rejected *syntactically* at this point,
+//! const generics (that aren't supported either) would have to be rejected
+//! syntactically as well for consistency. That is, however, not possible since
+//! const generics are syntactically indistinguishable from type parameters.
+
 use crate::ident::ATTR_IDENT;
 use crate::result::{self, Error};
 
 use std::vec;
 
+use indexmap::IndexSet;
 use proc_macro2::{Ident, TokenStream};
 use quote::ToTokens;
 use syn::{
@@ -12,14 +31,23 @@ use syn::{
     Attribute, ConstParam, GenericParam, Lifetime, LifetimeDef, LitStr, Path, Token, TypeParam,
 };
 
+/// Custom keywords
 mod kw {
     syn::custom_keyword!(params);
 }
 
+/// Options for `funcmap` derive macros
 #[derive(Debug)]
 pub(crate) struct FuncMapOpts {
+    /// Crate path
+    /// 
+    /// Configured via `#[funcmap(crate = "...")]`
     pub(crate) crate_path: Option<Path>,
-    pub(crate) params: Vec<Param>,
+
+    /// Set of parameters for which to generate an implementation
+    /// 
+    /// Configured via `#[funcmap(params(...))]`
+    pub(crate) params: IndexSet<Param>,
 }
 
 impl TryFrom<Vec<Attribute>> for FuncMapOpts {
@@ -27,7 +55,7 @@ impl TryFrom<Vec<Attribute>> for FuncMapOpts {
 
     fn try_from(attrs: Vec<Attribute>) -> Result<Self, Self::Error> {
         let mut crate_path = None;
-        let mut params = Vec::new();
+        let mut params = IndexSet::new();
         let mut result_builder = result::Builder::new();
 
         for args_result in attrs
@@ -58,7 +86,7 @@ impl TryFrom<Vec<Attribute>> for FuncMapOpts {
                                             "duplicate parameter",
                                         ));
                                     } else {
-                                        params.push(value);
+                                        params.insert(value);
                                     }
                                 }
                             }

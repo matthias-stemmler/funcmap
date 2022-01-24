@@ -1,3 +1,5 @@
+//! Provides types dealing with type and lifetime predicates
+
 use crate::result::Error;
 
 use indexmap::{IndexMap, IndexSet};
@@ -6,18 +8,22 @@ use syn::{
     PredicateType, Token, Type, TypeParamBound, WhereClause, WherePredicate,
 };
 
+/// A set of unique type bounds
 #[derive(Debug, Default)]
 pub(crate) struct UniqueTypeBounds(IndexSet<TypeParamBound>);
 
 impl UniqueTypeBounds {
+    /// Creates an empty set of unique type bounds
     pub(crate) fn new() -> Self {
         Self::default()
     }
 
+    /// Adds the given type bound to this set
     pub(crate) fn add(&mut self, bound: TypeParamBound) {
         self.0.insert(bound);
     }
 
+    /// Turn this set into a `+`-punctuated sequence
     pub(crate) fn into_bounds(self) -> Punctuated<TypeParamBound, Token![+]> {
         self.0.into_iter().collect()
     }
@@ -32,10 +38,12 @@ impl Extend<TypeParamBound> for UniqueTypeBounds {
     }
 }
 
+/// A set of unique lifetime bounds
 #[derive(Debug, Default)]
 struct UniqueLifetimeBounds(IndexSet<Lifetime>);
 
 impl UniqueLifetimeBounds {
+    /// Turns this set into a `+`-punctuated sequence
     fn into_bounds(self) -> Punctuated<Lifetime, Token![+]> {
         self.0.into_iter().collect()
     }
@@ -50,12 +58,14 @@ impl Extend<Lifetime> for UniqueLifetimeBounds {
     }
 }
 
+/// The left-hand side of a type predicate
 #[derive(Debug, Eq, Hash, PartialEq)]
 struct TypePredicateLhs {
     lifetimes: Option<BoundLifetimes>,
     bounded_ty: Type,
 }
 
+/// A set of unique type or lifetime predicates
 #[derive(Debug, Default)]
 pub(crate) struct UniquePredicates {
     for_types: IndexMap<TypePredicateLhs, UniqueTypeBounds>,
@@ -63,10 +73,12 @@ pub(crate) struct UniquePredicates {
 }
 
 impl UniquePredicates {
+    /// Creates an empty set of unique type of lifetime predicates
     pub(crate) fn new() -> Self {
         Self::default()
     }
 
+    /// Adds the given predicate to this set
     pub(crate) fn add(&mut self, predicate: WherePredicate) -> Result<(), Error> {
         match predicate {
             WherePredicate::Type(predicate_type) => self
@@ -98,6 +110,7 @@ impl UniquePredicates {
         Ok(())
     }
 
+    /// Turns this set into an iterator of predicates
     pub(crate) fn into_iter(self) -> impl Iterator<Item = WherePredicate> {
         let for_lifetimes = self.for_lifetimes.into_iter().filter_map(|(lhs, rhs)| {
             let bounds = rhs.into_bounds();
@@ -127,6 +140,7 @@ impl UniquePredicates {
         for_lifetimes.chain(for_types)
     }
 
+    /// Turns this set of predicates into a `where` clause
     pub(crate) fn into_where_clause(self) -> WhereClause {
         WhereClause {
             where_token: <Token![where]>::default(),

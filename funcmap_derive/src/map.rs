@@ -52,6 +52,8 @@ impl<'ast> Mapper<'ast> {
         if let Type::Macro(..) = ty {
             return Err(syn::Error::new_spanned(
                 ty,
+                // this is literally the same error message
+                // that would be emitted by builtin derive macros
                 "`derive` cannot be used on items with type macros",
             )
             .into());
@@ -185,14 +187,20 @@ impl<'ast> Mapper<'ast> {
                     let (inner_src_type, inner_dst_type) = self.subs_types(arg_type.clone());
 
                     let make_type = |mapped_until_idx: usize| {
-                        let mapped_args =
-                            map_type_args(args.iter().cloned(), |type_arg_idx, ty: Type| {
-                                if type_arg_idx >= mapped_until_idx {
-                                    self.subs_src_type(ty)
-                                } else {
-                                    self.subs_dst_type(ty)
+                        let mapped_args = args.iter().cloned().scan(0, |type_arg_idx, arg| {
+                            Some(match arg {
+                                GenericArgument::Type(ty) => {
+                                    let mapped_ty = if *type_arg_idx >= mapped_until_idx {
+                                        self.subs_src_type(ty)
+                                    } else {
+                                        self.subs_dst_type(ty)
+                                    };
+                                    *type_arg_idx += 1;
+                                    GenericArgument::Type(mapped_ty)
                                 }
-                            });
+                                _ => arg,
+                            })
+                        });
 
                         Type::Path(TypePath {
                             qself: qself.clone(),
@@ -305,45 +313,5 @@ impl<'ast> Mapper<'ast> {
 
     fn subs_types(&self, ty: Type) -> (Type, Type) {
         (self.subs_src_type(ty.clone()), self.subs_dst_type(ty))
-    }
-}
-
-fn map_type_args<I, F>(iter: I, f: F) -> MapTypeArgs<I, F> {
-    MapTypeArgs::new(iter, f)
-}
-
-#[derive(Debug)]
-struct MapTypeArgs<I, F> {
-    iter: I,
-    f: F,
-    type_idx: usize,
-}
-
-impl<I, F> MapTypeArgs<I, F> {
-    fn new(iter: I, f: F) -> Self {
-        Self {
-            iter,
-            f,
-            type_idx: 0,
-        }
-    }
-}
-
-impl<I, F> Iterator for MapTypeArgs<I, F>
-where
-    I: Iterator<Item = GenericArgument>,
-    F: FnMut(usize, Type) -> Type,
-{
-    type Item = GenericArgument;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(match self.iter.next()? {
-            GenericArgument::Type(ty) => {
-                let arg = GenericArgument::Type((self.f)(self.type_idx, ty));
-                self.type_idx += 1;
-                arg
-            }
-            arg => arg,
-        })
     }
 }

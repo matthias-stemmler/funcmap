@@ -456,7 +456,6 @@
 #![allow(clippy::missing_errors_doc)] // TODO remove
 #![deny(rustdoc::broken_intra_doc_links)]
 #![deny(rustdoc::private_intra_doc_links)]
-#![deny(rustdoc::private_doc_tests)]
 #![deny(rustdoc::invalid_codeblock_attributes)]
 #![deny(rustdoc::invalid_rust_codeblocks)]
 #![deny(rustdoc::bare_urls)]
