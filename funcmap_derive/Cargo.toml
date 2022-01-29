@@ -20,4 +20,4 @@ quote = "1"
 syn = { version = "1", features = ["extra-traits", "fold", "visit"] }
 
 [dev-dependencies]
-rstest = "0.12"
+syn = { version = "1", features = ["full"] }

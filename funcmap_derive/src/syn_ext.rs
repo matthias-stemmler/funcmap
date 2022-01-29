@@ -1,20 +1,26 @@
+//! Provides additional functionality for types in the [`syn`] crate
+
 use proc_macro2::{Ident, TokenStream};
 use quote::ToTokens;
 use syn::fold::{self, Fold};
 use syn::punctuated::Punctuated;
 use syn::visit::{self, Visit};
 use syn::{
-    ConstParam, GenericArgument, GenericParam, LifetimeDef, Path, PathSegment, PredicateType,
-    Token, TraitBound, TraitBoundModifier, Type, TypeParam, TypeParamBound, TypePath,
-    WherePredicate,
+    ConstParam, GenericArgument, GenericParam, LifetimeDef, PathSegment, PredicateType, TraitBound,
+    TraitBoundModifier, Type, TypeParam, TypeParamBound, TypePath, WherePredicate,
 };
 
+/// Extension trait for determining the dependency of an AST node on a type
 pub(crate) trait DependencyOnType {
-    fn dependency_on_type<'ast>(&'ast self, type_ident: &'ast Ident) -> Option<&'ast Ident>;
+    /// Returns the dependency of `self` on a type named `type_ident`, if any
+    ///
+    /// The returned [`Ident`] may differ from `type_ident` only in its
+    /// [`Span`](proc_macro2::Span).
+    fn dependency_on_type(&self, type_ident: &Ident) -> Option<&Ident>;
 }
 
 impl DependencyOnType for Type {
-    fn dependency_on_type<'ast>(&'ast self, type_ident: &'ast Ident) -> Option<&'ast Ident> {
+    fn dependency_on_type(&self, type_ident: &Ident) -> Option<&Ident> {
         let mut visitor = DependencyOnTypeVisitor::new(type_ident);
         visitor.visit_type(self);
         visitor.into_dependency()
@@ -22,16 +28,16 @@ impl DependencyOnType for Type {
 }
 
 #[derive(Debug)]
-struct DependencyOnTypeVisitor<'ast> {
-    type_ident: &'ast Ident,
+struct DependencyOnTypeVisitor<'ast, 'a> {
     dependency: Option<&'ast Ident>,
+    type_ident: &'a Ident,
 }
 
-impl<'ast> DependencyOnTypeVisitor<'ast> {
-    fn new(type_ident: &'ast Ident) -> Self {
+impl<'ast, 'a> DependencyOnTypeVisitor<'ast, 'a> {
+    fn new(type_ident: &'a Ident) -> Self {
         Self {
-            type_ident,
             dependency: None,
+            type_ident,
         }
     }
 
@@ -40,94 +46,88 @@ impl<'ast> DependencyOnTypeVisitor<'ast> {
     }
 }
 
-impl<'ast> Visit<'ast> for DependencyOnTypeVisitor<'ast> {
+impl<'ast> Visit<'ast> for DependencyOnTypeVisitor<'ast, '_> {
     fn visit_type(&mut self, ty: &'ast Type) {
-        match (self.dependency, ty.find_ident(self.type_ident)) {
-            (None, Some(ident)) => self.dependency = Some(ident),
-            (None, _) => visit::visit_type(self, ty),
-            _ => (),
-        };
-    }
+        if self.dependency.is_some() {
+            return;
+        }
 
-    fn visit_path(&mut self, path: &'ast Path) {
-        match (self.dependency, path.leading_colon, path.segments.first()) {
-            (None, None, Some(PathSegment { ident, .. })) if ident == self.type_ident => {
-                self.dependency = Some(ident);
+        match ty {
+            Type::Path(TypePath { qself: None, path }) if path.leading_colon.is_none() => {
+                match path.segments.first() {
+                    Some(PathSegment { ident, .. }) if ident == self.type_ident => {
+                        self.dependency = Some(ident);
+                    }
+                    _ => visit::visit_type(self, ty),
+                }
             }
-            (None, ..) => visit::visit_path(self, path),
-            _ => (),
+            _ => visit::visit_type(self, ty),
         }
     }
 }
 
+/// Extension trait for substituting one type with another in an AST node
 pub(crate) trait SubsType {
-    fn subs_type(self, ident: &Ident, subs_ident: &Ident) -> Self;
+    /// Substitutes the type named `type_ident` with `subs_ident` within `self`
+    fn subs_type(self, type_ident: &Ident, subs_ident: &Ident) -> Self;
 }
 
 impl SubsType for Type {
-    fn subs_type(self, ident: &Ident, subs_ident: &Ident) -> Self {
-        let mut folder = SubsTypeFolder { ident, subs_ident };
+    fn subs_type(self, type_ident: &Ident, subs_ident: &Ident) -> Self {
+        let mut folder = SubsTypeFolder::new(type_ident, subs_ident);
         folder.fold_type(self)
     }
 }
 
 impl SubsType for TraitBound {
-    fn subs_type(self, ident: &Ident, subs_ident: &Ident) -> Self {
-        let mut folder = SubsTypeFolder { ident, subs_ident };
+    fn subs_type(self, type_ident: &Ident, subs_ident: &Ident) -> Self {
+        let mut folder = SubsTypeFolder::new(type_ident, subs_ident);
         folder.fold_trait_bound(self)
     }
 }
 
 impl SubsType for WherePredicate {
-    fn subs_type(self, ident: &Ident, subs_ident: &Ident) -> Self {
-        let mut folder = SubsTypeFolder { ident, subs_ident };
+    fn subs_type(self, type_ident: &Ident, subs_ident: &Ident) -> Self {
+        let mut folder = SubsTypeFolder::new(type_ident, subs_ident);
         folder.fold_where_predicate(self)
     }
 }
 
-struct SubsTypeFolder<'ast> {
-    ident: &'ast Ident,
-    subs_ident: &'ast Ident,
+struct SubsTypeFolder<'a> {
+    type_ident: &'a Ident,
+    subs_ident: &'a Ident,
 }
 
-impl Fold for SubsTypeFolder<'_> {
-    fn fold_type(&mut self, ty: Type) -> Type {
-        if ty.find_ident(self.ident).is_some() {
-            self.subs_ident.clone().into_type()
-        } else {
-            fold::fold_type(self, ty)
+impl<'a> SubsTypeFolder<'a> {
+    fn new(type_ident: &'a Ident, subs_ident: &'a Ident) -> Self {
+        Self {
+            type_ident,
+            subs_ident,
         }
     }
+}
 
-    fn fold_path(&mut self, mut path: Path) -> Path {
-        match (path.leading_colon, path.segments.first_mut()) {
-            (None, Some(PathSegment { ident, .. })) if ident == self.ident => {
-                *ident = self.subs_ident.clone();
+impl<'a> Fold for SubsTypeFolder<'a> {
+    fn fold_type(&mut self, mut ty: Type) -> Type {
+        match &mut ty {
+            Type::Path(TypePath { qself: None, path }) if path.leading_colon.is_none() => {
+                match path.segments.first_mut() {
+                    Some(PathSegment { ident, .. }) if ident == self.type_ident => {
+                        *ident = self.subs_ident.clone();
+                    }
+                    _ => (),
+                }
             }
             _ => (),
         }
 
-        fold::fold_path(self, path)
+        fold::fold_type(self, ty)
     }
 }
 
-trait FindIdent {
-    fn find_ident(&self, ident: &Ident) -> Option<&Ident>;
-}
-
-impl FindIdent for Type {
-    fn find_ident(&self, ident: &Ident) -> Option<&Ident> {
-        match self {
-            Type::Path(TypePath { qself: None, path }) => match path.get_ident() {
-                Some(path_ident) if path_ident == ident => Some(path_ident),
-                _ => None,
-            },
-            _ => None,
-        }
-    }
-}
-
+/// Extension trait for converting an AST node into a [`GenericArgument`]
 pub(crate) trait IntoGenericArgument {
+    /// Converts `self` into a [`GenericArgument`]
     fn into_generic_argument(self) -> GenericArgument;
 }
 
@@ -145,7 +145,9 @@ impl IntoGenericArgument for GenericParam {
     }
 }
 
+/// Extension trait for converting an [`Ident`] into a [`Type`]
 pub(crate) trait IntoType {
+    /// Converts `self` into a [`Type`]
     fn into_type(self) -> Type;
 }
 
@@ -158,7 +160,13 @@ impl IntoType for Ident {
     }
 }
 
+/// Extension trait for interpolating types inside a `quote!` invocation if they
+/// produce a non-empty [`TokenStream`]
 pub(crate) trait ToNonEmptyTokens {
+    /// Converts `self` into a non-empty [`TokenStream`] if possible
+    ///
+    /// Returns the result of [`ToTokens::to_token_stream`] if it is non-empty,
+    /// or [`None`] otherwise.
     fn to_non_empty_token_stream(&self) -> Option<TokenStream>;
 }
 
@@ -174,7 +182,9 @@ where
     }
 }
 
+/// Extension trait for removing attributes from an AST node
 pub(crate) trait WithoutAttrs {
+    /// Returns `self` without attributes
     fn without_attrs(self) -> Self;
 }
 
@@ -202,6 +212,7 @@ impl WithoutAttrs for WherePredicate {
     }
 }
 
+#[derive(Debug)]
 struct WithoutAttrsFolder;
 
 impl Fold for WithoutAttrsFolder {
@@ -220,7 +231,9 @@ impl Fold for WithoutAttrsFolder {
     }
 }
 
+/// Extension trait for removing the default value from a generic parameter
 pub(crate) trait WithoutDefault {
+    /// Returns `self` without a default value
     fn without_default(self) -> Self;
 }
 
@@ -234,11 +247,16 @@ impl WithoutDefault for ConstParam {
     }
 }
 
+/// Extension trait for removing bounds such as `?Sized` from an AST node
 pub(crate) trait WithoutMaybeBounds {
+    /// Returns `self` without maybe bounds
     fn without_maybe_bounds(self) -> Self;
 }
 
-impl WithoutMaybeBounds for Punctuated<TypeParamBound, Token![+]> {
+impl<P> WithoutMaybeBounds for Punctuated<TypeParamBound, P>
+where
+    P: Default,
+{
     fn without_maybe_bounds(self) -> Self {
         self.into_iter()
             .filter(|bound| {
@@ -265,71 +283,204 @@ impl WithoutMaybeBounds for PredicateType {
 
 #[cfg(test)]
 mod tests {
-    use proc_macro2::Span;
-    use rstest::rstest;
-    use syn::parse_quote;
-
     use super::*;
 
-    #[rstest]
-    #[case(parse_quote ! (Foo), false)]
-    #[case(parse_quote ! (T), true)]
-    #[case(parse_quote ! ((T)), true)]
-    #[case(parse_quote ! ((Foo, T)), true)]
-    #[case(parse_quote ! ([T]), true)]
-    #[case(parse_quote ! ([T; 1]), true)]
-    #[case(parse_quote ! (fn (T) -> Foo), true)]
-    #[case(parse_quote ! (fn (Foo) -> T), true)]
-    #[case(parse_quote ! (* const T), true)]
-    #[case(parse_quote ! (* mut T), true)]
-    #[case(parse_quote ! (& T), true)]
-    #[case(parse_quote ! (& mut T), true)]
-    #[case(parse_quote ! (Foo::T), false)]
-    #[case(parse_quote ! (::T::Foo), false)]
-    #[case(parse_quote ! (Foo < Bar >), false)]
-    #[case(parse_quote ! (Foo < T >), true)]
-    #[case(parse_quote ! (Foo < Bar < T >>), true)]
-    #[case(parse_quote ! (T < Foo >), true)]
-    #[case(parse_quote ! (T::Foo < Bar >), true)]
-    #[case(parse_quote ! (< T as Foo >::Bar < Baz >), true)]
-    #[case(parse_quote ! (Foo < Bar, T >), true)]
-    #[case(parse_quote ! (Foo < 'T >), false)]
-    fn test_dependency_on_type(#[case] ty: Type, #[case] expected_result: bool) {
-        let type_ident = Ident::new("T", Span::call_site());
+    use proc_macro2::Span;
+    use quote::quote;
+    use syn::{parse_quote, Token};
+
+    mod type_dependency {
+        use super::*;
+
+        macro_rules! type_dependency_test {
+            ($name:ident: $src_type:ty => $dst_type:ty) => {
+                mod $name {
+                    use super::*;
+
+                    #[test]
+                    fn dependency_on_type_is_some_if_dependent() {
+                        let ty: Type = parse_quote!($src_type);
+                        let type_ident = Ident::new("A", Span::call_site());
+
+                        assert_eq!(ty.dependency_on_type(&type_ident), Some(&type_ident));
+                    }
+
+                    #[test]
+                    fn subs_type_substitutes_type_if_dependent() {
+                        let src_type: Type = parse_quote!($src_type);
+                        let dst_type: Type = parse_quote!($dst_type);
+
+                        let type_ident = Ident::new("A", Span::call_site());
+                        let subs_type_ident = Ident::new("B", Span::call_site());
+
+                        assert_eq!(src_type.subs_type(&type_ident, &subs_type_ident), dst_type);
+                    }
+                }
+            };
+
+            ($name:ident: $type:ty) => {
+                mod $name {
+                    use super::*;
+
+                    #[test]
+                    fn dependency_on_type_is_none_if_independent() {
+                        let ty: Type = parse_quote!($type);
+                        let type_ident = Ident::new("A", Span::call_site());
+
+                        assert!(ty.dependency_on_type(&type_ident).is_none());
+                    }
+
+                    #[test]
+                    fn subs_type_does_not_substitute_if_independent() {
+                        let ty: Type = parse_quote!($type);
+
+                        let type_ident = Ident::new("A", Span::call_site());
+                        let subs_type_ident = Ident::new("B", Span::call_site());
+
+                        assert_eq!(ty.clone().subs_type(&type_ident, &subs_type_ident), ty);
+                    }
+                }
+            };
+        }
+
+        macro_rules! type_dependency_tests {
+            ($($name:ident: $($type:ty)=>*,)*) => {
+                $(type_dependency_test!($name: $($type)=>*);)*
+            };
+        }
+
+        type_dependency_tests! {
+            array_dep: [A; 1] => [B; 1],
+            array_ind: [Foo; 1],
+            fn_dep: fn(A) -> A => fn(B) -> B,
+            fn_ind: fn(Foo) -> Foo,
+            impl_trait: impl A,
+            impl_trait_generic_dep: impl Trait<A> => impl Trait<B>,
+            impl_trait_generic_ind: impl Trait<Foo>,
+            impl_trait_assoc_dep: impl Trait<Assoc = A> => impl Trait<Assoc = B>,
+            impl_trait_assoc_ind: impl Trait<Assoc = Foo>,
+            infer: _,
+            macro_name: A!(),
+            macro_arg: test_macro!(A),
+            never: !,
+            paren_dep: (A) => (B),
+            paren_ind: (Foo),
+            path_ident_dep: A => B,
+            path_ident_ind: Foo,
+            path_ident_with_arg_dep: A<Bar> => B<Bar>,
+            path_ident_with_arg_ind: Foo<Bar>,
+            path_with_sub_dep: A::Bar => B::Bar,
+            path_with_sub_ind: Foo::Bar,
+            path_leading_colon: ::A,
+            path_with_super: Foo::A,
+            path_arg_dep: Foo<A> => Foo<B>,
+            path_arg_ind: Foo<Bar>,
+            path_nested_arg_dep: Foo<Bar<A>> => Foo<Bar<B>>,
+            path_nested_arg_ind: Foo<Bar<Baz>>,
+            path_qself_type_dep: <A as Bar>::Baz => <B as Bar>::Baz,
+            path_qself_type_ind: <Foo as Bar>::Baz,
+            path_qself_trait: <Foo as A>::Bar,
+            path_with_qself: <Foo as Bar>::A,
+            path_lifetime: Foo<'A>,
+            const_ptr_dep: *const A => *const B,
+            const_ptr_ind: *const Foo,
+            ptr_mut_dep: *mut A => *mut B,
+            ptr_mut_ind: *mut Foo,
+            ref_dep: &A => &B,
+            ref_ind: &Foo,
+            ref_mut_dep: &mut A => &mut B,
+            ref_mut_ind: &mut Foo,
+            slice_dep: [A] => [B],
+            slice_ind: [Foo],
+            dyn_trait: dyn A,
+            dyn_trait_generic_dep: dyn Trait<A> => dyn Trait<B>,
+            dyn_trait_generic_ind: dyn Trait<Foo>,
+            dyn_trait_assoc_dep: dyn Trait<Assoc = A> => dyn Trait<Assoc = B>,
+            dyn_trait_assoc_ind: dyn Trait<Assoc = Foo>,
+            tuple_dep: (Foo, A) => (Foo, B),
+            tuple_ind: (Foo, Bar),
+        }
+    }
+
+    #[test]
+    fn into_generic_argument_converts_type_param_into_type_argument() {
+        let generic_param: GenericParam = parse_quote!(T);
+        assert_eq!(generic_param.into_generic_argument(), parse_quote!(T));
+    }
+
+    #[test]
+    fn into_generic_argument_converts_lifetime_param_into_lifetime_argument() {
+        let generic_param: GenericParam = parse_quote!('a);
+        assert_eq!(generic_param.into_generic_argument(), parse_quote!('a));
+    }
+
+    #[test]
+    fn into_generic_argument_converts_const_param_into_type_argument() {
+        let generic_param: GenericParam = parse_quote!(const N: usize);
+        assert_eq!(generic_param.into_generic_argument(), parse_quote!(N));
+    }
+
+    #[test]
+    fn into_type_converts_ident_into_type() {
+        let ident = Ident::new("T", Span::call_site());
+        assert_eq!(ident.into_type(), parse_quote!(T));
+    }
+
+    #[test]
+    fn to_non_empty_token_stream_returns_some_if_token_stream_is_not_empty() {
+        let tokens = quote!(X);
+        assert!(tokens.to_non_empty_token_stream().is_some());
+    }
+
+    #[test]
+    fn to_non_empty_token_stream_returns_none_if_token_stream_is_empty() {
+        let tokens = quote!();
+        assert!(tokens.to_non_empty_token_stream().is_none());
+    }
+
+    #[test]
+    fn without_attrs_removes_attributes_from_const_param() {
+        let const_param: ConstParam = parse_quote!(#[attr] const N: usize = 42);
 
         assert_eq!(
-            ty.dependency_on_type(&type_ident).is_some(),
-            expected_result
+            const_param.without_attrs(),
+            parse_quote!(const N: usize = 42)
         );
     }
 
-    #[rstest]
-    #[case(parse_quote ! (Foo), parse_quote ! (Foo))]
-    #[case(parse_quote ! (T), parse_quote ! (A))]
-    #[case(parse_quote ! ((T)), parse_quote ! ((A)))]
-    #[case(parse_quote ! ((Foo, T)), parse_quote ! ((Foo, A)))]
-    #[case(parse_quote ! ([T]), parse_quote ! ([A]))]
-    #[case(parse_quote ! ([T; 1]), parse_quote ! ([A; 1]))]
-    #[case(parse_quote ! (fn (T) -> Foo), parse_quote ! (fn (A) -> Foo))]
-    #[case(parse_quote ! (fn (Foo) -> T), parse_quote ! (fn (Foo) -> A))]
-    #[case(parse_quote ! (* const T), parse_quote ! (* const A))]
-    #[case(parse_quote ! (* mut T), parse_quote ! (* mut A))]
-    #[case(parse_quote ! (& T), parse_quote ! (& A))]
-    #[case(parse_quote ! (& mut T), parse_quote ! (& mut A))]
-    #[case(parse_quote ! (Foo::T), parse_quote ! (Foo::T))]
-    #[case(parse_quote ! (::T::Foo), parse_quote ! (::T::Foo))]
-    #[case(parse_quote ! (Foo < Bar >), parse_quote ! (Foo < Bar >))]
-    #[case(parse_quote ! (Foo < T >), parse_quote ! (Foo < A >))]
-    #[case(parse_quote ! (Foo < Bar < T >>), parse_quote ! (Foo < Bar < A >>))]
-    #[case(parse_quote ! (T < Foo >), parse_quote ! (A < Foo >))]
-    #[case(parse_quote ! (T::Foo < Bar >), parse_quote ! (A::Foo < Bar >))]
-    #[case(parse_quote ! (< T as Foo >::Bar < Baz >), parse_quote ! (< A as Foo >::Bar < Baz >))]
-    #[case(parse_quote ! (Foo < Bar, T >), parse_quote ! (Foo < Bar, A >))]
-    #[case(parse_quote ! (Foo < 'T >), parse_quote ! (Foo < 'T >))]
-    fn test_subs_type(#[case] ty: Type, #[case] expected_result: Type) {
-        let type_ident = Ident::new("T", Span::call_site());
-        let subs_type_ident = Ident::new("A", Span::call_site());
+    #[test]
+    fn without_attrs_removes_attributes_from_lifetime_def() {
+        let lifetime_def: LifetimeDef = parse_quote!(#[attr] 'a: 'b);
+        assert_eq!(lifetime_def.without_attrs(), parse_quote!('a: 'b));
+    }
 
-        assert_eq!(ty.subs_type(&type_ident, &subs_type_ident), expected_result);
+    #[test]
+    fn without_default_removes_default_from_const_param() {
+        let const_param: ConstParam = parse_quote!(#[attr] const N: usize = 42);
+
+        assert_eq!(
+            const_param.without_default(),
+            parse_quote!(#[attr] const N: usize)
+        );
+    }
+
+    #[test]
+    fn without_maybe_bounds_removes_maybe_bounds_from_sequence_of_type_param_bounds() {
+        let bounds: Punctuated<TypeParamBound, Token![+]> = parse_quote!(?Sized + Trait + 'b);
+        assert_eq!(bounds.without_maybe_bounds(), parse_quote!(Trait + 'b))
+    }
+
+    #[test]
+    fn without_maybe_bounds_removes_maybe_bounds_from_type_predicate() {
+        let type_predicate: WherePredicate = parse_quote!(for<'a> Type: ?Sized + Trait + 'c);
+
+        assert_eq!(
+            match type_predicate {
+                WherePredicate::Type(predicate_type) =>
+                    WherePredicate::Type(predicate_type.without_maybe_bounds()),
+                predicate => predicate,
+            },
+            parse_quote!(for<'a> Type: Trait + 'c),
+        )
     }
 }

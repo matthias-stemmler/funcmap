@@ -46,6 +46,7 @@ mod syn_ext;
 // TODO https://rust-lang.github.io/api-guidelines
 // TODO https://doc.rust-lang.org/rustdoc/the-doc-attribute.html
 // TODO more fallible tests, fallible examples
+// TODO dependencies semver
 
 #[proc_macro_derive(FuncMap, attributes(funcmap))]
 pub fn derive_func_map(item: TokenStream) -> TokenStream {

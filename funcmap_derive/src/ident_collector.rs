@@ -75,7 +75,7 @@ impl VisitingIdentCollector {
     ///
     /// Afterwards, more identifiers can be reserved through
     /// [`reserve_uppercase_letter`](IdentCollector::reserve_uppercase_letter),
-    /// but not more AST nodes can be visited.
+    /// but no more AST nodes can be visited.
     pub(crate) fn into_reserved(self) -> IdentCollector {
         self.0
     }
