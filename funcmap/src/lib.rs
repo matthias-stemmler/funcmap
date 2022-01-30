@@ -24,7 +24,7 @@
 //!
 //! Now suppose you want to turn a `Foo<i32>` into a `Foo<String>` by converting
 //! each [`i32`] contained in the type into a [`String`] by applying
-//! [`to_string()`](ToString::to_string). You can do this by deriving the
+//! [`to_string`](ToString::to_string). You can do this by deriving the
 //! [`FuncMap`] trait provided by this crate and then invoking its
 //! [`func_map`](FuncMap::func_map) method like this:
 //! ```
@@ -82,7 +82,7 @@
 //!
 //! For a more detailed explanation and more features, see the following
 //! sections. Everything stated about [`FuncMap`] applies to [`TryFuncMap`]
-//! as well unless stated otherwise.
+//! as well unless mentioned otherwise.
 //!
 //! # Common Use Cases
 //!
@@ -142,17 +142,17 @@
 //! untouched.
 //!
 //! For any field whose type depends on `T`, the following types are supported:
-//! * arrays: `[T1; N]`, where `T1` is a type depending on `T`
-//! * tuples of arbitrary length: `(T1, ..., Tn)` where at least one of the `Ti`
+//! * arrays: `[T0; N]`, where `T0` is a type depending on `T`
+//! * tuples of arbitrary length: `(T0, ..., Tn)` where at least one of the `Ti`
 //!   depends on `T`
-//! * named generic types: `Bar<T1, ..., Tn>` where at least one of the `Ti`
+//! * named generic types: `Bar<T0, ..., Tn>` where at least one of the `Ti`
 //!   depends on `T`
 //!
 //! In the case of a named generic type, the derived implementation of
 //! [`FuncMap`] for `Foo<T>` carries the appropriate trait bounds to allow for
 //! recursive application of [`func_map`](FuncMap::func_map) on
-//! `Bar<T1, ..., Tn>`. In order to fulfill these trait bounds,
-//! `Bar<T1, ..., Tn>` must satisfy one of these conditions:
+//! `Bar<T0, ..., Tn>`. In order to fulfill these trait bounds,
+//! `Bar<T0, ..., Tn>` must satisfy one of these conditions:
 //! * It is a type from the standard library for which this crate provides an
 //!   implementation of [`FuncMap`], such as [`Vec<T>`].
 //! * It is a type defined in your crate for which [`FuncMap`] is derived.
@@ -169,7 +169,7 @@
 //! The closure passed to the [`func_map`](FuncMap::func_map) method must not
 //! fail. If you have a closure that can fail, you can use the [`TryFuncMap`]
 //! trait and its method [`try_func_map`](TryFuncMap::try_func_map) instead.
-//! [`TryFuncMap`] can be derived in the same way and or the same types as
+//! [`TryFuncMap`] can be derived in the same way and for the same types as
 //! [`FuncMap`]. Since [`FuncMap`] is a supertrait of [`TryFuncMap`], make sure
 //! you derive [`FuncMap`] as well.
 //!
@@ -222,7 +222,7 @@
 //! Since both cannot be handled by a single implementation of `FuncMap<A, B>`
 //! for `Foo<A>`, the [`FuncMap`] trait has a third parameter `P` to distinguish
 //! between the two. This parameter is instantiated with the types
-//! `TypeParam<0>` and `TypeParam<1>`, respectively, so that
+//! [`TypeParam<0>`] and [`TypeParam<1>`], respectively, so that
 //! ```
 //! # use funcmap::{FuncMap, TypeParam};
 //! #
@@ -410,6 +410,81 @@
 //!
 //! # Manually Implementing [`FuncMap`] and [`TryFuncMap`]
 //!
+//! Even though implementations of the traits in this crate are usually meant to
+//! be derived automatically, it can become necessary for you to implement the
+//! traits manually in some cases, for instance
+//! - when a type in your crate has a field depending on a type parameter in a
+//!   way that isn't supported by the [`FuncMap`] and [`TryFuncMap`] derive
+//!   macros, e.g. when you implement a low-level primitive such as your custom
+//!   version of [`Vec<T>`],
+//! - when you need a [`FuncMap`] or [`TryFuncMap`] implementation for a type in
+//!   a third-party crate that doesn't provide one.
+//!
+//! In the latter case, since you cannot implement nor derive the trait for a
+//! third-party type due to the orphan rule, it is recommended that you provide
+//! your own wrapper around it (following the *newtype* pattern) and implement
+//! the trait manually for the wrapper type:
+//! ```
+//! # use funcmap::FuncMap;
+//! #
+//! // Pretend this to be an external crate, not a module
+//! mod third_party {
+//!     # #[derive(Debug, PartialEq)]
+//!     pub struct List<T> {
+//!         // ...
+//!         # pub value: Option<T>,
+//!     }
+//!
+//!     impl<A> List<A> {
+//!         pub fn map<B>(self, f: impl FnMut(A) -> B) -> List<B> {
+//!             // ...
+//!             # List { value: self.value.map(f) }
+//!         }
+//!     }
+//! }
+//!
+//! // In your crate:
+//! # #[derive(Debug, PartialEq)]
+//! struct MyList<T>(third_party::List<T>);
+//!
+//! impl<A, B> FuncMap<A, B> for MyList<A> {
+//!     type Output = MyList<B>;
+//!
+//!     fn func_map<F>(self, f: F) -> Self::Output
+//!     where
+//!         F: FnMut(A) -> B,
+//!     {
+//!         MyList(self.0.map(f))
+//!     }
+//! }
+//!
+//! // Now you can derive `FuncMap` for types containing a `MyList<T>`:
+//! # #[derive(Debug, PartialEq)]
+//! #[derive(FuncMap)]
+//! struct Foo<T> {
+//!     list: MyList<T>,
+//! }
+//! #
+//! # let list = Foo {
+//! #     list: MyList(third_party::List {
+//! #         value: Some(1)
+//! #     })
+//! # };
+//! #
+//! # assert_eq!(
+//! #     list.func_map(|v| v.to_string()),
+//! #     Foo {
+//! #         list: MyList(third_party::List {
+//! #             value: Some(String::from("1"))
+//! #         })
+//! #     }
+//! # );
+//! ```
+//!
+//! For details on the exact contract to uphold when writing manual
+//! implementations, see the API documentation of [`FuncMap`] and
+//! [`TryFuncMap`].
+//!
 //! # `no_std` support
 //!
 //! `funcmap` has a Cargo feature named `std` that is enabled by default and
@@ -434,13 +509,99 @@
 //!
 //! This will provide implementations for many types in the [`alloc`] library.
 //!
+//! # Caveats (trait bounds, type aliases)
+//!
 //! # Functional Programming Background
 //!
-//! Functors, category theory, Haskell, fmap
+//! The idea of `funcmap` is based on the *functor* design pattern from
+//! functional programming, which in turn is inspired from the notion of a
+//! functor in category theory.
+//!
+//! Basically, `F` is a functor if
+//! 1. it associates each type `T` with a new type `F(T)`
+//! 2. it associates each function
+//!     ```plain
+//!     f: A -> B
+//!     ```
+//!     with a function
+//!     ```plain
+//!     F(f): F(A) -> F(B)
+//!     ```
+//!     such that the following *functor laws* are satisfied:
+//!     - `F(id) = id` where `id` is the identity function on `A`, respectively
+//!       `F(A)`
+//!     - `F(g . f) = F(g) . F(f)` for any two functions `f: A -> B` and
+//!       `g: B -> C`, where `g . f` denotes function composition
+//!
+//! In languages with higher-kinded types such as Haskell, this property of
+//! being a functor is expressed as a *type class* (similar to a trait) called
+//! [Functor](https://wiki.haskell.org/Functor) that the higher-kinded type `F`
+//! is an instance of.
+//!
+//! In Rust, property 1. is satisfied for every type `Foo<T>` that is generic
+//! over a type parameter `T` because it associates each type `T` with a new
+//! type `Foo<T>`, at least for those types `T` that satisfy all trait bounds
+//! that `Foo<T>` imposes on `T`.
+//!
+//! Property 2. is where the [`FuncMap`] trait comes into play. As there are no
+//! higher-kinded types in Rust as of now, it cannot be expressed by `Foo`
+//! itself implementing a trait, because while `Foo<T>` is a type for every `T`,
+//! `Foo` itself (without the `<T>`) isn't something one can reason about within
+//! the Rust type system. However, one can say that `Foo` is a functor if and
+//! only if
+//! ```
+//! # use funcmap::FuncMap;
+//! #
+//! # #[derive(FuncMap)]
+//! # struct Foo<T>(T);
+//! #
+//! # enum A {}
+//! # enum B {}
+//! #
+//! # fn test() where
+//! Foo<A>: FuncMap<A, B, Output = Foo<B>>
+//! # {}
+//! ```
+//! holds for all types `A` and `B` for which `Foo<T>` exists. The function
+//! `Foo<A> -> Foo<B>` associated with a function `f: A -> B` (in Rust:
+//! `f: impl FnMut(A) -> B`) by property 2. is then provided by the
+//! [func_map](FuncMap::func_map) method as the function
+//! ```
+//! # use funcmap::FuncMap;
+//! #
+//! # #[derive(FuncMap)]
+//! # struct Foo<T>(T);
+//! #
+//! # enum A {}
+//! # enum B {}
+//! #
+//! # fn test(f: impl FnMut(A) -> B) -> impl FnOnce(Foo<A>) -> Foo<B> {
+//! |x: Foo<A>| x.func_map(f)
+//! # }
+//! ```
+//! So deriving the [`FuncMap`] trait for `Foo<T>` can be viewed as deriving
+//! Property 2. from Property 1. or equivalently, deriving a (hypothetical)
+//! *Functor*  trait for the (hypothetical) higher-kinded type `Foo`.
+//!
+//! In fact, the name of the [`func_map`](FuncMap::func_map) method is inspired
+//! from the
+//! [`fmap`](https://hackage.haskell.org/package/base-4.16.0.0/docs/Data-Functor.html#v:fmap)
+//! function of Haskell's functor type class.
+//!
+//! # Minimum Supported Rust Version (MSRV) policy
+//!
+//! The current MSRV of this crate is `1.56`.
+//!
+//! Increasing the MSRV of this crate is *not* considered a breaking change.
+//! However, in such cases there will be at least a minor version bump.
+//!
+//! Each version of this crate will support at least the four latest stable Rust
+//! versions at the time it is published.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(missing_copy_implementations)]
 #![deny(missing_debug_implementations)]
-// #![deny(missing_docs)] // TODO uncomment
+#![deny(missing_docs)]
 #![deny(unreachable_pub)]
 #![deny(unused_crate_dependencies)]
 #![deny(unused_extern_crates)]
@@ -453,7 +614,6 @@
 #![deny(clippy::rest_pat_in_fully_bound_structs)]
 #![deny(clippy::use_debug)]
 #![allow(clippy::module_name_repetitions)]
-#![allow(clippy::missing_errors_doc)] // TODO remove
 #![deny(rustdoc::broken_intra_doc_links)]
 #![deny(rustdoc::private_intra_doc_links)]
 #![deny(rustdoc::invalid_codeblock_attributes)]
@@ -475,13 +635,201 @@ mod impls_std;
 use core::fmt::{self, Display, Formatter};
 
 /// Functorial mapping of a generic type over any of its type parameters
+///
+/// # Deriving [`FuncMap`]
+///
+/// In most cases, implementations of this trait can and should be derived
+/// automatically:
+/// ```
+/// # use funcmap::FuncMap;
+/// #
+/// #[derive(FuncMap)]
+/// struct Foo<T> {
+///     // ...
+///     # value: T,
+/// }
+/// ```
+///
+/// See the [crate-level documentation](crate) for details.
+///
+/// # Manually implementing [`FuncMap`]
+///
+/// If you need to implement [`FuncMap`] manually, make sure to uphold the
+/// following contract:
+///
+/// Let `Foo` be a type that is generic over the type parameters `T0, ..., Tn`.
+///
+/// If `Foo` implements [`FuncMap<A, B, TypeParam<N>>`], then
+/// - `N` must be in the range `0..=n`.
+/// - The type parameter of `Foo` at index `N` (not counting lifetime parameters
+///   and const generics) must be `A`.
+/// - `Foo::Output` must be `Foo`, but with the type parameter at index `N`
+///   replaced with `B`.
+///
+/// For simplicity, let's assume that `n == 1` and `Foo` is `Foo<T>`. Then
+/// [`func_map`](Self::func_map) must satisfy the *functor laws*:
+/// - For any `foo: Foo<A>`,
+///   ```
+///   # use funcmap::FuncMap;
+///   #
+///   # #[derive(FuncMap, Copy, Clone, Debug, PartialEq)]
+///   # struct Foo<T>(T);
+///   #
+///   # let foo = Foo(42);
+///   #
+///   # assert!(
+///   foo.func_map(|x| x) == foo
+///   # );
+///   ```
+///   if `Foo<A>: Copy + PartialEq` (if not, it must at least be conceptually
+///   equivalent to `foo`).
+/// - for any `foo: Foo<A>`, `f: impl FnMut(A) -> B` and
+///   `g: impl FnMut(B) -> C`,
+///   ```
+///   # use funcmap::FuncMap;
+///   #
+///   # #[derive(FuncMap, Copy, Clone, Debug, PartialEq)]
+///   # struct Foo<T>(T);
+///   #
+///   # let foo = Foo(42);
+///   # let f = |x| x + 1;
+///   # let g = |x| x * 2;
+///   #
+///   # assert!(
+///   foo.func_map(|x| g(f(x))) == foo.func_map(f).func_map(g)
+///   # );
+///   ```
+///   if `Foo<C>: Copy + PartialEq` (if not, the two terms must at least be
+///   conceptually equivalent).
+///
+/// Furthermore:
+/// - [`func_map_over`](Self::func_map_over) must behave in exactly the same way
+///   as [`func_map`](Self::func_map). This is the default behavior and must not
+///   be changed.
+/// - When implementing [`FuncMap`] for different marker types [`TypeParam<N>`]
+///   and [`TypeParam<M>`], the result of mapping over both type parameters in
+///   sequence must not depend on the order of the two mappings, i.e.
+///   ```
+///   # use funcmap::{FuncMap, TypeParam};
+///   #
+///   # #[derive(FuncMap, Copy, Clone, Debug, PartialEq)]
+///   # struct Foo<T, U>(T, U);
+///   #
+///   # const N: usize = 0;
+///   # const M: usize = 1;
+///   #
+///   # let foo = Foo(42, 43);
+///   # let f = |x| x + 1;
+///   # let g = |x| x * 2;
+///   #
+///   # assert!(
+///   foo.func_map_over::<TypeParam<N>, _>(f)
+///      .func_map_over::<TypeParam<M>, _>(g)
+///
+///   ==
+///
+///   foo.func_map_over::<TypeParam<M>, _>(g)
+///      .func_map_over::<TypeParam<N>, _>(f)  
+///   # );
+///   ```
 pub trait FuncMap<A, B, P = TypeParam<0>>: Sized {
+    /// The output type of the functorial mapping
+    ///
+    /// This is `Self`, but with the type parameter at index `N` replaced with
+    /// `B`, where `N` is such that `P` is `TypeParam<N>`.
+    ///
+    /// In the simplest case of a type with just a single type parameter, if
+    /// `Self` is `Foo<A>`, then this is `Foo<B>`.
     type Output;
 
+    /// Applies the closure `f` to `self` in a functorial way
     fn func_map<F>(self, f: F) -> Self::Output
     where
         F: FnMut(A) -> B;
 
+    /// Applies the closure `f` to `self` in a factorial way, allowing explicit
+    /// specification of the marker type `P`
+    ///
+    /// This is a convenience method that has the exact same functionality as
+    /// [`func_map`](Self::func_map) but can be used to specify the marker type
+    /// `P` in a convenient way in cases where it is ambiguous.
+    ///
+    /// So if you have
+    /// ```
+    /// # use funcmap::FuncMap;
+    /// #
+    /// #[derive(FuncMap, Debug, PartialEq)]
+    /// struct Foo<S, T> {
+    ///     s: S,
+    ///     t: T,
+    /// }
+    ///
+    /// let foo = Foo {
+    ///     s: 42,
+    ///     t: 42,
+    /// };
+    /// ```
+    /// then instead of writing
+    /// ```
+    /// # use funcmap::{FuncMap, TypeParam};
+    /// #
+    /// # #[derive(FuncMap, Debug, PartialEq)]
+    /// # struct Foo<S, T> {
+    /// #     s: S,
+    /// #     t: T,
+    /// # }
+    /// #
+    /// # let foo = Foo {
+    /// #     s: 42,
+    /// #     t: 42,
+    /// # };
+    /// #
+    /// let bar = FuncMap::<_, _, TypeParam<1>>::func_map(foo, |v| v + 1);
+    /// assert_eq!(bar, Foo { s: 42, t: 43 });
+    /// ```
+    ///
+    /// you can more conveniently write
+    ///
+    /// ```
+    /// # use funcmap::{FuncMap, TypeParam};
+    /// #
+    /// # #[derive(FuncMap, Debug, PartialEq)]
+    /// # struct Foo<S, T> {
+    /// #     s: S,
+    /// #     t: T,
+    /// # }
+    /// #
+    /// # let foo = Foo {
+    /// #     s: 42,
+    /// #     t: 42,
+    /// # };
+    /// #
+    /// let bar = foo.func_map_over::<TypeParam<1>, _>(|v| v + 1);
+    /// assert_eq!(bar, Foo { s: 42, t: 43 });
+    /// ```
+    ///
+    /// This lets you chain method calls more easily as in
+    /// ```
+    /// # use funcmap::{FuncMap, TypeParam};
+    /// #
+    /// # #[derive(FuncMap, Debug, PartialEq)]
+    /// # struct Foo<S, T> {
+    /// #     s: S,
+    /// #     t: T,
+    /// # }
+    /// #
+    /// # let foo = Foo {
+    /// #     s: 42,
+    /// #     t: 42,
+    /// # };
+    /// #
+    /// foo.func_map_over::<TypeParam<0>, _>(|v| v + 1)
+    ///    .func_map_over::<TypeParam<1>, _>(|v| v + 1)
+    /// # ;
+    /// ```
+    ///
+    /// Note that you still need to specify the inferred type `_` for the
+    /// closure type `F`.
     fn func_map_over<Q, F>(self, f: F) -> Self::Output
     where
         F: FnMut(A) -> B,
@@ -493,11 +841,248 @@ pub trait FuncMap<A, B, P = TypeParam<0>>: Sized {
 
 /// Fallible functorial mapping of a generic type over any of its type
 /// parameters
+///
+/// # Deriving [`TryFuncMap`]
+///
+/// In most cases, implementations of this trait can and should be derived
+/// automatically:
+/// ```
+/// # use funcmap::{FuncMap, TryFuncMap};
+/// #
+/// #[derive(FuncMap, TryFuncMap)]
+/// struct Foo<T> {
+///     // ...
+///     # value: T,
+/// }
+/// ```
+///
+/// Note that since [`FuncMap`] is a supertrait of [`TryFuncMap`], you have to
+/// derive it as well.
+///
+/// See the [crate-level documentation](crate) for details.
+///
+/// # Manually implementing [`TryFuncMap`]
+///
+/// If you need to implement [`TryFuncMap`] manually, make sure to uphold the
+/// following contract:
+///
+/// Let `Foo` be a type that is generic over the type parameters `T0, ..., Tn`.
+///
+/// If `Foo` implements [`TryFuncMap<A, B, TypeParam<N>>`], then
+/// - `N` must be in the range `0..=n`.
+/// - The type parameter of `Foo` at index `N` (not counting lifetime parameters
+///   and const generics) must be `A`.
+///
+/// For simplicity, let's assume that `n == 1` and `Foo` is `Foo<T>`. Then
+/// [`try_func_map`](Self::try_func_map) must satisfy the *functor laws*:
+/// - For any `foo: Foo<A>`,
+///   ```
+///   # use funcmap::{FuncMap, TryFuncMap};
+///   #
+///   # #[derive(FuncMap, TryFuncMap, Copy, Clone, Debug, PartialEq)]
+///   # struct Foo<T>(T);
+///   #
+///   # let foo = Foo(42);
+///   #
+///   # #[derive(PartialEq)]
+///   # enum E {}
+///   #
+///   # assert!(
+///   foo.try_func_map(|x| Ok::<_, E>(x)) == Ok(foo)
+///   # );
+///   ```
+///   for any error type `E` if `Foo<A>: Copy + PartialEq` (if not, it must at
+///   least be conceptually equivalent to `Ok(foo)`).
+/// - for any `foo: Foo<A>`, `f: impl FnMut(A) -> Result<B, E>` and
+///   `g: impl FnMut(B) -> Result<C, F>`,
+///   ```
+///   # use funcmap::{FuncMap, TryFuncMap};
+///   #
+///   # #[derive(FuncMap, TryFuncMap, Copy, Clone, Debug, PartialEq)]
+///   # struct Foo<T>(T);
+///   #
+///   # let foo = Foo(42);
+///   # let f = |x| Ok::<_, ()>(x + 1);
+///   # let g = |x| Ok::<_, ()>(x * 2);
+///   #
+///   # assert!(
+///   foo.try_func_map(|x| f(x).and_then(g))
+///       == foo.try_func_map(f).and_then(|y| y.try_func_map(g))
+///   # );
+///   ```
+///   for any error types `E` and `F` if `Foo<C>: Copy + PartialEq` (if not, the
+///   two terms must at least be conceptually equivalent).
+///
+/// Furthermore:
+/// - [`try_func_map_over`](Self::try_func_map_over) must behave in exactly the
+///   same way as [`try_func_map`](Self::try_func_map). This is the default
+///   behavior and must not be changed.
+/// - If the closure provided to [`try_func_map`](Self::try_func_map) doesn't
+///   fail, then the result must be the same as for
+///   [`func_map`](FuncMap::func_map):
+///   ```
+///   # use funcmap::{FuncMap, TryFuncMap};
+///   #
+///   #[derive(FuncMap, TryFuncMap, Copy, Clone, Debug, PartialEq)]
+///   struct Foo<T> {
+///       value: T,
+///   }
+///   
+///   let foo = Foo {
+///       value: "42"
+///   };
+///
+///   let result: Result<Foo<i32>, _> = foo.try_func_map(|v| v.parse());
+///
+///   assert_eq!(result, Ok(foo.func_map(|v| v.parse().unwrap())));
+///   ```
+/// - If the closure provided to [`try_func_map`](Self::try_func_map) fails,
+///   then the result must be the first error according to the order of the
+///   fields in the definition of `Foo`:
+///   ```
+///   # use funcmap::{FuncMap, TryFuncMap};
+///   # use std::num::{IntErrorKind, ParseIntError};
+///   #
+///   #[derive(FuncMap, TryFuncMap, Copy, Clone, Debug, PartialEq)]
+///   struct Foo<T> {
+///       value1: T,
+///       value2: T,
+///   }
+///   
+///   let foo = Foo {
+///       value1: "1a",
+///       value2: ""
+///   };
+///
+///   let result: Result<Foo<i32>, ParseIntError> = foo.try_func_map(|v| v.parse());
+///   
+///   assert!(result.is_err());
+///   assert_eq!(*result.unwrap_err().kind(), IntErrorKind::InvalidDigit);
+///   ```
+/// - When implementing [`TryFuncMap`] for different marker types
+///   [`TypeParam<N>`] and [`TypeParam<M>`], the result of mapping over both type
+///   parameters in sequence must not depend on the order of the two mappings,
+///   i.e.
+///   ```
+///   # use funcmap::{FuncMap, TryFuncMap, TypeParam};
+///   #
+///   # #[derive(FuncMap, TryFuncMap, Copy, Clone, Debug, PartialEq)]
+///   # struct Foo<T, U>(T, U);
+///   #
+///   # const N: usize = 0;
+///   # const M: usize = 1;
+///   #
+///   # let foo = Foo(42, 43);
+///   # let f = |x| Ok::<_, ()>(x + 1);
+///   # let g = |x| Ok::<_, ()>(x * 2);
+///   #
+///   # assert!(
+///   foo.try_func_map_over::<TypeParam<N>, _, _>(f)
+///      .and_then(|x| x.try_func_map_over::<TypeParam<M>, _, _>(g))
+///
+///   ==
+///
+///   foo.try_func_map_over::<TypeParam<M>, _, _>(g)
+///      .and_then(|x| x.try_func_map_over::<TypeParam<N>, _, _>(f))
+///   # );
+///   ```
 pub trait TryFuncMap<A, B, P = TypeParam<0>>: FuncMap<A, B, P> {
+    /// Tries to apply the closure `f` to `self` in a functorial way
+    ///
+    /// # Errors
+    /// Fails if and only if `f` fails, returning the first error according to
+    /// the order of the fields in the definition of `Self`
     fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>;
 
+    /// Tries to apply the closure `f` to `self` in a factorial way, allowing
+    /// explicit specification of the marker type `P`
+    ///
+    /// This is a convenience method that has the exact same functionality as
+    /// [`try_func_map`](Self::try_func_map) but can be used to specify the
+    /// marker type `P` in a convenient way in cases where it is ambiguous.
+    ///
+    /// So if you have
+    /// ```
+    /// # use funcmap::{FuncMap, TryFuncMap};
+    /// #
+    /// #[derive(FuncMap, TryFuncMap, Debug, PartialEq)]
+    /// struct Foo<S, T> {
+    ///     s: S,
+    ///     t: T,
+    /// }
+    ///
+    /// let foo = Foo {
+    ///     s: "42",
+    ///     t: "42",
+    /// };
+    /// ```
+    /// then instead of writing
+    /// ```
+    /// # use funcmap::{FuncMap, TryFuncMap, TypeParam};
+    /// #
+    /// # #[derive(FuncMap, TryFuncMap, Debug, PartialEq)]
+    /// # struct Foo<S, T> {
+    /// #     s: S,
+    /// #     t: T,
+    /// # }
+    /// #
+    /// # let foo = Foo {
+    /// #     s: "42",
+    /// #     t: "42",
+    /// # };
+    /// #
+    /// let bar = TryFuncMap::<_, _, TypeParam<1>>::try_func_map(foo, |v| v.parse::<i32>());
+    /// assert_eq!(bar, Ok(Foo { s: "42", t: 42 }));
+    /// ```
+    ///
+    /// you can more conveniently write
+    ///
+    /// ```
+    /// # use funcmap::{FuncMap, TryFuncMap, TypeParam};
+    /// #
+    /// # #[derive(FuncMap, TryFuncMap, Debug, PartialEq)]
+    /// # struct Foo<S, T> {
+    /// #     s: S,
+    /// #     t: T,
+    /// # }
+    /// #
+    /// # let foo = Foo {
+    /// #     s: "42",
+    /// #     t: "42",
+    /// # };
+    /// #
+    /// let bar = foo.try_func_map_over::<TypeParam<1>, _, _>(|v| v.parse::<i32>());
+    /// assert_eq!(bar, Ok(Foo { s: "42", t: 42 }));
+    /// ```
+    ///
+    /// This lets you chain method calls more easily as in
+    /// ```
+    /// # use funcmap::{FuncMap, TryFuncMap, TypeParam};
+    /// #
+    /// # #[derive(FuncMap, TryFuncMap, Debug, PartialEq)]
+    /// # struct Foo<S, T> {
+    /// #     s: S,
+    /// #     t: T,
+    /// # }
+    /// #
+    /// # let foo = Foo {
+    /// #     s: "42",
+    /// #     t: "42",
+    /// # };
+    /// #
+    /// foo.func_map_over::<TypeParam<0>, _>(|v| v.parse::<i32>())
+    ///    .func_map_over::<TypeParam<1>, _>(|v| v.parse::<i32>())
+    /// # ;
+    /// ```
+    ///
+    /// Note that you still need to specify the inferred type `_` for the
+    /// error type `E` and the closure type `F`.
+    ///
+    /// # Errors
+    /// Fails if and only if `f` fails, returning the first error according to
+    /// the order of the fields in the definition of `Self`
     fn try_func_map_over<Q, E, F>(self, f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
@@ -507,10 +1092,10 @@ pub trait TryFuncMap<A, B, P = TypeParam<0>>: FuncMap<A, B, P> {
     }
 }
 
-/// Derive macro generating an impl of the trait [`FuncMap`]
+/// Derive macro generating an implementation of the [`FuncMap`] trait
 pub use funcmap_derive::FuncMap;
 
-/// Derive macro generating an impl of the trait [`TryFuncMap`]
+/// Derive macro generating an implementation of the [`TryFuncMap`] trait
 pub use funcmap_derive::TryFuncMap;
 
 /// Marker type specifying one of multiple type parameters to map over

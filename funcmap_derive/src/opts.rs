@@ -1,6 +1,6 @@
 //! Provides functionality for parsing options configured via `#[funcmap]`
 //! helper attributes
-//! 
+//!
 //! Note that this is implemented using custom parsing logic rather than using
 //! [`Attribute::parse_meta`] in order to support syntax such as
 //! `#[funcmap(params('a, 'b))]` where one or more of the given parameters are
@@ -8,7 +8,7 @@
 //! [`parse_meta`](`syn::Attribute::parse_meta`) because the elements of a list
 //! would be parsed as [`NestedMeta`](syn::NestedMeta) and hence would have to
 //! be literals or paths, not lifetimes.
-//! 
+//!
 //! This is necessary despite the fact that lifetimes aren't actually supported
 //! *semantically* in this position in order to produce more consistent error
 //! messages: If lifetimes were already rejected *syntactically* at this point,
@@ -40,12 +40,12 @@ mod kw {
 #[derive(Debug)]
 pub(crate) struct FuncMapOpts {
     /// Crate path
-    /// 
+    ///
     /// Configured via `#[funcmap(crate = "...")]`
     pub(crate) crate_path: Option<Path>,
 
     /// Set of parameters for which to generate an implementation
-    /// 
+    ///
     /// Configured via `#[funcmap(params(...))]`
     pub(crate) params: IndexSet<Param>,
 }

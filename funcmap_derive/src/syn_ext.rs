@@ -16,6 +16,9 @@ pub(crate) trait DependencyOnType {
     ///
     /// The returned [`Ident`] may differ from `type_ident` only in its
     /// [`Span`](proc_macro2::Span).
+    ///
+    /// Note that macros in type position are always considered to be
+    /// independent of the given type.
     fn dependency_on_type(&self, type_ident: &Ident) -> Option<&Ident>;
 }
 
