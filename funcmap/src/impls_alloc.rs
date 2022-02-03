@@ -23,6 +23,8 @@ mod binary_heap {
     where
         B: Ord,
     {
+        type Output = BinaryHeap<B>;
+
         fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -49,6 +51,8 @@ mod binary_heap {
     where
         B: Ord,
     {
+        type Output = binary_heap::IntoIter<B>;
+
         fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -79,6 +83,8 @@ mod boxed {
     }
 
     impl<A, B> TryFuncMap<A, B> for Box<A> {
+        type Output = Box<B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -113,6 +119,8 @@ mod btree_map {
     where
         B: Ord,
     {
+        type Output = BTreeMap<B, V>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -139,6 +147,8 @@ mod btree_map {
     where
         K: Ord,
     {
+        type Output = BTreeMap<K, B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -167,6 +177,8 @@ mod btree_map {
     where
         B: Ord,
     {
+        type Output = btree_map::IntoIter<B, V>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -197,6 +209,8 @@ mod btree_map {
     where
         K: Ord,
     {
+        type Output = btree_map::IntoIter<K, B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -233,6 +247,8 @@ mod btree_set {
     where
         B: Ord,
     {
+        type Output = BTreeSet<B>;
+
         fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -259,6 +275,8 @@ mod btree_set {
     where
         B: Ord,
     {
+        type Output = btree_set::IntoIter<B>;
+
         fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -289,6 +307,8 @@ mod linked_list {
     }
 
     impl<A, B> TryFuncMap<A, B> for LinkedList<A> {
+        type Output = LinkedList<B>;
+
         fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -309,6 +329,8 @@ mod linked_list {
     }
 
     impl<A, B> TryFuncMap<A, B> for linked_list::IntoIter<A> {
+        type Output = linked_list::IntoIter<B>;
+
         fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -339,6 +361,8 @@ mod vec {
     }
 
     impl<A, B> TryFuncMap<A, B> for Vec<A> {
+        type Output = Vec<B>;
+
         fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -359,6 +383,8 @@ mod vec {
     }
 
     impl<A, B> TryFuncMap<A, B> for vec::IntoIter<A> {
+        type Output = vec::IntoIter<B>;
+
         fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -389,6 +415,8 @@ mod vec_deque {
     }
 
     impl<A, B> TryFuncMap<A, B> for VecDeque<A> {
+        type Output = VecDeque<B>;
+
         fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -396,6 +424,7 @@ mod vec_deque {
             self.into_iter().map(f).collect()
         }
     }
+
     impl<A, B> FuncMap<A, B> for vec_deque::IntoIter<A> {
         type Output = vec_deque::IntoIter<B>;
 
@@ -408,6 +437,8 @@ mod vec_deque {
     }
 
     impl<A, B> TryFuncMap<A, B> for vec_deque::IntoIter<A> {
+        type Output = vec_deque::IntoIter<B>;
+
         fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,

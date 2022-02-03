@@ -170,17 +170,16 @@
 //! fail. If you have a closure that can fail, you can use the [`TryFuncMap`]
 //! trait and its method [`try_func_map`](TryFuncMap::try_func_map) instead.
 //! [`TryFuncMap`] can be derived in the same way and for the same types as
-//! [`FuncMap`]. Since [`FuncMap`] is a supertrait of [`TryFuncMap`], make sure
-//! you derive [`FuncMap`] as well.
+//! [`FuncMap`].
 //!
 //! The [`try_func_map`](TryFuncMap::try_func_map) method takes a
 //! closure returning a [`Result<B, E>`] for some error type `E` and returns a
 //! result with the same error type `E`:
 //! ```
-//! # use funcmap::{FuncMap, TryFuncMap};
+//! # use funcmap::TryFuncMap;
 //! # use std::num::{IntErrorKind, ParseIntError};
 //! # #[derive(Debug)]
-//! #[derive(FuncMap, TryFuncMap)]
+//! #[derive(TryFuncMap)]
 //! struct Foo<T> {
 //!     value1: T,
 //!     value2: T,
@@ -565,7 +564,7 @@
 //! holds for all types `A` and `B` for which `Foo<T>` exists. The function
 //! `Foo<A> -> Foo<B>` associated with a function `f: A -> B` (in Rust:
 //! `f: impl FnMut(A) -> B`) by property 2. is then provided by the
-//! [func_map](FuncMap::func_map) method as the function
+//! [`func_map`](FuncMap::func_map) method as the function
 //! ```
 //! # use funcmap::FuncMap;
 //! #
@@ -850,17 +849,14 @@ where
 /// In most cases, implementations of this trait can and should be derived
 /// automatically:
 /// ```
-/// # use funcmap::{FuncMap, TryFuncMap};
+/// # use funcmap::TryFuncMap;
 /// #
-/// #[derive(FuncMap, TryFuncMap)]
+/// #[derive(TryFuncMap)]
 /// struct Foo<T> {
 ///     // ...
 ///     # value: T,
 /// }
 /// ```
-///
-/// Note that since [`FuncMap`] is a supertrait of [`TryFuncMap`], you have to
-/// derive it as well.
 ///
 /// See the [crate-level documentation](crate) for details.
 ///
@@ -880,9 +876,9 @@ where
 /// [`try_func_map`](Self::try_func_map) must satisfy the *functor laws*:
 /// - For any `foo: Foo<A>`,
 ///   ```
-///   # use funcmap::{FuncMap, TryFuncMap};
+///   # use funcmap::TryFuncMap;
 ///   #
-///   # #[derive(FuncMap, TryFuncMap, Copy, Clone, Debug, PartialEq)]
+///   # #[derive(TryFuncMap, Copy, Clone, Debug, PartialEq)]
 ///   # struct Foo<T>(T);
 ///   #
 ///   # let foo = Foo(42);
@@ -899,9 +895,9 @@ where
 /// - for any `foo: Foo<A>`, `f: impl FnMut(A) -> Result<B, E>` and
 ///   `g: impl FnMut(B) -> Result<C, F>`,
 ///   ```
-///   # use funcmap::{FuncMap, TryFuncMap};
+///   # use funcmap::TryFuncMap;
 ///   #
-///   # #[derive(FuncMap, TryFuncMap, Copy, Clone, Debug, PartialEq)]
+///   # #[derive(TryFuncMap, Copy, Clone, Debug, PartialEq)]
 ///   # struct Foo<T>(T);
 ///   #
 ///   # let foo = Foo(42);
@@ -920,33 +916,14 @@ where
 /// - [`try_func_map_over`](Self::try_func_map_over) must behave in exactly the
 ///   same way as [`try_func_map`](Self::try_func_map). This is the default
 ///   behavior and must not be changed.
-/// - If the closure provided to [`try_func_map`](Self::try_func_map) doesn't
-///   fail, then the result must be the same as for
-///   [`func_map`](FuncMap::func_map):
-///   ```
-///   # use funcmap::{FuncMap, TryFuncMap};
-///   #
-///   #[derive(FuncMap, TryFuncMap, Copy, Clone, Debug, PartialEq)]
-///   struct Foo<T> {
-///       value: T,
-///   }
-///   
-///   let foo = Foo {
-///       value: "42"
-///   };
-///
-///   let result: Result<Foo<i32>, _> = foo.try_func_map(|v| v.parse());
-///
-///   assert_eq!(result, Ok(foo.func_map(|v| v.parse().unwrap())));
-///   ```
 /// - If the closure provided to [`try_func_map`](Self::try_func_map) fails,
 ///   then the result must be the first error according to the order of the
 ///   fields in the definition of `Foo`:
 ///   ```
-///   # use funcmap::{FuncMap, TryFuncMap};
+///   # use funcmap::TryFuncMap;
 ///   # use std::num::{IntErrorKind, ParseIntError};
 ///   #
-///   #[derive(FuncMap, TryFuncMap, Copy, Clone, Debug, PartialEq)]
+///   #[derive(TryFuncMap, Copy, Clone, Debug, PartialEq)]
 ///   struct Foo<T> {
 ///       value1: T,
 ///       value2: T,
@@ -967,9 +944,9 @@ where
 ///   parameters in sequence must not depend on the order of the two mappings,
 ///   i.e.
 ///   ```
-///   # use funcmap::{FuncMap, TryFuncMap, TypeParam};
+///   # use funcmap::{TryFuncMap, TypeParam};
 ///   #
-///   # #[derive(FuncMap, TryFuncMap, Copy, Clone, Debug, PartialEq)]
+///   # #[derive(TryFuncMap, Copy, Clone, Debug, PartialEq)]
 ///   # struct Foo<T, U>(T, U);
 ///   #
 ///   # const N: usize = 0;
@@ -989,10 +966,19 @@ where
 ///      .and_then(|x| x.try_func_map_over::<TypeParam<N>, _, _>(f))
 ///   # );
 ///   ```
-pub trait TryFuncMap<A, B, P = TypeParam<0>>: FuncMap<A, B, P>
+pub trait TryFuncMap<A, B, P = TypeParam<0>>: Sized
 where
     P: FuncMarker<P>,
 {
+    /// The output type of the functorial mapping
+    ///
+    /// This is `Self`, but with the type parameter at index `N` replaced with
+    /// `B`, where `N` is such that `P` is `TypeParam<N>`.
+    ///
+    /// In the simplest case of a type with just a single type parameter, if
+    /// `Self` is `Foo<A>`, then this is `Foo<B>`.
+    type Output;
+
     /// Tries to apply the closure `f` to `self` in a functorial way
     ///
     /// # Errors
@@ -1011,9 +997,9 @@ where
     ///
     /// So if you have
     /// ```
-    /// # use funcmap::{FuncMap, TryFuncMap};
+    /// # use funcmap::TryFuncMap;
     /// #
-    /// #[derive(FuncMap, TryFuncMap, Debug, PartialEq)]
+    /// #[derive(TryFuncMap, Debug, PartialEq)]
     /// struct Foo<S, T> {
     ///     s: S,
     ///     t: T,
@@ -1026,9 +1012,9 @@ where
     /// ```
     /// then instead of writing
     /// ```
-    /// # use funcmap::{FuncMap, TryFuncMap, TypeParam};
+    /// # use funcmap::{TryFuncMap, TypeParam};
     /// #
-    /// # #[derive(FuncMap, TryFuncMap, Debug, PartialEq)]
+    /// # #[derive(TryFuncMap, Debug, PartialEq)]
     /// # struct Foo<S, T> {
     /// #     s: S,
     /// #     t: T,
@@ -1046,9 +1032,9 @@ where
     /// you can more conveniently write
     ///
     /// ```
-    /// # use funcmap::{FuncMap, TryFuncMap, TypeParam};
+    /// # use funcmap::{TryFuncMap, TypeParam};
     /// #
-    /// # #[derive(FuncMap, TryFuncMap, Debug, PartialEq)]
+    /// # #[derive(TryFuncMap, Debug, PartialEq)]
     /// # struct Foo<S, T> {
     /// #     s: S,
     /// #     t: T,
@@ -1065,9 +1051,9 @@ where
     ///
     /// This lets you chain method calls more easily as in
     /// ```
-    /// # use funcmap::{FuncMap, TryFuncMap, TypeParam};
+    /// # use funcmap::{TryFuncMap, TypeParam};
     /// #
-    /// # #[derive(FuncMap, TryFuncMap, Debug, PartialEq)]
+    /// # #[derive(TryFuncMap, Debug, PartialEq)]
     /// # struct Foo<S, T> {
     /// #     s: S,
     /// #     t: T,
@@ -1078,8 +1064,8 @@ where
     /// #     t: "42",
     /// # };
     /// #
-    /// foo.func_map_over::<TypeParam<0>, _>(|v| v.parse::<i32>())
-    ///    .func_map_over::<TypeParam<1>, _>(|v| v.parse::<i32>())
+    /// foo.try_func_map_over::<TypeParam<0>, _, _>(|v| v.parse::<i32>())
+    ///     .and_then(|foo| foo.try_func_map_over::<TypeParam<1>, _, _>(|v| v.parse::<i32>()))
     /// # ;
     /// ```
     ///

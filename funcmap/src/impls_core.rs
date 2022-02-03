@@ -13,6 +13,8 @@ mod array {
     }
 
     impl<A, B, const N: usize> TryFuncMap<A, B> for [A; N] {
+        type Output = [B; N];
+
         fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -43,6 +45,8 @@ mod bound {
     }
 
     impl<A, B> TryFuncMap<A, B> for Bound<A> {
+        type Output = Bound<B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -73,6 +77,8 @@ mod cell {
     }
 
     impl<A, B> TryFuncMap<A, B> for Cell<A> {
+        type Output = Cell<B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -102,6 +108,8 @@ mod control_flow {
     }
 
     impl<T, U, C> TryFuncMap<T, U, TypeParam<0>> for ControlFlow<T, C> {
+        type Output = ControlFlow<U, C>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(T) -> Result<U, E>,
@@ -128,6 +136,8 @@ mod control_flow {
     }
 
     impl<B, T, U> TryFuncMap<T, U, TypeParam<1>> for ControlFlow<B, T> {
+        type Output = ControlFlow<B, U>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(T) -> Result<U, E>,
@@ -157,6 +167,8 @@ mod option {
     }
 
     impl<A, B> TryFuncMap<A, B> for Option<A> {
+        type Output = Option<B>;
+
         fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -177,6 +189,8 @@ mod option {
     }
 
     impl<A, B> TryFuncMap<A, B> for option::IntoIter<A> {
+        type Output = option::IntoIter<B>;
+
         fn try_func_map<E, F>(mut self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -203,6 +217,8 @@ mod phantom_data {
     }
 
     impl<A, B> TryFuncMap<A, B> for PhantomData<A> {
+        type Output = PhantomData<B>;
+
         fn try_func_map<E, F>(self, _: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -232,6 +248,8 @@ mod poll {
     }
 
     impl<A, B> TryFuncMap<A, B> for Poll<A> {
+        type Output = Poll<B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -261,6 +279,8 @@ mod range {
     }
 
     impl<A, B> TryFuncMap<A, B> for Range<A> {
+        type Output = Range<B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -281,6 +301,8 @@ mod range {
     }
 
     impl<A, B> TryFuncMap<A, B> for RangeFrom<A> {
+        type Output = RangeFrom<B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -302,6 +324,8 @@ mod range {
     }
 
     impl<A, B> TryFuncMap<A, B> for RangeInclusive<A> {
+        type Output = RangeInclusive<B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -323,6 +347,8 @@ mod range {
     }
 
     impl<A, B> TryFuncMap<A, B> for RangeTo<A> {
+        type Output = RangeTo<B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -343,6 +369,8 @@ mod range {
     }
 
     impl<A, B> TryFuncMap<A, B> for RangeToInclusive<A> {
+        type Output = RangeToInclusive<B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -369,6 +397,8 @@ mod ref_cell {
     }
 
     impl<A, B> TryFuncMap<A, B> for RefCell<A> {
+        type Output = RefCell<B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -398,6 +428,8 @@ mod result {
     }
 
     impl<A, B, U> TryFuncMap<A, B, TypeParam<0>> for Result<A, U> {
+        type Output = Result<B, U>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -424,6 +456,8 @@ mod result {
     }
 
     impl<T, A, B> TryFuncMap<A, B, TypeParam<1>> for Result<T, A> {
+        type Output = Result<T, B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -447,6 +481,8 @@ mod result {
     }
 
     impl<A, B> TryFuncMap<A, B> for result::IntoIter<A> {
+        type Output = result::IntoIter<B>;
+
         fn try_func_map<E, F>(mut self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -473,6 +509,8 @@ mod unsafe_cell {
     }
 
     impl<A, B> TryFuncMap<A, B> for UnsafeCell<A> {
+        type Output = UnsafeCell<B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,

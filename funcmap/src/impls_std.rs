@@ -22,6 +22,8 @@ mod hash_map {
     where
         B: Eq + Hash,
     {
+        type Output = HashMap<B, V>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -48,6 +50,8 @@ mod hash_map {
     where
         K: Eq + Hash,
     {
+        type Output = HashMap<K, B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -76,6 +80,8 @@ mod hash_map {
     where
         B: Eq + Hash,
     {
+        type Output = hash_map::IntoIter<B, V>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -106,6 +112,8 @@ mod hash_map {
     where
         K: Eq + Hash,
     {
+        type Output = hash_map::IntoIter<K, B>;
+
         fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -141,6 +149,8 @@ mod hash_set {
     where
         B: Eq + Hash,
     {
+        type Output = HashSet<B>;
+
         fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,
@@ -167,6 +177,8 @@ mod hash_set {
     where
         B: Eq + Hash,
     {
+        type Output = hash_set::IntoIter<B>;
+
         fn try_func_map<E, F>(self, f: F) -> Result<Self::Output, E>
         where
             F: FnMut(A) -> Result<B, E>,

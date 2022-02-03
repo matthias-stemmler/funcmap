@@ -263,6 +263,8 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
                         for #ident<#(#src_args),*>
                         #where_clause
                     {
+                        type #OUTPUT_TYPE_IDENT = #ident<#(#dst_args),*>;
+
                         fn #FALLIBLE_FN_IDENT<#err_type_ident, #fn_type_ident>(
                             self,
                             mut #fn_var_ident: #fn_type_ident

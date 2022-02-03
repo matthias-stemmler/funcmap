@@ -1,10 +1,10 @@
-use funcmap::{FuncMap, TryFuncMap};
+use funcmap::TryFuncMap;
 
 use std::convert::{TryFrom, TryInto};
 
 #[test]
 fn mapping_succeeds_when_function_succeeds() {
-    #[derive(FuncMap, TryFuncMap, Debug, PartialEq)]
+    #[derive(TryFuncMap, Debug, PartialEq)]
     struct Test<T>(T, T, T);
 
     let src = Test(T1::Mappable, T1::Mappable, T1::Mappable);
@@ -15,7 +15,7 @@ fn mapping_succeeds_when_function_succeeds() {
 
 #[test]
 fn mapping_fails_with_first_error_when_function_fails() {
-    #[derive(FuncMap, TryFuncMap, Debug, PartialEq)]
+    #[derive(TryFuncMap, Debug, PartialEq)]
     struct Test<T>(T, T, T);
 
     let src = Test(
