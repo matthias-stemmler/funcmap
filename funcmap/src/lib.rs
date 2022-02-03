@@ -732,7 +732,10 @@ use core::fmt::{self, Display, Formatter};
 ///      .func_map_over::<TypeParam<N>, _>(f)  
 ///   # );
 ///   ```
-pub trait FuncMap<A, B, P = TypeParam<0>>: Sized {
+pub trait FuncMap<A, B, P = TypeParam<0>>: Sized
+where
+    P: FuncMarker<P>,
+{
     /// The output type of the functorial mapping
     ///
     /// This is `Self`, but with the type parameter at index `N` replaced with
@@ -833,7 +836,7 @@ pub trait FuncMap<A, B, P = TypeParam<0>>: Sized {
     fn func_map_over<Q, F>(self, f: F) -> Self::Output
     where
         F: FnMut(A) -> B,
-        Q: Equals<P>,
+        Q: FuncMarker<P>,
     {
         self.func_map(f)
     }
@@ -986,7 +989,10 @@ pub trait FuncMap<A, B, P = TypeParam<0>>: Sized {
 ///      .and_then(|x| x.try_func_map_over::<TypeParam<N>, _, _>(f))
 ///   # );
 ///   ```
-pub trait TryFuncMap<A, B, P = TypeParam<0>>: FuncMap<A, B, P> {
+pub trait TryFuncMap<A, B, P = TypeParam<0>>: FuncMap<A, B, P>
+where
+    P: FuncMarker<P>,
+{
     /// Tries to apply the closure `f` to `self` in a functorial way
     ///
     /// # Errors
@@ -1086,7 +1092,7 @@ pub trait TryFuncMap<A, B, P = TypeParam<0>>: FuncMap<A, B, P> {
     fn try_func_map_over<Q, E, F>(self, f: F) -> Result<Self::Output, E>
     where
         F: FnMut(A) -> Result<B, E>,
-        Q: Equals<P>,
+        Q: FuncMarker<P>,
     {
         self.try_func_map(f)
     }
@@ -1119,26 +1125,35 @@ impl<const N: usize> Display for TypeParam<N> {
     }
 }
 
-/// Marker trait for type equality
+/// Marker trait for marker types specifying what to map over
 ///
-/// For any two types `P` and `Q`, the trait bound `P: Equals<Q>` is satisfied
-/// if and only if `P == Q`.
+/// This is only implemented by the marker types [`TypeParam<N>`] and is used to
+/// restrict the choice of types for the `P` type parameter of
+/// [`FuncMap<A, B, P>`].
+///
+/// Note that [`FuncMarker<P>`] is itself generic over `P` and for all
+/// implementations, the type parameter `P` is the implementing type itself.
+/// This way, from `Q: FuncMarker<P>` it can be inferred that `Q == P`, which is
+/// used in the [`FuncMap::func_map_over`] and [`TryFuncMap::try_func_map_over`]
+/// methods.
 ///
 /// This trait is sealed and cannot be implemented outside of `funcmap`.
-pub trait Equals<T>: private::Sealed<T> {}
+pub trait FuncMarker<P>: private::Sealed<P> {}
 
-// Note that from `Q: Equals<P>`
-// - if `Q` is known, then the compiler can infer `P`
-// - if `P` is known, then the compiler *cannot* infer `Q`
+// Note that from `Q: FuncMarker<P>`
+// - if `Q` is known, then the compiler can infer `P`,
+// - yet if `P` is known, then the compiler *cannot* infer `Q`
 //
 // This way, we force the user to make `Q` explicit when using
-// [`FuncMap::func_map_over`] because that is the whole purpose of this method.
+// [`FuncMap::func_map_over`] because that is the whole purpose of that method.
 // If `Q` could be inferred, then it wouldn't be needed and using
 // [`FuncMap::func_map`] would be more idiomatic.
-impl<T> Equals<T> for T {}
+impl<const N: usize> FuncMarker<TypeParam<N>> for TypeParam<N> {}
 
 mod private {
-    pub trait Sealed<T> {}
+    use super::TypeParam;
 
-    impl<T> Sealed<T> for T {}
+    pub trait Sealed<P> {}
+
+    impl<const N: usize> Sealed<TypeParam<N>> for TypeParam<N> {}
 }
