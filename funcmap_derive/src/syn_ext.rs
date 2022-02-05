@@ -197,6 +197,12 @@ impl WithoutAttrs for ConstParam {
     }
 }
 
+impl WithoutAttrs for GenericParam {
+    fn without_attrs(self) -> Self {
+        WithoutAttrsFolder.fold_generic_param(self)
+    }
+}
+
 impl WithoutAttrs for LifetimeDef {
     fn without_attrs(self) -> Self {
         WithoutAttrsFolder.fold_lifetime_def(self)
@@ -232,6 +238,13 @@ impl Fold for WithoutAttrsFolder {
             ..lifetime_def
         }
     }
+
+    fn fold_type_param(&mut self, type_param: TypeParam) -> TypeParam {
+        TypeParam {
+            attrs: Vec::new(),
+            ..type_param
+        }
+    }
 }
 
 /// Extension trait for removing the default value from a generic parameter
@@ -241,6 +254,26 @@ pub(crate) trait WithoutDefault {
 }
 
 impl WithoutDefault for ConstParam {
+    fn without_default(self) -> Self {
+        Self {
+            eq_token: None,
+            default: None,
+            ..self
+        }
+    }
+}
+
+impl WithoutDefault for GenericParam {
+    fn without_default(self) -> Self {
+        match self {
+            Self::Type(type_param) => Self::Type(type_param.without_default()),
+            Self::Const(const_param) => Self::Const(const_param.without_default()),
+            Self::Lifetime(..) => self,
+        }
+    }
+}
+
+impl WithoutDefault for TypeParam {
     fn without_default(self) -> Self {
         Self {
             eq_token: None,
@@ -443,7 +476,7 @@ mod tests {
 
     #[test]
     fn without_attrs_removes_attributes_from_const_param() {
-        let const_param: ConstParam = parse_quote!(#[attr] const N: usize = 42);
+        let const_param: GenericParam = parse_quote!(#[attr] const N: usize = 42);
 
         assert_eq!(
             const_param.without_attrs(),
@@ -452,18 +485,44 @@ mod tests {
     }
 
     #[test]
-    fn without_attrs_removes_attributes_from_lifetime_def() {
-        let lifetime_def: LifetimeDef = parse_quote!(#[attr] 'a: 'b);
-        assert_eq!(lifetime_def.without_attrs(), parse_quote!('a: 'b));
+    fn without_attrs_removes_attributes_from_lifetime_param() {
+        let lifetime_param: GenericParam = parse_quote!(#[attr] 'a: 'b);
+        assert_eq!(lifetime_param.without_attrs(), parse_quote!('a: 'b));
+    }
+
+    #[test]
+    fn without_attrs_removes_attributes_from_type_param() {
+        let type_param: GenericParam = parse_quote!(
+            #[attr]
+            T: Trait = Test
+        );
+
+        assert_eq!(type_param.without_attrs(), parse_quote!(T: Trait = Test));
     }
 
     #[test]
     fn without_default_removes_default_from_const_param() {
-        let const_param: ConstParam = parse_quote!(#[attr] const N: usize = 42);
+        let const_param: GenericParam = parse_quote!(#[attr] const N: usize = 42);
 
         assert_eq!(
             const_param.without_default(),
             parse_quote!(#[attr] const N: usize)
+        );
+    }
+
+    #[test]
+    fn without_default_removes_default_from_type_param() {
+        let type_param: GenericParam = parse_quote!(
+            #[attr]
+            T: Trait = Test
+        );
+
+        assert_eq!(
+            type_param.without_default(),
+            parse_quote!(
+                #[attr]
+                T: Trait
+            )
         );
     }
 

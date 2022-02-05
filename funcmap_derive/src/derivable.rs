@@ -1,6 +1,9 @@
 //! Provides the [`Derivable`] type for for managing different derivable traits
 
-use crate::ident::{StaticIdent, FALLIBLE_FN_IDENT, FALLIBLE_TRAIT_IDENT, FN_IDENT, TRAIT_IDENT};
+use crate::ident::{
+    StaticIdent, FALLIBLE_FN_IDENT, FALLIBLE_TRAIT_IDENT, FN_IDENT,
+    NO_DROP_MARKER_FALLIBLE_TRAIT_IDENT, NO_DROP_MARKER_TRAIT_IDENT, TRAIT_IDENT,
+};
 
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -21,6 +24,15 @@ impl Derivable {
         match self {
             Self::Standard => TRAIT_IDENT,
             Self::Fallible => FALLIBLE_TRAIT_IDENT,
+        }
+    }
+
+    /// Returns the identifier of the "no drop" marker trait corresponding to
+    /// this derivable trait
+    pub(crate) fn no_drop_marker_trait_ident(self) -> StaticIdent {
+        match self {
+            Self::Standard => NO_DROP_MARKER_TRAIT_IDENT,
+            Self::Fallible => NO_DROP_MARKER_FALLIBLE_TRAIT_IDENT,
         }
     }
 

@@ -12,7 +12,7 @@ use crate::syn_ext::{
 };
 
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::{format_ident, quote};
+use quote::{format_ident, quote, quote_spanned};
 use syn::punctuated::Punctuated;
 use syn::{
     DeriveInput, GenericArgument, GenericParam, Member, Token, TypeParam, TypeParamBound,
@@ -37,7 +37,50 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
     let err_type_ident = ident_collector.reserve_uppercase_letter('E', Span::mixed_site());
     let fn_var_ident = Ident::new("f", Span::mixed_site());
 
+    let crate_path = &input.meta.crate_path;
+    let ident = &input.ident;
     let all_params = &input.generics.params;
+    let where_clause = &input.generics.where_clause;
+
+    let attrs = quote! {
+        #[allow(absolute_paths_not_starting_with_crate)]
+        #[allow(bare_trait_objects)]
+        #[allow(deprecated)]
+        #[allow(drop_bounds)]
+        #[allow(dyn_drop)]
+        #[allow(keyword_idents)]
+        #[allow(non_camel_case_types)]
+        #[allow(trivial_bounds)]
+        #[allow(unused_qualifications)]
+        #[allow(clippy::disallowed_method)]
+        #[allow(clippy::disallowed_type)]
+        #[automatically_derived]
+    };
+
+    let assert_not_drop = {
+        let impl_params = all_params
+            .iter()
+            .cloned()
+            .map(|param| param.without_attrs().without_default());
+
+        let args = all_params
+            .iter()
+            .cloned()
+            .map(IntoGenericArgument::into_generic_argument);
+
+        let trait_ident = derivable.no_drop_marker_trait_ident();
+
+        // use `ident.span()` instead of `Span::call_site()` to avoid error
+        // message "this error originates in the derive macro ..."
+        quote_spanned! { ident.span() =>
+            #attrs
+            impl<#(#impl_params),*>
+                #crate_path::#trait_ident
+                for #ident<#(#args),*>
+                #where_clause
+            {}
+        }
+    };
 
     let mut result_builder = result::Builder::new();
 
@@ -108,9 +151,7 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
 
             let mut unique_predicates = UniquePredicates::new();
 
-            for predicate in input
-                .generics
-                .where_clause
+            for predicate in where_clause
                 .iter()
                 .flat_map(|clause| clause.predicates.iter())
             {
@@ -205,25 +246,8 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
                 });
             }
 
-            let crate_path = &input.meta.crate_path;
-            let ident = &input.ident;
-            let where_clause = unique_predicates.into_where_clause();
+            let impl_where_clause = unique_predicates.into_where_clause();
             let type_param_idx = mapped_type_param.type_param_idx;
-
-            let attrs = quote! {
-                #[allow(absolute_paths_not_starting_with_crate)]
-                #[allow(bare_trait_objects)]
-                #[allow(deprecated)]
-                #[allow(drop_bounds)]
-                #[allow(dyn_drop)]
-                #[allow(keyword_idents)]
-                #[allow(non_camel_case_types)]
-                #[allow(trivial_bounds)]
-                #[allow(unused_qualifications)]
-                #[allow(clippy::disallowed_method)]
-                #[allow(clippy::disallowed_type)]
-                #[automatically_derived]
-            };
 
             match derivable {
                 Derivable::Standard => quote! {
@@ -235,7 +259,7 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
                             #crate_path::#MARKER_TYPE_IDENT<#type_param_idx>
                         >
                         for #ident<#(#src_args),*>
-                        #where_clause
+                        #impl_where_clause
                     {
                         type #OUTPUT_TYPE_IDENT = #ident<#(#dst_args),*>;
 
@@ -261,7 +285,7 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
                             #crate_path::#MARKER_TYPE_IDENT<#type_param_idx>
                         >
                         for #ident<#(#src_args),*>
-                        #where_clause
+                        #impl_where_clause
                     {
                         type #OUTPUT_TYPE_IDENT = #ident<#(#dst_args),*>;
 
@@ -286,6 +310,7 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
         .collect::<Vec<_>>();
 
     result_builder.err_or(quote! {
+        #assert_not_drop
         #(#impls)*
     })
 }

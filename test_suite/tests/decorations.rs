@@ -297,7 +297,6 @@ fn impl_is_restricted_to_allow_mapping_of_inner_type() {
     assert_eq!(dst, Test(Inner(T2)));
 }
 
-
 #[test]
 fn impl_is_restricted_to_sized_bound_on_unmapped_inner_type() {
     trait TestTrait {

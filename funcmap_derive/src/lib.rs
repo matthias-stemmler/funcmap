@@ -50,7 +50,6 @@ mod syn_ext;
 // TODO https://doc.rust-lang.org/rustdoc/the-doc-attribute.html
 // TODO more fallible tests, fallible examples
 // TODO dependencies semver
-// TODO assert not drop
 // TODO remove functor laws from trait docs - use "semantically equivalent" instead of `==`
 // TODO explain how to manually derive `FuncMap` from `TryFuncMap`
 // TODO explain !Drop restriction, explain `take` alternative for drop types

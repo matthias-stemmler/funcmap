@@ -1143,3 +1143,37 @@ mod private {
 
     impl<const N: usize> Sealed<TypeParam<N>> for TypeParam<N> {}
 }
+
+/// Marker trait with a blanket implementation for all types that implement
+/// [`Drop`]
+///
+/// The [`FuncMap`] derive macro produces an implementation of this trait (in
+/// addition to an implementation of [`FuncMap`]), asserting that the type
+/// doesn't implement [`Drop`] because otherwise there would be conflicting
+/// implementations of this trait.
+///
+/// This is necessary because derived implementation of [`FuncMap`] need to move
+/// out of fields, which isn't possible for types implementing [`Drop`].
+#[doc(hidden)]
+#[allow(non_camel_case_types)]
+pub trait FuncMap_cannot_be_derived_for_types_implementing_Drop {}
+
+#[allow(drop_bounds)]
+impl<T> FuncMap_cannot_be_derived_for_types_implementing_Drop for T where T: Drop + ?Sized {}
+
+/// Marker trait with a blanket implementation for all types that implement
+/// [`Drop`]
+///
+/// The [`TryFuncMap`] derive macro produces an implementation of this trait (in
+/// addition to an implementation of [`TryFuncMap`]), asserting that the type
+/// doesn't implement [`Drop`] because otherwise there would be conflicting
+/// implementations of this trait.
+///
+/// This is necessary because derived implementation of [`TryFuncMap`] need to
+/// move out of fields, which isn't possible for types implementing [`Drop`].
+#[doc(hidden)]
+#[allow(non_camel_case_types)]
+pub trait TryFuncMap_cannot_be_derived_for_types_implementing_Drop {}
+
+#[allow(drop_bounds)]
+impl<T> TryFuncMap_cannot_be_derived_for_types_implementing_Drop for T where T: Drop + ?Sized {}
