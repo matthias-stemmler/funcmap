@@ -12,7 +12,11 @@ struct Test<S, T>(S, T, i32);
 #[allow(clippy::disallowed_method)]
 #[allow(clippy::disallowed_type)]
 #[automatically_derived]
-impl<A, B, T> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A, T> {
+impl<A, B, T> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A, T>
+where
+    T: ::core::marker::Sized,
+    i32: ::core::marker::Sized,
+{
     type Output = Test<B, T>;
     fn func_map<F>(self, mut f: F) -> Self::Output
     where
@@ -43,7 +47,11 @@ impl<A, B, T> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A,
 #[allow(clippy::disallowed_method)]
 #[allow(clippy::disallowed_type)]
 #[automatically_derived]
-impl<S, A, B> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<1usize>> for Test<S, A> {
+impl<S, A, B> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<1usize>> for Test<S, A>
+where
+    S: ::core::marker::Sized,
+    i32: ::core::marker::Sized,
+{
     type Output = Test<S, B>;
     fn func_map<F>(self, mut f: F) -> Self::Output
     where
@@ -74,7 +82,11 @@ impl<S, A, B> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<1usize>> for Test<S,
 #[allow(clippy::disallowed_method)]
 #[allow(clippy::disallowed_type)]
 #[automatically_derived]
-impl<A, B, T> ::funcmap::TryFuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A, T> {
+impl<A, B, T> ::funcmap::TryFuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A, T>
+where
+    T: ::core::marker::Sized,
+    i32: ::core::marker::Sized,
+{
     type Output = Test<B, T>;
     fn try_func_map<E, F>(self, mut f: F) -> ::core::result::Result<Self::Output, E>
     where
@@ -105,7 +117,11 @@ impl<A, B, T> ::funcmap::TryFuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test
 #[allow(clippy::disallowed_method)]
 #[allow(clippy::disallowed_type)]
 #[automatically_derived]
-impl<S, A, B> ::funcmap::TryFuncMap<A, B, ::funcmap::TypeParam<1usize>> for Test<S, A> {
+impl<S, A, B> ::funcmap::TryFuncMap<A, B, ::funcmap::TypeParam<1usize>> for Test<S, A>
+where
+    S: ::core::marker::Sized,
+    i32: ::core::marker::Sized,
+{
     type Output = Test<S, B>;
     fn try_func_map<E, F>(self, mut f: F) -> ::core::result::Result<Self::Output, E>
     where

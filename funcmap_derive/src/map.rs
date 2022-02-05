@@ -63,6 +63,10 @@ impl<'ast> Mapper<'ast> {
             .dependency_on_type(&self.mapping.type_param.ident)
             .is_none()
         {
+            self.unique_predicates.add(parse_quote! {
+                #ty: ::core::marker::Sized
+            })?;
+
             return Ok(mappable);
         }
 

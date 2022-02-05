@@ -297,6 +297,37 @@ fn impl_is_restricted_to_allow_mapping_of_inner_type() {
     assert_eq!(dst, Test(Inner(T2)));
 }
 
+
+#[test]
+fn impl_is_restricted_to_sized_bound_on_unmapped_inner_type() {
+    trait TestTrait {
+        type Assoc: ?Sized;
+    }
+
+    type Unsized = [()];
+
+    impl TestTrait for T1 {
+        type Assoc = ();
+    }
+
+    impl TestTrait for T2 {
+        type Assoc = Unsized;
+    }
+
+    // derived impl for mapping over S is supposed to have `T::Assoc: Sized`, so
+    // `Test<S, T1>` implements `FuncMap` but `Test<S, T2>` doesn't
+    #[derive(FuncMap, Debug, PartialEq)]
+    #[funcmap(params(S))]
+    struct Test<S, T>(S, T::Assoc)
+    where
+        T: TestTrait;
+
+    let src: Test<T1, T1> = Test(T1, ());
+    let dst = src.func_map(|_| T2);
+
+    assert_eq!(dst, Test(T2, ()));
+}
+
 #[derive(Debug, PartialEq)]
 struct T1;
 

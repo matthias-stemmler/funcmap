@@ -54,11 +54,8 @@ mod syn_ext;
 // TODO remove functor laws from trait docs - use "semantically equivalent" instead of `==`
 // TODO explain how to manually derive `FuncMap` from `TryFuncMap`
 // TODO explain !Drop restriction, explain `take` alternative for drop types
-// TODO No WithoutMaybeBounds
-// TODO Add where Self: Sized
-// TODO If T mapped directly, add where T: Sized
-// TODO Simplify Sized + ?Sized
 // TODO Explain trait bounds (FuncMap, Sized, Drop)
+// TODO How to install
 
 /// Derive macro generating an implementation of the `FuncMap` trait
 #[proc_macro_derive(FuncMap, attributes(funcmap))]

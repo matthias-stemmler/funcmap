@@ -15,7 +15,10 @@ struct Test<T> {
 #[allow(clippy::disallowed_method)]
 #[allow(clippy::disallowed_type)]
 #[automatically_derived]
-impl<A, B> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A> {
+impl<A, B> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A>
+where
+    i32: ::core::marker::Sized,
+{
     type Output = Test<B>;
     fn func_map<F>(self, mut f: F) -> Self::Output
     where
@@ -44,7 +47,10 @@ impl<A, B> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A> {
 #[allow(clippy::disallowed_method)]
 #[allow(clippy::disallowed_type)]
 #[automatically_derived]
-impl<A, B> ::funcmap::TryFuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A> {
+impl<A, B> ::funcmap::TryFuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A>
+where
+    i32: ::core::marker::Sized,
+{
     type Output = Test<B>;
     fn try_func_map<E, F>(self, mut f: F) -> ::core::result::Result<Self::Output, E>
     where

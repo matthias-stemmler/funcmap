@@ -19,6 +19,7 @@ struct Test<T> {
 #[automatically_derived]
 impl<A, B> ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A>
 where
+    i32: ::core::marker::Sized,
     Foo<Bar<A>>:
         ::funcmap::FuncMap<Bar<A>, Bar<B>, ::funcmap::TypeParam<0usize>, Output = Foo<Bar<B>>>,
     Bar<A>: ::funcmap::FuncMap<A, B, ::funcmap::TypeParam<0usize>, Output = Bar<B>>,
@@ -73,6 +74,7 @@ where
 #[automatically_derived]
 impl<A, B> ::funcmap::TryFuncMap<A, B, ::funcmap::TypeParam<0usize>> for Test<A>
 where
+    i32: ::core::marker::Sized,
     Foo<Bar<A>>:
         ::funcmap::TryFuncMap<Bar<A>, Bar<B>, ::funcmap::TypeParam<0usize>, Output = Foo<Bar<B>>>,
     Bar<A>: ::funcmap::TryFuncMap<A, B, ::funcmap::TypeParam<0usize>, Output = Bar<B>>,
