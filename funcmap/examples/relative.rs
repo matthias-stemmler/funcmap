@@ -1,9 +1,13 @@
+/// Usage of [`FuncMap`] to "deeply" convert from relative to absolute paths
+/// using newtype wrappers
+
 use funcmap::FuncMap;
 
 use crate::paths::*;
 
-/// Example data structure illustrating the use of [FuncMap]
-/// `T` is meant to be either [RelativePath<P>] or [AbsolutePath<P>] where `P: AsRef<Path>`
+/// Example data structure illustrating the use of [`FuncMap`]
+/// `T` is meant to be either [`RelativePath<P>`] or [`AbsolutePath<P>`] where
+/// `P: AsRef<Path>`
 #[derive(FuncMap, Debug)]
 struct FilePaths<T> {
     manifest_path: T,
@@ -17,8 +21,7 @@ fn main() {
     };
 
     let base_path = "my_project";
-    let absolute_paths =
-        relative_paths.func_map(|relative_path| relative_path.to_absolute(base_path));
+    let absolute_paths = relative_paths.func_map(|rel_path| rel_path.to_absolute(base_path));
 
     println!("{:?}", absolute_paths);
 }

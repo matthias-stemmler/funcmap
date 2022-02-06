@@ -1,15 +1,19 @@
+/// Usage of [`FuncMap`] to "deeply" convert units, using independent type
+/// parameters for different units
+
 use funcmap::{FuncMap, TypeParam};
 use units::*;
 
-/// Example data structure illustrating the use of [FuncMap]
-/// `L` and `M` are meant to be units of length resp. mass from the [units] module below
+/// Example data structure illustrating the use of [`FuncMap`]
+/// `L` and `M` are meant to be units of length resp. mass from the [units]
+/// module below
 #[derive(FuncMap, Debug)]
 struct Measurements<L, M> {
     lengths: Vec<L>,
     masses: Vec<M>,
 }
 
-/// Aliases for the markers for the two type parameters of [Measurements]
+/// Aliases for the markers for the two type parameters of [`Measurements`]
 /// These are abstractions over the concrete indices `0` and `1`
 type LengthParam = TypeParam<0>;
 type MassParam = TypeParam<1>;

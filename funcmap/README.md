@@ -1,3 +1,1 @@
-# funcmap
-
-License (-> add license files)
+../README.md

@@ -48,13 +48,9 @@ mod syn_ext;
 // TODO test publishing (https://github.com/rust-lang/cargo/wiki/Third-party-registries)
 // TODO https://rust-lang.github.io/api-guidelines
 // TODO https://doc.rust-lang.org/rustdoc/the-doc-attribute.html
-// TODO more fallible tests, fallible examples
+// TODO more fallible tests
 // TODO dependencies semver
-// TODO remove functor laws from trait docs - use "semantically equivalent" instead of `==`
-// TODO explain how to manually derive `FuncMap` from `TryFuncMap`
-// TODO explain !Drop restriction, explain `take` alternative for drop types
-// TODO Explain trait bounds (FuncMap, Sized, Drop)
-// TODO How to install
+// TODO Readme: How to install, license
 
 /// Derive macro generating an implementation of the `FuncMap` trait
 #[proc_macro_derive(FuncMap, attributes(funcmap))]
