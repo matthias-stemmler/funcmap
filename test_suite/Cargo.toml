@@ -8,12 +8,14 @@ publish = false
 funcmap = { path = "../funcmap", features = ["alloc"] }
 
 [build-dependencies]
+# patch dependency: transitive dependency pest_derive 1.0.0 specifies quote ^0.3 but needs quote ^0.3.15
+quote = "0.3.15"
 toolchain_find = "0.2"
 
 [dev-dependencies]
-macrotest = "1"
-rustversion = "1"
-trybuild = "1"
+macrotest = "1.0.8"
+rustversion = "1.0.6"
+trybuild = "1.0.56"
 
 [[test]]
 name = "edition2015"

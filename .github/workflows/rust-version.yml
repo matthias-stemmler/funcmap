@@ -1,0 +1,44 @@
+name: Verify new Rust versions
+
+on:
+  schedule:
+    # new Rust versions are released on Thursdays -> run every Friday at 12pm
+    - cron: '0 12 * * FRI'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -Dwarnings
+
+jobs:
+  test:
+    name: Cargo test (${{ matrix.toolchain }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: [stable, beta, nightly]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install latest ${{ matrix.toolchain }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+          profile: minimal
+
+      - name: Install `cargo-expand`
+        if: matrix.toolchain == 'nightly'
+        uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-expand
+          use-tool-cache: true
+
+      - name: Run `cargo test`
+        uses: actions-rs/cargo@v1
+        with:
+          command: test

@@ -15,9 +15,9 @@ proc-macro = true
 
 [dependencies]
 indexmap = { version = "1", features = ["std"] }
-proc-macro2 = "1"
+proc-macro2 = "1.0.19"
 quote = "1"
-syn = { version = "1", features = ["extra-traits", "fold", "visit"] }
+syn = { version = "1.0.73", features = ["extra-traits", "fold", "visit"] }
 
 [dev-dependencies]
-syn = { version = "1", features = ["full"] }
+syn = { version = "1.0.73", features = ["full"] }
