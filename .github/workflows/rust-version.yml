@@ -3,7 +3,7 @@ name: Verify new Rust versions
 on:
   schedule:
     # new Rust versions are released on Thursdays -> run every Friday at 12pm
-    - cron: '0 12 * * FRI'
+    - cron: "0 12 * * FRI"
   workflow_dispatch:
 
 env:

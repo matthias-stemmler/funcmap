@@ -43,7 +43,6 @@ mod syn_ext;
 // TODO check auto-impl/structopt/serde (serde: crates-io.md, html_root_url, explicit "include" in Cargo.toml)
 // TODO docs (including root README)
 // TODO unit tests
-// TODO GitHub Actions: cargo msrv --verify, cargo nono check
 // TODO resolve TODOs
 // TODO test publishing (https://github.com/rust-lang/cargo/wiki/Third-party-registries)
 // TODO https://rust-lang.github.io/api-guidelines
@@ -53,6 +52,7 @@ mod syn_ext;
 // TODO more fallible tests
 // TODO Readme: How to install, license
 // TODO Release workflow (cargo-release?)
+// TODO dependabot, security audit
 
 /// Derive macro generating an implementation of the `FuncMap` trait
 #[proc_macro_derive(FuncMap, attributes(funcmap))]

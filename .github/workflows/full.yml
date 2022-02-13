@@ -1,6 +1,6 @@
 name: Full
 
-on: 
+on:
   pull_request:
   push:
     branches: [main]
@@ -25,8 +25,8 @@ jobs:
   msrv:
     uses: ./.github/workflows/msrv.yml
 
-  miri:
-   uses: ./.github/workflows/miri.yml
+  no-std:
+    uses: ./.github/workflows/no-std.yml
 
-# TODO: no_std, msrv
-# TODO: security audit, dependabot
+  miri:
+    uses: ./.github/workflows/miri.yml
