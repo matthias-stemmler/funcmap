@@ -1,6 +1,5 @@
 /// Usage of [`FuncMap`] to "deeply" convert units, using independent type
 /// parameters for different units
-
 use funcmap::{FuncMap, TypeParam};
 use units::*;
 

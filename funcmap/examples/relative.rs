@@ -1,6 +1,5 @@
 /// Usage of [`FuncMap`] to "deeply" convert from relative to absolute paths
 /// using newtype wrappers
-
 use funcmap::FuncMap;
 
 use crate::paths::*;

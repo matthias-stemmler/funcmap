@@ -44,6 +44,27 @@ jobs:
         with:
           command: test
 
+  fmt-check:
+    name: Cargo fmt check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
+
+      - name: Run `cargo fmt --check`
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --check
+
   lint:
     name: Cargo clippy
     runs-on: ubuntu-latest
@@ -144,3 +165,5 @@ jobs:
 
 # TODO: no_std, msrv
 # TODO: security audit, dependabot
+# TODO: simple workflow for every push
+# TODO: make workflows more modular

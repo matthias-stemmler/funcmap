@@ -1,5 +1,4 @@
 /// Usage of [`TryFuncMap`] for "deep" fallible conversions
-
 use funcmap::TryFuncMap;
 
 /// Example data structures illustrating the use of [`TryFuncMap`]

@@ -1,5 +1,4 @@
 /// Usage of [`FuncMap`] to perform a "deep" `to_owned`
-
 use funcmap::FuncMap;
 
 /// Example data structures illustrating the use of [`FuncMap`]
