@@ -8,26 +8,26 @@ env:
 
 jobs:
   no-std:
-    name: Cargo check (${{ matrix.target }})
+    name: Cargo nono check
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        target: [thumbv7m-none-eabi, aarch64-unknown-none]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - uses: actions-rs/toolchain@v1
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
           profile: minimal
-          target: ${{ matrix.target }}
 
-      - name: Run `cargo check`
+      - name: Install cargo-nono
+        run: |
+          curl -LSfs https://japaric.github.io/trust/install.sh | sh -s -- --git hobofan/cargo-nono
+
+      - name: Run `cargo nono check --package funcmap`
         uses: actions-rs/cargo@v1
         with:
-          command: check
-          args: --target ${{ matrix.target }} --no-default-features
+          command: nono
+          args: check --package funcmap
