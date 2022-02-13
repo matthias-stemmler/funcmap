@@ -1,0 +1,33 @@
+name: Miri
+
+on: [workflow_call, workflow_dispatch]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -Dwarnings
+
+jobs:
+  miri:
+    name: Cargo miri
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Determine date of latest nightly including MIRI
+        run: |
+          echo "NIGHTLY_DATE=$(curl -s https://rust-lang.github.io/rustup-components-history/x86_64-unknown-linux-gnu/miri)" >> $GITHUB_ENV
+
+      - name: Install latest nightly including MIRI
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-${{ env.NIGHTLY_DATE }}
+          override: true
+          components: miri
+
+      - name: Run `cargo miri test -p funcmap --lib`
+        uses: actions-rs/cargo@v1
+        with:
+          command: miri
+          args: test -p funcmap --lib

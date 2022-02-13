@@ -1,0 +1,29 @@
+name: Full
+
+on: 
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
+  fmt-check:
+    uses: ./.github/workflows/format-check.yml
+
+  lint:
+    uses: ./.github/workflows/lint.yml
+
+  doc:
+    uses: ./.github/workflows/doc.yml
+
+  minimal-versions:
+    uses: ./.github/workflows/minimal-versions.yml
+
+  miri:
+   uses: ./.github/workflows/miri.yml
+
+# TODO: no_std, msrv
+# TODO: security audit, dependabot

@@ -1,0 +1,41 @@
+name: Minimal versions
+
+on: [workflow_call, workflow_dispatch]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -Dwarnings
+
+jobs:
+  minimal-versions:
+    name: Cargo test using minimal dependency versions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          profile: minimal
+
+      - name: Install `cargo-expand`
+        uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-expand
+          use-tool-cache: true
+
+      - name: Run `cargo update -Zminimal-versions`
+        uses: actions-rs/cargo@v1
+        with:
+          command: update
+          args: -Zminimal-versions
+
+      - name: Run `cargo test -- --skip ui`
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: -- --skip ui

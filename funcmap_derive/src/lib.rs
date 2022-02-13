@@ -52,7 +52,7 @@ mod syn_ext;
 // TODO https://docs.github.com/en/code-security (dependabot, vulnerability audit)
 // TODO more fallible tests
 // TODO Readme: How to install, license
-// TODO Release workflow (using manual step with environment including token)
+// TODO Release workflow (cargo-release?)
 
 /// Derive macro generating an implementation of the `FuncMap` trait
 #[proc_macro_derive(FuncMap, attributes(funcmap))]
