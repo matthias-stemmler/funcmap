@@ -68,7 +68,7 @@ pub(crate) struct MappedTypeParam {
 #[derive(Debug)]
 pub(crate) struct Structish {
     /// Name of the struct/variant
-    /// 
+    ///
     /// For structs, this is [`None`]
     pub(crate) variant_ident: Option<Ident>,
 
@@ -80,7 +80,7 @@ pub(crate) struct Structish {
 #[derive(Debug)]
 pub(crate) struct Fieldish {
     /// Identifier of the field
-    /// 
+    ///
     /// For tuple structs/variants, this is [`None`]
     pub(crate) ident: Option<Ident>,
 

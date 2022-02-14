@@ -9,6 +9,7 @@ repository = "https://github.com/matthias-stemmler/funcmap"
 license = "MIT OR Apache-2.0"
 keywords = ["data", "derive", "macro", "map", "no_std"]
 categories = ["algorithms", "data-structures", "development-tools", "no-std", "rust-patterns"]
+publish = ["ktra"]
 
 [lib]
 proc-macro = true
