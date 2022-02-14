@@ -51,7 +51,6 @@ mod syn_ext;
 // TODO more fallible tests
 // TODO Readme: How to install, license, how to release
 // TODO Release workflow (cargo-release?)
-// TODO dependabot, security audit
 
 /// Derive macro generating an implementation of the `FuncMap` trait
 #[proc_macro_derive(FuncMap, attributes(funcmap))]
