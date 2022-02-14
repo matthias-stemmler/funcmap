@@ -1,4 +1,4 @@
-name: no-std
+name: Verify no_std support
 
 on: [workflow_call, workflow_dispatch]
 
