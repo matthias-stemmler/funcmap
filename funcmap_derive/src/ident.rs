@@ -1,4 +1,4 @@
-//! Provides static identifiers referring to items from the `funcmap` crate
+//! Static identifiers referring to items from the `funcmap` crate
 
 use std::fmt::{self, Display, Formatter};
 

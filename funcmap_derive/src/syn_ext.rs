@@ -1,4 +1,4 @@
-//! Provides additional functionality for types in the [`syn`] crate
+//! Additional functionality for types in the [`syn`] crate
 
 use proc_macro2::{Ident, TokenStream};
 use quote::ToTokens;

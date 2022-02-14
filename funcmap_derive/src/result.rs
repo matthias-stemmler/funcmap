@@ -1,4 +1,4 @@
-//! Provides infrastructure for dealing with fallible operations while deriving
+//! Infrastructure for dealing with fallible operations while deriving
 
 use std::error;
 use std::fmt::{self, Display, Formatter};

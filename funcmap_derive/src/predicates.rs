@@ -1,4 +1,4 @@
-//! Provides types dealing with type and lifetime predicates
+//! Types dealing with type and lifetime predicates
 
 use crate::result::Error;
 

@@ -1,3 +1,5 @@
+//! Functionality for preparing the input to `funcmap` derive macros
+
 use crate::{
     ident::{CRATE_IDENT, TRAIT_IDENT},
     ident_collector::IdentCollector,
@@ -15,37 +17,74 @@ use syn::{
     Generics, Path, Token, Type, TypeParam, Variant,
 };
 
+/// Input to a `funcmap` derive macro
 #[derive(Debug)]
 pub(crate) struct FuncMapInput {
+    /// Meta information for deriving mappings
     pub(crate) meta: FuncMapMeta,
+
+    /// Identifier of type for which to derive mappings
     pub(crate) ident: Ident,
+
+    /// Generics of type for which to derive mappings
     pub(crate) generics: Generics,
+
+    /// Type parameters for which to derive mappings
     pub(crate) mapped_type_params: Vec<MappedTypeParam>,
+
+    /// Variants of type for which to derive mappings
+    ///
+    /// For structs, this is a one-element vector
     pub(crate) variants: Vec<Structish>,
 }
 
+/// Meta information for deriving mappings
 #[derive(Debug)]
 pub(crate) struct FuncMapMeta {
+    /// Path to the `funcmap` crate
     pub(crate) crate_path: Path,
+
+    /// [`IdentCollector`] where all identifiers that occur within the
+    /// definition of the type are already reserved
     pub(crate) ident_collector: IdentCollector,
 }
 
+/// Type parameter for which to derive a mapping
 #[derive(Debug)]
 pub(crate) struct MappedTypeParam {
+    /// 0-based index of the type parameter within *all* parameters of the type,
+    /// including lifetimes and const generics
     pub(crate) param_idx: usize,
+
+    /// 0-based index of the type parameter within all *type* parameters of the
+    /// type
     pub(crate) type_param_idx: usize,
+
+    /// The type parameter itself
     pub(crate) type_param: TypeParam,
 }
 
+/// Either a struct or a variant of an enum
 #[derive(Debug)]
 pub(crate) struct Structish {
+    /// Name of the struct/variant
+    /// 
+    /// For structs, this is [`None`]
     pub(crate) variant_ident: Option<Ident>,
+
+    /// Fields of the struct/variant
     pub(crate) fields: Vec<Fieldish>,
 }
 
+/// Field of a struct/variant
 #[derive(Debug)]
 pub(crate) struct Fieldish {
+    /// Identifier of the field
+    /// 
+    /// For tuple structs/variants, this is [`None`]
     pub(crate) ident: Option<Ident>,
+
+    /// Type of the field
     pub(crate) ty: Type,
 }
 

@@ -1,4 +1,4 @@
-//! Provides types for collecting unique identifiers
+//! Types for collecting unique identifiers
 
 use std::collections::HashSet;
 

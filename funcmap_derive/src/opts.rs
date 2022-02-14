@@ -1,5 +1,5 @@
-//! Provides functionality for parsing options configured via `#[funcmap]`
-//! helper attributes
+//! Functionality for parsing options configured via `#[funcmap]` helper
+//! attributes
 //!
 //! Note that this is implemented using custom parsing logic rather than using
 //! [`Attribute::parse_meta`] in order to support syntax such as
@@ -39,7 +39,7 @@ mod kw {
 /// Options for `funcmap` derive macros
 #[derive(Debug)]
 pub(crate) struct FuncMapOpts {
-    /// Crate path
+    /// Path to the `funcmap` crate
     ///
     /// Configured via `#[funcmap(crate = "...")]`
     pub(crate) crate_path: Option<Path>,

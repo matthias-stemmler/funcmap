@@ -46,8 +46,6 @@ mod syn_ext;
 // TODO test publishing (https://github.com/rust-lang/cargo/wiki/Third-party-registries)
 // TODO https://rust-lang.github.io/api-guidelines
 // TODO https://doc.rust-lang.org/rustdoc/the-doc-attribute.html
-// TODO https://doc.rust-lang.org/cargo/reference/semver.html#change-categories
-// TODO https://docs.github.com/en/code-security (dependabot, vulnerability audit)
 // TODO more fallible tests
 // TODO Readme: How to install, license, how to release
 // TODO Release workflow (cargo-release?)
