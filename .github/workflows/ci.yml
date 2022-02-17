@@ -1,31 +1,175 @@
 name: Continuous integration
 
 on:
-  pull_request:
-  workflow_call:
-  workflow_dispatch:
+  - pull_request
+  - workflow_call
+  - workflow_dispatch
 
 jobs:
-  test:
-    uses: ./.github/workflows/test.yml
-
   fmt-check:
-    uses: ./.github/workflows/format-check.yml
+    name: Cargo fmt check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
+
+      - name: Run `cargo fmt --check`
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --check
 
   lint:
-    uses: ./.github/workflows/lint.yml
+    name: Cargo clippy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
+
+      - name: Run `cargo clippy`
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
 
   doc:
-    uses: ./.github/workflows/doc.yml
+    name: Cargo doc
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
+
+      - name: Run `cargo doc`
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
 
   minimal-versions:
-    uses: ./.github/workflows/minimal-versions.yml
+    name: Cargo test using minimal dependency versions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          profile: minimal
+
+      - name: Install `cargo-expand`
+        uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-expand
+          use-tool-cache: true
+
+      - name: Run `cargo update -Zminimal-versions`
+        uses: actions-rs/cargo@v1
+        with:
+          command: update
+          args: -Zminimal-versions
+
+      - name: Run `cargo test -- --skip ui`
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: -- --skip ui
 
   msrv:
-    uses: ./.github/workflows/msrv.yml
+    name: Cargo check (${{ matrix.toolchain }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        toolchain: [1.56]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install ${{ matrix.toolchain }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+          profile: minimal
+
+      - name: Run `cargo check`
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
 
   no-std:
-    uses: ./.github/workflows/no-std.yml
+    name: Cargo nono check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
+
+      - name: Install cargo-nono
+        run: |
+          curl -LSfs https://japaric.github.io/trust/install.sh | sh -s -- --git hobofan/cargo-nono
+
+      - name: Run `cargo nono check --package funcmap`
+        uses: actions-rs/cargo@v1
+        with:
+          command: nono
+          args: check --package funcmap
 
   miri:
-    uses: ./.github/workflows/miri.yml
+    name: Cargo miri
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Determine date of latest nightly including MIRI
+        run: |
+          echo "NIGHTLY_DATE=$(curl -s https://rust-lang.github.io/rustup-components-history/x86_64-unknown-linux-gnu/miri)" >> $GITHUB_ENV
+
+      - name: Install latest nightly including MIRI
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-${{ env.NIGHTLY_DATE }}
+          override: true
+          components: miri
+
+      - name: Run `cargo miri test -p funcmap --lib`
+        uses: actions-rs/cargo@v1
+        with:
+          command: miri
+          args: test -p funcmap --lib
