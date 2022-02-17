@@ -47,9 +47,11 @@ mod syn_ext;
 // TODO https://doc.rust-lang.org/rustdoc/the-doc-attribute.html
 // TODO more fallible tests
 // TODO Readme: How to install, license, how to release
-// TODO Release workflow (cargo-release?, cleanup ktra from .cargo/config.toml)
+// TODO Release workflow (cleanup ktra from .cargo/config.toml)
 // TODO Lint commit messages? (committed)
 // TODO badges (section in Cargo.toml)
+// TODO add caching to workflows?
+// TODO support 1.59 const generics (default, interleaving)
 
 /// Derive macro generating an implementation of the `FuncMap` trait
 #[proc_macro_derive(FuncMap, attributes(funcmap))]

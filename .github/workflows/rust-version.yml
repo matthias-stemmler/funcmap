@@ -36,7 +36,6 @@ jobs:
         uses: actions-rs/install@v0.1
         with:
           crate: cargo-expand
-          use-tool-cache: true
 
       - name: Run `cargo test`
         uses: actions-rs/cargo@v1
