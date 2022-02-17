@@ -2,7 +2,8 @@ name: Basic
 
 on:
   push:
-    branches-ignore: [main]
+    branches-ignore:
+      - main
   workflow_dispatch:
 
 jobs:

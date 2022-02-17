@@ -1,6 +1,8 @@
 name: Format check
 
-on: [workflow_call, workflow_dispatch]
+on:
+  - workflow_call
+  - workflow_dispatch
 
 env:
   CARGO_TERM_COLOR: always

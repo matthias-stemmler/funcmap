@@ -1,0 +1,49 @@
+name: Releasable branch
+
+on:
+  push:
+    branches:
+      - main
+      - 'hotfix/**'
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  release-please:
+    name: Run release-please
+    runs-on: ubuntu-latest
+    steps:
+      - id: release-please
+        name: Run release-please
+        uses: google-github-actions/release-please-action@v3
+        with:
+          command: manifest # TODO create manifest, including generic updater
+    outputs:
+      release_created: ${{ steps.release-please.outputs.release_created }}
+      pr: ${{ steps.release-please.outputs.pr }}
+
+  publish:
+    name: Publish release
+    needs:
+      - release-please
+      - ci
+    if: needs.release-please.outputs.release_created
+    environment: crates.io
+    steps:
+      - name: Publish release # TODO publish using cargo publish or cargo-workspaces
+        run: |
+          echo ${{ secrets.CRATESIO_TOKEN }}
+
+      - name: Unlabel pull request as tagged
+        uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          number: ${{ needs.release-please.outputs.pr }}
+          labels: autorelease:tagged
+
+      - name: Label pull request as published
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          number: ${{ needs.release-please.outputs.pr }}
+          labels: autorelease:published

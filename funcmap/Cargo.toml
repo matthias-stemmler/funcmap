@@ -18,4 +18,4 @@ alloc = []
 std = ["alloc"]
 
 [dependencies]
-"funcmap_derive" = { version = "0.1.0", path = "../funcmap_derive" }
+"funcmap_derive" = { version = "=0.1.0", path = "../funcmap_derive" }
