@@ -50,7 +50,6 @@ mod syn_ext;
 // TODO Release workflow (cleanup ktra from .cargo/config.toml)
 // TODO Lint commit messages? (committed)
 // TODO badges (section in Cargo.toml)
-// TODO add caching to workflows?
 // TODO support 1.59 const generics (default, interleaving)
 
 /// Derive macro generating an implementation of the `FuncMap` trait

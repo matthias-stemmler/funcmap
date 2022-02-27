@@ -15,15 +15,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
           profile: minimal
+
+      - name: Checkout
+        uses: actions/checkout@v2
 
       - name: Run `cargo fmt --check`
         uses: actions-rs/cargo@v1
@@ -36,15 +36,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
           profile: minimal
+
+      - name: Checkout
+        uses: actions/checkout@v2
 
       - name: Run `cargo clippy`
         uses: actions-rs/cargo@v1
@@ -56,15 +56,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
           profile: minimal
+
+      - name: Checkout
+        uses: actions/checkout@v2
 
       - name: Run `cargo doc`
         uses: actions-rs/cargo@v1
@@ -76,8 +76,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - name: Cache
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.cargo/
+          key: cargo-expand
+
+      - name: Install `cargo-expand`
+        if: ${{ !steps.cache.outputs.cache-hit }}
+        uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-expand
 
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
@@ -86,10 +96,8 @@ jobs:
           override: true
           profile: minimal
 
-      - name: Install `cargo-expand`
-        uses: actions-rs/install@v0.1
-        with:
-          crate: cargo-expand
+      - name: Checkout
+        uses: actions/checkout@v2
 
       - name: Run `cargo update -Zminimal-versions`
         uses: actions-rs/cargo@v1
@@ -112,15 +120,15 @@ jobs:
         toolchain: [1.56]
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
       - name: Install ${{ matrix.toolchain }}
         uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.toolchain }}
           override: true
           profile: minimal
+
+      - name: Checkout
+        uses: actions/checkout@v2
 
       - name: Run `cargo check`
         uses: actions-rs/cargo@v1
@@ -132,8 +140,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - name: Install cargo-nono
+        run: |
+          curl -LSfs https://japaric.github.io/trust/install.sh | sh -s -- --git hobofan/cargo-nono
 
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
@@ -142,9 +151,8 @@ jobs:
           override: true
           profile: minimal
 
-      - name: Install cargo-nono
-        run: |
-          curl -LSfs https://japaric.github.io/trust/install.sh | sh -s -- --git hobofan/cargo-nono
+      - name: Checkout
+        uses: actions/checkout@v2
 
       - name: Run `cargo nono check --package funcmap`
         uses: actions-rs/cargo@v1
@@ -157,19 +165,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Determine date of latest nightly including MIRI
+      - name: Determine date of latest nightly including Miri
+        id: miri-nightly-date
         run: |
-          echo "NIGHTLY_DATE=$(curl -s https://rust-lang.github.io/rustup-components-history/x86_64-unknown-linux-gnu/miri)" >> $GITHUB_ENV
+          echo "::set-output name=date::$(curl -s https://rust-lang.github.io/rustup-components-history/x86_64-unknown-linux-gnu/miri)"
 
-      - name: Install latest nightly including MIRI
+      - name: Install latest nightly including Miri
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-${{ env.NIGHTLY_DATE }}
+          toolchain: nightly-${{ steps.miri-nightly-date.outputs.date }}
           override: true
           components: miri
+
+      - name: Checkout
+        uses: actions/checkout@v2
 
       - name: Run `cargo miri test -p funcmap --lib`
         uses: actions-rs/cargo@v1

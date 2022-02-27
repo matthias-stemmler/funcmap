@@ -21,8 +21,19 @@ jobs:
         toolchain: [stable, beta, nightly]
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - name: Cache
+        id: cache
+        if: matrix.toolchain == 'nightly'
+        uses: actions/cache@v2
+        with:
+          path: ~/.cargo/
+          key: cargo-expand
+
+      - name: Install `cargo-expand`
+        if: ${{ matrix.toolchain == 'nightly' && !steps.cache.outputs.cache-hit }}
+        uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-expand
 
       - name: Install latest ${{ matrix.toolchain }}
         uses: actions-rs/toolchain@v1
@@ -31,11 +42,8 @@ jobs:
           override: true
           profile: minimal
 
-      - name: Install `cargo-expand`
-        if: matrix.toolchain == 'nightly'
-        uses: actions-rs/install@v0.1
-        with:
-          crate: cargo-expand
+      - name: Checkout
+        uses: actions/checkout@v2
 
       - name: Run `cargo test`
         uses: actions-rs/cargo@v1
