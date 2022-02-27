@@ -1,0 +1,7 @@
+style = "conventional"
+
+imperative_subject = false
+subject_capitalized = false
+
+ignore_author_re = "dependabot"
+merge_commit = false

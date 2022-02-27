@@ -1,9 +1,9 @@
 [package]
 name = "funcmap"
-version = "0.1.0"
+version = "0.0.0"
 authors = ["Matthias Stemmler <matthias.stemmler@gmail.com>"]
 edition = "2021"
-rust-version = "1.56" # should be the same as in Cargo.toml of funcmap_derive and in docs
+rust-version = "1.56" # should be the same as in Cargo.toml of funcmap_derive, docs and MSRV job
 description = "Derivable functorial mappings for Rust"
 readme = "README.md"
 repository = "https://github.com/matthias-stemmler/funcmap"
@@ -18,4 +18,4 @@ alloc = []
 std = ["alloc"]
 
 [dependencies]
-"funcmap_derive" = { version = "=0.1.0", path = "../funcmap_derive" }
+"funcmap_derive" = { version = "=0.0.0", path = "../funcmap_derive", registry = "ktra" }
