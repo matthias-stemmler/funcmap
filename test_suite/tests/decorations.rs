@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use funcmap::{FuncMap, TypeParam};
 
 #[test]
-fn attributes_on_generics_are_supported() {
+fn attributes_on_type_params_are_supported() {
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<#[cfg(test)] S, #[cfg(test)] T>(S, T);
 
@@ -14,14 +14,47 @@ fn attributes_on_generics_are_supported() {
 }
 
 #[test]
-fn defaults_on_generics_are_supported() {
+fn attributes_on_lifetime_params_are_supported() {
     #[derive(FuncMap, Debug, PartialEq)]
-    struct Test<S, T = T1>(S, T);
+    struct Test<#[cfg(test)] 'a, T>(T, PhantomData<&'a ()>);
+
+    let src = Test(T1, PhantomData);
+    let dst = src.func_map(|_| T2);
+
+    assert_eq!(dst, Test(T2, PhantomData));
+}
+
+#[test]
+fn attributes_on_const_params_are_supported() {
+    #[derive(FuncMap, Debug, PartialEq)]
+    struct Test<T, #[cfg(test)] const N: usize>(T);
+
+    let src: Test<_, 0> = Test(T1);
+    let dst = src.func_map(|_| T2);
+
+    assert_eq!(dst, Test(T2));
+}
+
+#[test]
+fn defaults_on_type_params_are_supported() {
+    #[derive(FuncMap, Debug, PartialEq)]
+    struct Test<S = T1, T = T1>(S, T);
 
     let src = Test(T1, T1);
     let dst = src.func_map_over::<TypeParam<0>, _>(|_| T2);
 
     assert_eq!(dst, Test(T2, T1));
+}
+
+#[test]
+fn defaults_on_const_params_are_supported() {
+    #[derive(FuncMap, Debug, PartialEq)]
+    struct Test<T, const N: usize = 0>(T);
+
+    let src: Test<_> = Test(T1);
+    let dst = src.func_map(|_| T2);
+
+    assert_eq!(dst, Test(T2));
 }
 
 #[test]
