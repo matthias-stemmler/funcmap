@@ -5,28 +5,28 @@ fn generics_to_be_mapped_can_be_configured() {
     fn noop() {}
 
     #[derive(FuncMap, Debug, PartialEq)]
-    #[funcmap(params(S, T))]
+    #[funcmap(params(S, U))]
     struct Test<S, T, U> {
         value1: S,
-        value2: T,
-        not_mappable: fn() -> U,
+        not_mappable: fn() -> T,
+        value2: U,
     }
 
     let src = Test {
         value1: T1,
-        value2: T1,
         not_mappable: noop,
+        value2: T1,
     };
     let dst = src
         .func_map_over::<TypeParam<0>, _>(|_| T2)
-        .func_map_over::<TypeParam<1>, _>(|_| T2);
+        .func_map_over::<TypeParam<2>, _>(|_| T2);
 
     assert_eq!(
         dst,
         Test {
             value1: T2,
+            not_mappable: noop,
             value2: T2,
-            not_mappable: noop
         }
     );
 }

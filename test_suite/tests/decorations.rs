@@ -29,7 +29,7 @@ fn attributes_on_const_params_are_supported() {
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<T, #[cfg(test)] const N: usize>(T);
 
-    let src: Test<_, 0> = Test(T1);
+    let src = Test::<_, 42>(T1);
     let dst = src.func_map(|_| T2);
 
     assert_eq!(dst, Test(T2));
@@ -51,7 +51,7 @@ fn defaults_on_const_params_are_supported() {
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<T, const N: usize = 0>(T);
 
-    let src: Test<_> = Test(T1);
+    let src = Test::<_>(T1);
     let dst = src.func_map(|_| T2);
 
     assert_eq!(dst, Test(T2));

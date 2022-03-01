@@ -2,7 +2,7 @@ use crate::derivable::Derivable;
 use crate::ident::{MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT};
 use crate::predicates::UniquePredicates;
 use crate::result::Error;
-use crate::syn_ext::{DependencyOnType, SubsType};
+use crate::syn_ext::{DependencyOnType, IsTypish, SubsType};
 
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
@@ -173,14 +173,18 @@ impl<'ast> Mapper<'ast> {
 
                 let args = angle_bracketed.args;
 
-                let arg_types = args.iter().filter_map(|arg| match arg {
-                    GenericArgument::Type(ty) => Some(ty),
-                    _ => None,
-                });
+                let arg_types = args
+                    .iter()
+                    .filter(|arg| arg.is_typish())
+                    .enumerate()
+                    .filter_map(|(marker_idx, arg)| match arg {
+                        GenericArgument::Type(ty) => Some((marker_idx, ty)),
+                        _ => None,
+                    });
 
                 let mut mappable = mappable;
 
-                for (type_idx, arg_type) in arg_types.enumerate() {
+                for (marker_idx, arg_type) in arg_types {
                     if arg_type
                         .dependency_on_type(&self.mapping.type_param.ident)
                         .is_none()
@@ -191,19 +195,23 @@ impl<'ast> Mapper<'ast> {
                     let (inner_src_type, inner_dst_type) = self.subs_types(arg_type.clone());
 
                     let make_type = |mapped_until_idx: usize| {
-                        let mapped_args = args.iter().cloned().scan(0, |type_arg_idx, arg| {
-                            Some(match arg {
+                        let mapped_args = args.iter().cloned().scan(0, |marker_arg_idx, arg| {
+                            let mapped = match arg {
                                 GenericArgument::Type(ty) => {
-                                    let mapped_ty = if *type_arg_idx >= mapped_until_idx {
+                                    GenericArgument::Type(if *marker_arg_idx >= mapped_until_idx {
                                         self.subs_src_type(ty)
                                     } else {
                                         self.subs_dst_type(ty)
-                                    };
-                                    *type_arg_idx += 1;
-                                    GenericArgument::Type(mapped_ty)
+                                    })
                                 }
                                 _ => arg,
-                            })
+                            };
+
+                            if mapped.is_typish() {
+                                *marker_arg_idx += 1;
+                            }
+
+                            Some(mapped)
                         });
 
                         Type::Path(TypePath {
@@ -227,14 +235,14 @@ impl<'ast> Mapper<'ast> {
                         })
                     };
 
-                    let src_type = make_type(type_idx);
-                    let dst_type = make_type(type_idx + 1);
+                    let src_type = make_type(marker_idx);
+                    let dst_type = make_type(marker_idx + 1);
 
                     self.unique_predicates.add(parse_quote! {
                         #src_type: #crate_path::#trait_ident<
                             #inner_src_type,
                             #inner_dst_type,
-                            #crate_path::#MARKER_TYPE_IDENT<#type_idx>,
+                            #crate_path::#MARKER_TYPE_IDENT<#marker_idx>,
                             #OUTPUT_TYPE_IDENT = #dst_type
                         >
                     })?;
@@ -245,7 +253,7 @@ impl<'ast> Mapper<'ast> {
                         #crate_path::#trait_ident::<
                             _,
                             _,
-                            #crate_path::#MARKER_TYPE_IDENT::<#type_idx>
+                            #crate_path::#MARKER_TYPE_IDENT::<#marker_idx>
                         >::#fn_ident(#mappable, #closure)
                     });
                 }

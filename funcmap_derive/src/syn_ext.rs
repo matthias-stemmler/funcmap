@@ -163,6 +163,26 @@ impl IntoType for Ident {
     }
 }
 
+/// Extension trait for determining whether an AST node is "typish", i.e. if it
+/// may be syntactically indistinguishable from a type
+pub(crate) trait IsTypish {
+    /// Returns `true` if `self` is a type or something that may be
+    /// syntactically indistinguishable from a type such as a const parameter
+    fn is_typish(&self) -> bool;
+}
+
+impl IsTypish for GenericArgument {
+    fn is_typish(&self) -> bool {
+        matches!(self, GenericArgument::Type(..) | GenericArgument::Const(..))
+    }
+}
+
+impl IsTypish for GenericParam {
+    fn is_typish(&self) -> bool {
+        matches!(self, GenericParam::Type(..) | GenericParam::Const(..))
+    }
+}
+
 /// Extension trait for interpolating types inside a `quote!` invocation if they
 /// produce a non-empty [`TokenStream`]
 pub(crate) trait ToNonEmptyTokens {
@@ -460,6 +480,30 @@ mod tests {
     fn into_type_converts_ident_into_type() {
         let ident = Ident::new("T", Span::call_site());
         assert_eq!(ident.into_type(), parse_quote!(T));
+    }
+
+    #[test]
+    fn is_typish_returns_true_for_generic_argument_looking_like_type() {
+        let ty: GenericArgument = parse_quote!(T);
+        assert!(ty.is_typish());
+    }
+
+    #[test]
+    fn is_typish_returns_false_for_generic_argument_not_looking_like_type() {
+        let ty: GenericArgument = parse_quote!('a);
+        assert!(!ty.is_typish());
+    }
+
+    #[test]
+    fn is_typish_returns_true_for_generic_parameter_looking_like_type() {
+        let ty: GenericParam = parse_quote!(T);
+        assert!(ty.is_typish());
+    }
+
+    #[test]
+    fn is_typish_returns_false_for_generic_parameter_not_looking_like_type() {
+        let ty: GenericParam = parse_quote!('a);
+        assert!(!ty.is_typish());
     }
 
     #[test]

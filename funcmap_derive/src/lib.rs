@@ -49,8 +49,8 @@ mod syn_ext;
 // TODO Readme: How to install, license, how to release
 // TODO Test release workflow (then cleanup ktra)
 // TODO badges (section in Cargo.toml)
-// TODO support 1.59 const generics (default, interleaving)
 // TODO Configure PR merge checks
+// TODO Check: inner type with const param depending on T
 
 /// Derive macro generating an implementation of the `FuncMap` trait
 #[proc_macro_derive(FuncMap, attributes(funcmap))]

@@ -247,7 +247,7 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
             }
 
             let impl_where_clause = unique_predicates.into_where_clause();
-            let type_param_idx = mapped_type_param.type_param_idx;
+            let marker_idx = mapped_type_param.marker_idx;
 
             match derivable {
                 Derivable::Standard => quote! {
@@ -256,7 +256,7 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
                         #crate_path::#TRAIT_IDENT<
                             #src_type_ident,
                             #dst_type_ident,
-                            #crate_path::#MARKER_TYPE_IDENT<#type_param_idx>
+                            #crate_path::#MARKER_TYPE_IDENT<#marker_idx>
                         >
                         for #ident<#(#src_args),*>
                         #impl_where_clause
@@ -282,7 +282,7 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
                         #crate_path::#FALLIBLE_TRAIT_IDENT<
                             #src_type_ident,
                             #dst_type_ident,
-                            #crate_path::#MARKER_TYPE_IDENT<#type_param_idx>
+                            #crate_path::#MARKER_TYPE_IDENT<#marker_idx>
                         >
                         for #ident<#(#src_args),*>
                         #impl_where_clause

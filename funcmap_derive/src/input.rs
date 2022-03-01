@@ -5,7 +5,7 @@ use crate::{
     ident_collector::IdentCollector,
     opts::{self, FuncMapOpts, Param},
     result::{self, Error, IteratorExt, ResultExt},
-    syn_ext::ToNonEmptyTokens,
+    syn_ext::{IsTypish, ToNonEmptyTokens},
 };
 
 use std::{collections::HashSet, iter};
@@ -53,12 +53,14 @@ pub(crate) struct FuncMapMeta {
 #[derive(Debug)]
 pub(crate) struct MappedTypeParam {
     /// 0-based index of the type parameter within *all* parameters of the type,
-    /// including lifetimes and const generics
+    /// including lifetimes
     pub(crate) param_idx: usize,
 
-    /// 0-based index of the type parameter within all *type* parameters of the
-    /// type
-    pub(crate) type_param_idx: usize,
+    /// 0-based index of the type parameter within all *typish* parameters of
+    /// the type (i.e. types and const generics)
+    ///
+    /// This is used as `N` in the marker type `TypeParam<N>`.
+    pub(crate) marker_idx: usize,
 
     /// The type parameter itself
     pub(crate) type_param: TypeParam,
@@ -148,23 +150,21 @@ impl TryFrom<DeriveInput> for FuncMapInput {
             .params
             .iter()
             .enumerate()
-            .filter_map(|(param_idx, param)| match param {
+            .filter(|(_, param)| param.is_typish())
+            .enumerate()
+            .filter_map(|(marker_idx, (param_idx, param))| match param {
                 GenericParam::Type(type_param)
                     if mapped_type_param_idents.is_empty()
                         || mapped_type_param_idents.contains(&type_param.ident) =>
                 {
-                    Some((param_idx, type_param.clone()))
+                    Some(MappedTypeParam {
+                        param_idx,
+                        marker_idx,
+                        type_param: type_param.clone(),
+                    })
                 }
                 _ => None,
             })
-            .enumerate()
-            .map(
-                |(type_param_idx, (param_idx, type_param))| MappedTypeParam {
-                    param_idx,
-                    type_param_idx,
-                    type_param,
-                },
-            )
             .collect();
 
         if mapped_type_params.is_empty() {

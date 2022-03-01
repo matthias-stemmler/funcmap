@@ -362,9 +362,17 @@
 //! even for `Foo<'a, S, T>`,
 //! - `TypeParam<0>` refers to `S`
 //! - `TypeParam<1>` refers to `T`
+//! Note that while lifetime parameters aren't counted, const generics are. The
+//! reason for this is that when the derive macro looks at arguments of nested
+//! types, it may not be able to distinguish const arguments from type arguments
+//! syntactically. So, for `Foo<'a, const N: usize, S, const M: usize, T>`,
+//! - `TypeParam<1>` refers to `S`
+//! - `TypeParam<3>` refers to `T`
+//! and `TypeParam<0>` and `TypeParam<2>` are not used at all.
 //!
 //! The `P` parameter of [`FuncMap`] defaults to `TypeParam<0>`, so it can be
-//! ignored completely in case there is only a single type parameter.
+//! ignored completely in case there is only a single type parameter, at least
+//! if it's not preceded by a const generic.
 //!
 //! Note that when calling [`func_map`](FuncMap::func_map), the correct type
 //! for `P` can often be inferred:
@@ -860,14 +868,16 @@ use core::fmt::{self, Display, Formatter};
 /// If you need to implement [`FuncMap`] manually, make sure to uphold the
 /// following contract:
 ///
-/// Let `Foo` be a type that is generic over the type parameters `T0, ..., Tn`.
+/// Let `Foo` be a type that is generic over the type or const parameters
+/// `T0, ..., Tn`.
 ///
 /// If `Foo` implements [`FuncMap<A, B, TypeParam<N>>`], then
 /// - `N` must be in the range `0..=n`.
-/// - The type parameter of `Foo` at index `N` (not counting lifetime parameters
-///   and const generics) must be `A`.
-/// - `Foo::Output` must be `Foo` with the type parameter at index `N` replaced
-///   with `B`.
+/// - The parameter of `Foo` at index `N` (not counting lifetime parameters)
+///   must be `A`. In particular, it must be a type parameter, not a const
+///   generic.
+/// - `Foo::Output` must be `Foo` with the parameter at index `N` replaced with
+///   `B`.
 ///
 /// Furthermore:
 /// - [`func_map_over`](Self::func_map_over) must behave in exactly the same way
@@ -906,8 +916,8 @@ where
 {
     /// The output type of the functorial mapping
     ///
-    /// This is `Self` with the type parameter at index `N` replaced with `B`,
-    /// where `N` is such that `P` is `TypeParam<N>`.
+    /// This is `Self` with the parameter at index `N` replaced with `B`, where
+    /// `N` is such that `P` is `TypeParam<N>`.
     ///
     /// In the simplest case of a type with just a single type parameter, if
     /// `Self` is `Foo<A>`, then this is `Foo<B>`.
@@ -1034,14 +1044,16 @@ where
 /// If you need to implement [`TryFuncMap`] manually, make sure to uphold the
 /// following contract:
 ///
-/// Let `Foo` be a type that is generic over the type parameters `T0, ..., Tn`.
+/// Let `Foo` be a type that is generic over the type or const parameters
+/// `T0, ..., Tn`.
 ///
 /// If `Foo` implements [`TryFuncMap<A, B, TypeParam<N>>`], then
 /// - `N` must be in the range `0..=n`.
-/// - The type parameter of `Foo` at index `N` (not counting lifetime parameters
-///   and const generics) must be `A`.
-/// - `Foo::Output` must be `Foo` with the type parameter at index `N` replaced
-///   with `B`.
+/// - The parameter of `Foo` at index `N` (not counting lifetime parameters)
+///   must be `A`. In particular, it must be a type parameter, not a const
+///   generic.
+/// - `Foo::Output` must be `Foo` with the parameter at index `N` replaced with
+///   `B`.
 ///
 /// Furthermore:
 /// - [`try_func_map_over`](Self::try_func_map_over) must behave in exactly the
@@ -1104,8 +1116,8 @@ where
 {
     /// The output type of the functorial mapping
     ///
-    /// This is `Self` with the type parameter at index `N` replaced with `B`,
-    /// where `N` is such that `P` is `TypeParam<N>`.
+    /// This is `Self` with the parameter at index `N` replaced with `B`, where
+    /// `N` is such that `P` is `TypeParam<N>`.
     ///
     /// In the simplest case of a type with just a single type parameter, if
     /// `Self` is `Foo<A>`, then this is `Foo<B>`.
@@ -1225,15 +1237,14 @@ pub use funcmap_derive::TryFuncMap;
 /// Marker type specifying one of multiple type parameters to map over
 ///
 /// The const generic `N` is the zero-based index of the type parameter, not
-/// counting lifetime parameters[^const-generics].
+/// counting lifetime parameters, but counting const generics.
 ///
 /// For example, for a type `Foo<'a, S, T>`,
 /// - [`TypeParam<0>`] refers to `S` and
-/// - [`TypeParam<1>`] refers to `T`.
-///
-/// [^const-generics]: While lifetime parameters are explicitly not counted,
-/// this is not relevant for const generics as they must be declared *after*
-/// type parameters and hence do not affect the indices of type parameters.
+/// - [`TypeParam<1>`] refers to `T`
+/// and for a type `Foo<'a, const N: usize, S, const M: usize, T>`,
+/// - [`TypeParam<1>`] refers to `S` and
+/// - [`TypeParam<3>`] refers to `T`
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum TypeParam<const N: usize> {}
 
