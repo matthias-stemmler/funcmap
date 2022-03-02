@@ -360,6 +360,20 @@ fn impl_is_restricted_to_sized_bound_on_unmapped_inner_type() {
     assert_eq!(dst, Test(T2, ()));
 }
 
+#[test]
+fn const_args_with_braces_are_supported() {
+    #[derive(Debug, PartialEq)]
+    struct Inner<const N: usize>;
+
+    #[derive(FuncMap, Debug, PartialEq)]
+    struct Test<T>(T, Inner<{ 41 + 1 }>);
+
+    let src = Test(T1, Inner);
+    let dst = src.func_map(|_| T2);
+
+    assert_eq!(dst, Test(T2, Inner));
+}
+
 #[derive(Debug, PartialEq)]
 struct T1;
 
