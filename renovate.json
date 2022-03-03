@@ -1,5 +1,26 @@
 {
-  "extends": [
-    "config:base"
+  "extends": ["config:base"],
+  "packageRules": [
+    {
+      "matchPaths": ["funcmap/**", "funcmap_derive/**"],
+      "enabled": false
+    },
+    {
+      "matchPaths": ["test_suite/**"],
+      "matchPackageNames": ["quote"],
+      "enabled": false
+    },
+    {
+      "matchManagers": ["regex"],
+      "rangeStrategy": "bump"
+    }
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": ["^.github\\/workflows\\/.*\\.yml$"],
+      "matchStrings": [
+        "\\s*renovate:\\s*datasource=(?<datasource>.*?)\\s*depName=(?<depName>.*?)\\s*\\n\\s*VERSION_.*?:\\s*(?<currentValue>.*)\\s*"
+      ]
+    }
   ]
 }
