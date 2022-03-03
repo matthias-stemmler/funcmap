@@ -11,7 +11,7 @@ concurrency:
 
 env:
   # renovate: datasource=crate depName=cargo-expand
-  VERSION_CARGO_EXPAND: 1.0.16
+  VERSION_CARGO_EXPAND: 1.0.17
 
 jobs:
   fmt-check:
