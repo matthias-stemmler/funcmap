@@ -17,9 +17,9 @@
   ],
   "regexManagers": [
     {
-      "fileMatch": ["^.github\\/workflows\\/.*\\.yml$"],
+      "fileMatch": ["^\\.github\\/workflows\\/.*\\.yml$"],
       "matchStrings": [
-        "\\s*renovate:\\s*datasource=(?<datasource>.*?)\\s*depName=(?<depName>.*?)\\s*\\n\\s*VERSION_.*?:\\s*(?<currentValue>.*)\\s*"
+        "\\s*renovate:\\s*datasource=(?<datasource>.*?)\\s*depName=(?<depName>.*?)\\s*\\n.*?:\\s*(?<currentValue>.*)\\s*"
       ]
     }
   ]
