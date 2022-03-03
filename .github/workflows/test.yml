@@ -32,19 +32,26 @@ jobs:
             toolchain: nightly
 
     steps:
+      - name: Find tool versions
+        id: tool-versions
+        if: matrix.toolchain == 'nightly'
+        run: |
+          echo "::set-output name=cargo-expand::$(curl -s https://crates.io/api/v1/crates/cargo-expand | jq -r .crate.max_version)"
+
       - name: Cache
         id: cache
         if: matrix.toolchain == 'nightly'
         uses: actions/cache@v2
         with:
           path: ~/.cargo/
-          key: cargo-expand
+          key: cargo-bin-expand-${{ steps.tool-versions.outputs.cargo-expand }}
 
       - name: Install `cargo-expand`
         if: ${{ matrix.toolchain == 'nightly' && !steps.cache.outputs.cache-hit }}
         uses: actions-rs/install@v0.1
         with:
           crate: cargo-expand
+          version: ${{ steps.tool-versions.outputs.cargo-expand }}
 
       - name: Install latest ${{ matrix.toolchain }}
         uses: actions-rs/toolchain@v1

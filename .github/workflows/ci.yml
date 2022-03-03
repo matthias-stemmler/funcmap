@@ -76,18 +76,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Find tool versions
+        id: tool-versions
+        run: |
+          echo "::set-output name=cargo-expand::$(curl -s https://crates.io/api/v1/crates/cargo-expand | jq -r .crate.max_version)"
+
       - name: Cache
         id: cache
         uses: actions/cache@v2
         with:
           path: ~/.cargo/
-          key: cargo-expand
+          key: cargo-bin-expand-${{ steps.tool-versions.outputs.cargo-expand }}
 
       - name: Install `cargo-expand`
         if: ${{ !steps.cache.outputs.cache-hit }}
         uses: actions-rs/install@v0.1
         with:
           crate: cargo-expand
+          version: ${{ steps.tool-versions.outputs.cargo-expand }}
 
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
