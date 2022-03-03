@@ -27,7 +27,7 @@ jobs:
           profile: minimal
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Run `cargo fmt --check`
         uses: actions-rs/cargo@v1
@@ -48,7 +48,7 @@ jobs:
           profile: minimal
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Run `cargo clippy`
         uses: actions-rs/cargo@v1
@@ -68,7 +68,7 @@ jobs:
           profile: minimal
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Run `cargo doc`
         uses: actions-rs/cargo@v1
@@ -102,7 +102,7 @@ jobs:
           profile: minimal
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Run `cargo update -Zminimal-versions`
         uses: actions-rs/cargo@v1
@@ -133,7 +133,7 @@ jobs:
           profile: minimal
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Run `cargo check`
         uses: actions-rs/cargo@v1
@@ -157,7 +157,7 @@ jobs:
           profile: minimal
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Run `cargo nono check --package funcmap`
         uses: actions-rs/cargo@v1
@@ -183,7 +183,7 @@ jobs:
           components: miri
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Run `cargo miri test -p funcmap --lib`
         uses: actions-rs/cargo@v1
