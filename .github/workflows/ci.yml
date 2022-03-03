@@ -9,6 +9,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # renovate: datasource=crate depName=cargo-expand
+  VERSION_CARGO_EXPAND: 1.0.16
+
 jobs:
   fmt-check:
     name: Cargo fmt check
@@ -76,24 +80,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Find tool versions
-        id: tool-versions
-        run: |
-          echo "::set-output name=cargo-expand::$(curl -s https://crates.io/api/v1/crates/cargo-expand | jq -r .crate.max_version)"
-
       - name: Cache
         id: cache
         uses: actions/cache@v2
         with:
           path: ~/.cargo/
-          key: cargo-bin-expand-${{ steps.tool-versions.outputs.cargo-expand }}
+          key: cargo-bin-cargo-expand-${{ env.VERSION_CARGO_EXPAND }}
 
       - name: Install `cargo-expand`
         if: ${{ !steps.cache.outputs.cache-hit }}
         uses: actions-rs/install@v0.1
         with:
           crate: cargo-expand
-          version: ${{ steps.tool-versions.outputs.cargo-expand }}
+          version: ${{ env.VERSION_CARGO_EXPAND }}
 
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
