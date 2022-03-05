@@ -46,8 +46,7 @@ mod syn_ext;
 // TODO https://rust-lang.github.io/api-guidelines
 // TODO more fallible tests
 // TODO Test release workflow (then cleanup ktra)
-// TODO separate crates.io README?
-// TODO badges on docs.rs and crates.io?
+// TODO README: absolute URLs, referring to current version
 
 /// Derive macro generating an implementation of the `FuncMap` trait
 #[proc_macro_derive(FuncMap, attributes(funcmap))]

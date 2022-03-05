@@ -83,9 +83,9 @@ the `funcmap` crate is just to provide utility functionality, so
   except in generic implementations of those same traits.
 
 For a more detailed explanation and more features, see the
-[crate documentation](https://docs.rs/funcmap/latest/funcmap/).
+[crate documentation][docs].
 
-For larger examples, see the [examples](funcmap/examples) folder.
+For larger examples, see the [examples] folder.
 
 ## Minimum Supported Rust Version (MSRV) policy
 
@@ -100,10 +100,12 @@ time it is published.
 
 Licensed under either of
 
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
-  https://www.apache.org/licenses/LICENSE-2.0)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or
-  https://opensource.org/licenses/MIT)
+- Apache License, Version 2.0
+  ([LICENSE-APACHE](https://github.com/matthias-stemmler/funcmap/blob/main/LICENSE-APACHE)
+  or https://www.apache.org/licenses/LICENSE-2.0)
+- MIT license
+  ([LICENSE-MIT](https://github.com/matthias-stemmler/funcmap/blob/main/LICENSE-MIT)
+  or https://opensource.org/licenses/MIT)
 
 at your option.
 
@@ -113,6 +115,8 @@ Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
 
-[`funcmap`]: https://docs.rs/funcmap/latest/funcmap/trait.FuncMap.html
-[`tryfuncmap`]: https://docs.rs/funcmap/latest/funcmap/trait.TryFuncMap.html
-[`func_map`]: https://docs.rs/funcmap/latest/funcmap/trait.FuncMap.html#tymethod.func_map
+[examples]: https://github.com/matthias-stemmler/funcmap/tree/v0.0.0/funcmap/examples
+[docs]: https://docs.rs/funcmap/0.0.0/funcmap/
+[`funcmap`]: https://docs.rs/funcmap/0.0.0/funcmap/trait.FuncMap.html
+[`tryfuncmap`]: https://docs.rs/funcmap/0.0.0/funcmap/trait.TryFuncMap.html
+[`func_map`]: https://docs.rs/funcmap/0.0.0/funcmap/trait.FuncMap.html#tymethod.func_map

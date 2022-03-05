@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - hotfix/**
+  workflow_dispatch:
 
 env:
   BUMP_FILE: .version-bump

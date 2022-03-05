@@ -1,7 +1,8 @@
 //! [![GitHub](https://img.shields.io/badge/GitHub-informational?logo=GitHub&labelColor=555555)](https://github.com/matthias-stemmler/funcmap)
 //! [![crates.io](https://img.shields.io/crates/v/funcmap.svg)](https://crates.io/crates/funcmap)
+//! [![docs.rs](https://img.shields.io/docsrs/funcmap)](https://docs.rs/funcmap/latest/funcmap/)
+//! [![license](https://img.shields.io/crates/l/funcmap.svg)](https://github.com/matthias-stemmler/funcmap/blob/main/LICENSE-APACHE)
 //! [![rustc 1.56+](https://img.shields.io/badge/rustc-1.56+-lightgrey.svg)](https://blog.rust-lang.org/2021/10/21/Rust-1.56.0.html)
-//! [![license](https://img.shields.io/crates/l/funcmap.svg)](LICENSE-APACHE)
 //!
 //! Derivable functorial mappings for Rust
 //!
