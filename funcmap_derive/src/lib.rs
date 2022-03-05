@@ -40,15 +40,14 @@ mod predicates;
 mod result;
 mod syn_ext;
 
-// TODO check auto-impl/structopt/serde (serde: crates-io.md, html_root_url, explicit "include" in Cargo.toml)
-// TODO docs (including root README)
+// TODO check auto-impl/structopt/serde (serde: crates-io.md, explicit "include" in Cargo.toml)
+// TODO more private docs
 // TODO unit tests
 // TODO https://rust-lang.github.io/api-guidelines
-// TODO https://doc.rust-lang.org/rustdoc/the-doc-attribute.html
 // TODO more fallible tests
-// TODO Readme: How to install, license, how to release
 // TODO Test release workflow (then cleanup ktra)
-// TODO badges (section in Cargo.toml)
+// TODO separate crates.io README?
+// TODO badges on docs.rs and crates.io?
 
 /// Derive macro generating an implementation of the `FuncMap` trait
 #[proc_macro_derive(FuncMap, attributes(funcmap))]

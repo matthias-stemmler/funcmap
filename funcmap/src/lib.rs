@@ -1,3 +1,8 @@
+//! [![GitHub](https://img.shields.io/badge/GitHub-informational?logo=GitHub&labelColor=555555)](https://github.com/matthias-stemmler/funcmap)
+//! [![crates.io](https://img.shields.io/crates/v/funcmap.svg)](https://crates.io/crates/funcmap)
+//! [![rustc 1.56+](https://img.shields.io/badge/rustc-1.56+-lightgrey.svg)](https://blog.rust-lang.org/2021/10/21/Rust-1.56.0.html)
+//! [![license](https://img.shields.io/crates/l/funcmap.svg)](LICENSE-APACHE)
+//!
 //! Derivable functorial mappings for Rust
 //!
 //! This crate provides the [`FuncMap`] trait (and its fallible version
