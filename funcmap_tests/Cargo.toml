@@ -1,5 +1,5 @@
 [package]
-name = "test_suite"
+name = "funcmap_tests"
 version = "0.0.0"
 edition = "2018" # macrotest doesn't support 2021 yet
 publish = false

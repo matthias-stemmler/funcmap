@@ -1,8 +1,0 @@
-disallowed-methods = [ 
-    { path = "funcmap::FuncMap::func_map", reason = "just for testing that lint is not applied to derived impl" }, 
-    { path = "funcmap::FuncMap::func_map_over", reason = "just for testing that lint is not applied to derived impl" }
-]
-
-disallowed-types = [
-    "core::option::Option" # just for testing that lint is not applied to derived impl
-]
