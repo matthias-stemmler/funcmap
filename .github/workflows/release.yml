@@ -13,6 +13,8 @@ env:
   RUSTFLAGS: -Dwarnings
   # renovate: datasource=crate depName=cargo-release
   VERSION_CARGO_RELEASE: 0.20.2
+  # renovate: datasource=crate depName=cargo-workspaces
+  VERSION_CARGO_WORKSPACES: 0.2.30
   # renovate: datasource=crate depName=convco
   VERSION_CONVCO: 0.3.9
 
@@ -216,13 +218,14 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.cargo/
-          key: cargo-workspaces
+          key: cargo-bin-cargo-workspaces-${{ env.VERSION_CARGO_WORKSPACES }}
 
       - name: Install `cargo-workspaces`
         if: ${{ !steps.cache.outputs.cache-hit }}
         uses: actions-rs/install@v0.1
         with:
           crate: cargo-workspaces
+          version: ${{ env.VERSION_CARGO_WORKSPACES }}
 
       - name: Checkout
         uses: actions/checkout@v3
