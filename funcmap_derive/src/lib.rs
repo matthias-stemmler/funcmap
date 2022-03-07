@@ -46,14 +46,15 @@ mod syn_ext;
 // TODO https://rust-lang.github.io/api-guidelines
 // TODO more fallible tests
 // TODO Test release workflow (then cleanup ktra)
+// TODO extract and test `subs_type_in_bounds`
 
-/// Derive macro generating an implementation of the `FuncMap` trait
+/// Derive macro generating implementations of the `FuncMap` trait
 #[proc_macro_derive(FuncMap, attributes(funcmap))]
 pub fn derive_func_map(item: TokenStream) -> TokenStream {
     derive::derive(item.into(), Derivable::Standard).into()
 }
 
-/// Derive macro generating an implementation of the `TryFuncMap` trait
+/// Derive macro generating implementations of the `TryFuncMap` trait
 #[proc_macro_derive(TryFuncMap, attributes(funcmap))]
 pub fn derive_try_func_map(item: TokenStream) -> TokenStream {
     derive::derive(item.into(), Derivable::Fallible).into()

@@ -1,3 +1,7 @@
+//! Implementations of [`FuncMap`](crate::FuncMap) and
+//! [`TryFuncMap`](crate::TryFuncMap) for types in [`alloc`]
+
+/// Implementations for types in [`alloc::collections::binary_heap`]
 mod binary_heap {
     extern crate alloc;
 
@@ -64,6 +68,7 @@ mod binary_heap {
     }
 }
 
+/// Implementations for types in [`alloc::boxed`]
 mod boxed {
     extern crate alloc;
 
@@ -94,6 +99,7 @@ mod boxed {
     }
 }
 
+/// Implementations for types in [`alloc::collections::btree_map`]
 mod btree_map {
     extern crate alloc;
 
@@ -222,6 +228,7 @@ mod btree_map {
     }
 }
 
+/// Implementations for types in [`alloc::collections::btree_set`]
 mod btree_set {
     extern crate alloc;
 
@@ -288,6 +295,7 @@ mod btree_set {
     }
 }
 
+/// Implementations for types in [`alloc::collections::linked_list`]
 mod linked_list {
     extern crate alloc;
 
@@ -342,6 +350,7 @@ mod linked_list {
     }
 }
 
+/// Implementations for types in [`alloc::vec`](mod@alloc::vec)
 mod vec {
     extern crate alloc;
 
@@ -396,6 +405,7 @@ mod vec {
     }
 }
 
+/// Implementations for types in [`alloc::collections::vec_deque`]
 mod vec_deque {
     extern crate alloc;
 

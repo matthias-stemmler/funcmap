@@ -1,3 +1,7 @@
+//! Implementations of [`FuncMap`](crate::FuncMap) and
+//! [`TryFuncMap`](crate::TryFuncMap) for types in [`core`]
+
+/// Implementations for [arrays](prim@array)
 mod array {
     use crate::{array, FuncMap, TryFuncMap};
 
@@ -24,6 +28,7 @@ mod array {
     }
 }
 
+/// Implementations for [`core::ops::Bound`]
 mod bound {
     use crate::{FuncMap, TryFuncMap};
 
@@ -60,6 +65,7 @@ mod bound {
     }
 }
 
+/// Implementations for [`core::cell::Cell`]
 mod cell {
     use crate::{FuncMap, TryFuncMap};
 
@@ -88,6 +94,7 @@ mod cell {
     }
 }
 
+/// Implementations for [`core::ops::ControlFlow`]
 mod control_flow {
     use crate::{FuncMap, TryFuncMap, TypeParam};
 
@@ -150,6 +157,7 @@ mod control_flow {
     }
 }
 
+/// Implementations for [`core::option::Option`]
 mod option {
     use crate::{FuncMap, TryFuncMap};
 
@@ -200,6 +208,7 @@ mod option {
     }
 }
 
+/// Implementations for [`core::marker::PhantomData`]
 mod phantom_data {
     use crate::{FuncMap, TryFuncMap};
 
@@ -228,6 +237,7 @@ mod phantom_data {
     }
 }
 
+/// Implementations for [`core::task::Poll`]
 mod poll {
     use crate::{FuncMap, TryFuncMap};
 
@@ -262,6 +272,7 @@ mod poll {
     }
 }
 
+/// Implementations for [`core::ops::Range`] etc.
 mod range {
     use crate::{FuncMap, TryFuncMap};
 
@@ -380,6 +391,7 @@ mod range {
     }
 }
 
+/// Implementations for [`core::cell::RefCell`]
 mod ref_cell {
     use crate::{FuncMap, TryFuncMap};
 
@@ -408,6 +420,7 @@ mod ref_cell {
     }
 }
 
+/// Implementations for [`core::result::Result`]
 mod result {
     use crate::{FuncMap, TryFuncMap, TypeParam};
 
@@ -492,6 +505,7 @@ mod result {
     }
 }
 
+/// Implementations for [`core::cell::UnsafeCell`]
 mod unsafe_cell {
     use crate::{FuncMap, TryFuncMap};
 

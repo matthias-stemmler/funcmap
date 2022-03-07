@@ -30,6 +30,8 @@ impl DependencyOnType for Type {
     }
 }
 
+/// Type implementing [`Visit`] for
+/// [`dependency_on_type`](DependencyOnType::dependency_on_type)
 #[derive(Debug)]
 struct DependencyOnTypeVisitor<'ast, 'a> {
     dependency: Option<&'ast Ident>,
@@ -96,6 +98,7 @@ impl SubsType for WherePredicate {
     }
 }
 
+/// Type implementing [`Fold`] for [`subs_type`](SubsType::subs_type)
 struct SubsTypeFolder<'a> {
     type_ident: &'a Ident,
     subs_ident: &'a Ident,
@@ -241,6 +244,8 @@ impl WithoutAttrs for WherePredicate {
     }
 }
 
+/// Type implementing [`Fold`] for
+/// [`without_attrs`](WithoutAttrs::without_attrs)
 #[derive(Debug)]
 struct WithoutAttrsFolder;
 

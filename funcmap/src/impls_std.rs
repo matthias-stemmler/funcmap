@@ -1,3 +1,7 @@
+//! Implementations of [`FuncMap`](crate::FuncMap) and
+//! [`TryFuncMap`](crate::TryFuncMap) for types in [`std`]
+
+/// Implementations for types in [`std::collections::hash_map`]
 mod hash_map {
     use crate::{FuncMap, TryFuncMap, TypeParam};
 
@@ -125,6 +129,7 @@ mod hash_map {
     }
 }
 
+/// Implementations for types in [`std::collections::hash_set`]
 mod hash_set {
     use crate::{FuncMap, TryFuncMap};
 

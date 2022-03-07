@@ -1,3 +1,5 @@
+//! The core derive logic
+
 use crate::derivable::Derivable;
 use crate::ident::{
     FALLIBLE_FN_IDENT, FALLIBLE_TRAIT_IDENT, FN_IDENT, MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT,
@@ -19,6 +21,7 @@ use syn::{
     WherePredicate,
 };
 
+/// Generates an implementation of `FuncMap` or `TryFuncMap` for a given item
 pub(crate) fn derive(item: TokenStream, derivable: Derivable) -> TokenStream {
     match try_derive(item, derivable) {
         Ok(output) => output,
@@ -26,6 +29,14 @@ pub(crate) fn derive(item: TokenStream, derivable: Derivable) -> TokenStream {
     }
 }
 
+/// Tries to generate an implementation of `FuncMap` or `TryFuncMap` for a given
+/// item
+///
+/// # Errors
+/// Fails if
+/// - `item` cannot be parsed
+/// - `item` is not a valid input for deriving `FuncMap` or `TryFuncMap`
+/// - any of the fields of `item` has an unsupported type
 pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<TokenStream, Error> {
     let input: DeriveInput = syn::parse2(item)?;
     let input: FuncMapInput = input.try_into()?;

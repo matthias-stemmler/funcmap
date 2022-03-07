@@ -1,33 +1,52 @@
+//! Helper functions for arrays
+
 use core::{
     mem::{self, MaybeUninit},
     ptr,
 };
 
+/// Tries to apply a given closure to every element of a given array, producing
+/// a new array of the same length
+///
+/// This is a fallible version of [`array::map`].
+///
+/// It can be replaced with [`array::try_map`] once that is stabilized. In fact,
+/// the implementation is heavily inspired by the standard library's
+/// implementation of [`array::try_map`].
+///
+/// # Errors
+/// Fails if and only if `f` fails, returning the first error according to the
+/// order of the elements in `array`
 pub(crate) fn try_map<A, B, E, F, const N: usize>(array: [A; N], mut f: F) -> Result<[B; N], E>
 where
     F: FnMut(A) -> Result<B, E>,
 {
-    // invariants:
-    // - `init_until_idx <= N`
-    // - the slice `array_mut[..init_until_idx]` is initialized
+    // This guards the target array, making sure the part of it that has already
+    // been filled is dropped if `f` returns `Err(_)` or panics
     struct Guard<'a, T, const N: usize> {
+        // mutable borrow of the target array
         array_mut: &'a mut [MaybeUninit<T>; N],
+
+        // index in ..=N up to which (exclusive) `array_mut` is initialized
         init_until_idx: usize,
     }
 
     impl<T, const N: usize> Drop for Guard<'_, T, N> {
         fn drop(&mut self) {
-            // `self.init_until_idx <= N` is an invariant of `Self`
-            // if `self.init_until_idx == N`, then `self` must not be dropped
+            // - `self.init_until_idx <= N` is always satisfied
+            // - if `self.init_until_idx == N`, the target array is fully
+            //   initialized and hence the guard must not be dropped
             debug_assert!(self.init_until_idx < N);
 
-            // SAFETY: as `self.init_until_idx <= N` by invariant, the range is within bounds of `self.array_mut`
+            // SAFETY: as `self.init_until_idx <= N`, the range is within bounds of `self.array_mut`
             let init_slice = unsafe { self.array_mut.get_unchecked_mut(..self.init_until_idx) };
 
-            // SAFETY: the slice is initialized by invariant
+            // SAFETY: by definition of `init_until_idx`, `init_slice` is fully initialized
             let init_slice = unsafe { &mut *(init_slice as *mut [MaybeUninit<T>]).cast::<T>() };
 
-            // SAFETY: `self.array_mut` is not used after `Self` is dropped
+            // SAFETY:
+            // - `init_slice` is valid for dropping
+            // - `self.array_mut` (and hence `init_slice`) is not used after `self` is dropped
             unsafe { ptr::drop_in_place(init_slice) };
         }
     }
@@ -37,6 +56,8 @@ where
         return Ok(unsafe { mem::zeroed() });
     }
 
+    // This can be replaced with a call to `MaybeUninit::uninit_array` once that is stabilized
+    //
     // SAFETY: an array of `MaybeUninit<_>` is always initialized
     let mut mapped: [MaybeUninit<B>; N] = unsafe { MaybeUninit::uninit().assume_init() };
 
@@ -46,23 +67,25 @@ where
     };
 
     for value in array {
-        // SAFETY: `guard.init_until_idx` is within bounds of `guard.array_mut` because the iterator yields exactly `N` elements
-        // and hence `guard.init_until_idx` has been increased at most `N - 1` times
+        // SAFETY: the iterator yields exactly `N` elements,
+        // so `guard.init_until_idx` has been increased at most `N - 1` times
+        // and hence is within bounds of `guard.array_mut`
         unsafe {
             guard
                 .array_mut
                 .get_unchecked_mut(guard.init_until_idx)
-                // if `f` panics or returns `Err(_)`, then `guard` is dropped
+                // if `f` returns `Err(_)` or panics, then `guard` is dropped
                 .write(f(value)?);
         }
 
         guard.init_until_idx += 1;
     }
 
-    // now `guard.init_until_idx == N` and all elemens are initialized, so don't drop the guard
+    // now `guard.init_until_idx == N` and the target array is fully initialized,
+    // so make sure the guard isn't dropped
     mem::forget(guard);
 
-    // SAFETY: all elements are initialized at this point
+    // SAFETY: `mapped` is fully initialized
     let mapped = unsafe {
         (&mapped as *const [MaybeUninit<B>; N])
             .cast::<[B; N]>()

@@ -9,6 +9,10 @@ use syn::{
 };
 
 /// A set of unique type bounds
+///
+/// This uses [`IndexSet`] rather than e.g.
+/// [`HashSet`](std::collections::HashSet) to maintain a consistent order and
+/// make the output of the derive macros deterministic.
 #[derive(Debug, Default)]
 pub(crate) struct UniqueTypeBounds(IndexSet<TypeParamBound>);
 
@@ -39,6 +43,10 @@ impl Extend<TypeParamBound> for UniqueTypeBounds {
 }
 
 /// A set of unique lifetime bounds
+///
+/// This uses [`IndexSet`] rather than e.g.
+/// [`HashSet`](std::collections::HashSet) to maintain a consistent order and
+/// make the output of the derive macros deterministic.
 #[derive(Debug, Default)]
 struct UniqueLifetimeBounds(IndexSet<Lifetime>);
 
@@ -66,6 +74,10 @@ struct TypePredicateLhs {
 }
 
 /// A set of unique type or lifetime predicates
+///
+/// This uses [`IndexMap`] rather than e.g.
+/// [`HashMap`](std::collections::HashMap) to maintain a consistent order and
+/// make the output of the derive macros deterministic.
 #[derive(Debug, Default)]
 pub(crate) struct UniquePredicates {
     for_types: IndexMap<TypePredicateLhs, UniqueTypeBounds>,

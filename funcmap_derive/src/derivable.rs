@@ -56,7 +56,7 @@ impl Derivable {
 
     /// "Wraps" an expression in implementations of this derivable trait
     ///
-    /// This named after the *unit* operation for monads
+    /// This is named after the *unit* operation for monads
     pub(crate) fn unit_expr(self, expr: TokenStream) -> TokenStream {
         match self {
             Self::Standard => expr,

@@ -47,6 +47,9 @@ pub(crate) struct FuncMapOpts {
     /// Set of parameters for which to generate an implementation
     ///
     /// Configured via `#[funcmap(params(...))]`
+    /// This uses [`IndexSet`] rather than e.g.
+    /// [`HashSet`](std::collections::HashSet) to maintain a consistent order
+    /// and make error messages of the derive macros deterministic.
     pub(crate) params: IndexSet<Param>,
 }
 
@@ -104,6 +107,7 @@ impl TryFrom<Vec<Attribute>> for FuncMapOpts {
     }
 }
 
+/// The arguments of a `#[funcmap]` helper attribute
 #[derive(Debug)]
 struct Args(Vec<Arg>);
 
@@ -139,6 +143,7 @@ impl Parse for Args {
     }
 }
 
+/// An argument of a `#[funcmap]` helper attribute
 #[derive(Debug)]
 enum Arg {
     Crate(ArgCrate),
@@ -157,6 +162,7 @@ impl Parse for Arg {
     }
 }
 
+/// A `crate = "..."` argument
 #[derive(Debug)]
 struct ArgCrate(Path);
 
@@ -168,6 +174,7 @@ impl Parse for ArgCrate {
     }
 }
 
+/// Parser for [`Path`] producing errors spanned to the parsed tokens
 #[derive(Debug)]
 struct PathParser;
 
@@ -179,6 +186,7 @@ impl Parser for PathParser {
     }
 }
 
+/// A `params(...)` argument
 #[derive(Debug)]
 struct ArgParams(Vec<Param>);
 
@@ -198,9 +206,13 @@ impl Parse for ArgParams {
     }
 }
 
+/// A generic parameter to be used within `params(..)`
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub(crate) enum Param {
+    /// A lifetime parameter
     Lifetime(Lifetime),
+
+    /// A type or const parameter
     TypeOrConst(Ident),
 }
 
@@ -237,6 +249,15 @@ impl PartialEq<GenericParam> for Param {
     }
 }
 
+/// Asserts that a given slice of attributes doesn't contain a `#[funcmap]`
+/// helper attribute
+///
+/// This is meant to be invoked with the slice of all attributes of an item for
+/// which `#[funcmap]` helper attributes aren't supported. `name` is the kind of
+/// item, i.e. `"variants"` or `"fields"`.
+///
+/// # Errors
+/// Fails if `attrs` contains a `#[funcmap]` helper attribute
 pub(crate) fn assert_absent(attrs: &[Attribute], name: &str) -> Result<(), Error> {
     attrs
         .iter()

@@ -1234,10 +1234,8 @@ where
     }
 }
 
-/// Derive macro generating an implementation of the [`FuncMap`] trait
 pub use funcmap_derive::FuncMap;
 
-/// Derive macro generating an implementation of the [`TryFuncMap`] trait
 pub use funcmap_derive::TryFuncMap;
 
 /// Marker type specifying one of multiple type parameters to map over
@@ -1286,9 +1284,11 @@ pub trait FuncMarker<P>: private::Sealed<P> {}
 // [`TryFuncMap::try_func_map`] would be more idiomatic.
 impl<const N: usize> FuncMarker<TypeParam<N>> for TypeParam<N> {}
 
+/// Making [`FuncMarker`] a sealed trait
 mod private {
     use super::TypeParam;
 
+    /// Private supertrait of [`FuncMarker<P>`](super::FuncMarker)
     pub trait Sealed<P> {}
 
     impl<const N: usize> Sealed<TypeParam<N>> for TypeParam<N> {}
