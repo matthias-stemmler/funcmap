@@ -46,7 +46,6 @@ mod syn_ext;
 // TODO https://rust-lang.github.io/api-guidelines
 // TODO more fallible tests
 // TODO Test release workflow (then cleanup ktra)
-// TODO extract and test `subs_type_in_bounds`
 
 /// Derive macro generating implementations of the `FuncMap` trait
 #[proc_macro_derive(FuncMap, attributes(funcmap))]

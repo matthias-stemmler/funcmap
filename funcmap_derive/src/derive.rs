@@ -326,26 +326,28 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
     })
 }
 
+/// Substitutes the type named `type_ident` with each of `subs_idents` within
+/// each of `bounds`, returning a deduplicated `+`-punctuated sequence
 fn subs_type_in_bounds<'ast>(
     bounds: impl IntoIterator<Item = &'ast TypeParamBound>,
-    ident: &Ident,
-    new_idents: &[&Ident],
+    type_ident: &Ident,
+    subs_idents: &[&Ident],
 ) -> Punctuated<TypeParamBound, Token![+]> {
     let mut unique_type_bounds = UniqueTypeBounds::new();
 
     for bound in bounds {
         match bound {
             TypeParamBound::Trait(trait_bound) => {
-                for new_ident in new_idents {
+                for subs_ident in subs_idents {
                     unique_type_bounds.add(TypeParamBound::Trait(
                         trait_bound
                             .clone()
                             .without_attrs()
-                            .subs_type(ident, new_ident),
+                            .subs_type(type_ident, subs_ident),
                     ));
                 }
             }
-            bound @ TypeParamBound::Lifetime(..) => unique_type_bounds.add(bound.clone()),
+            bound => unique_type_bounds.add(bound.clone()),
         };
     }
 
