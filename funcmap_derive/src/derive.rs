@@ -347,7 +347,7 @@ fn subs_type_in_bounds<'ast>(
                     ));
                 }
             }
-            bound => unique_type_bounds.add(bound.clone()),
+            bound @ TypeParamBound::Lifetime(..) => unique_type_bounds.add(bound.clone()),
         };
     }
 
