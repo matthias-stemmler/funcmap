@@ -170,17 +170,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Determine date of latest nightly including Miri
-        id: miri-nightly-date
-        run: |
-          echo "::set-output name=date::$(curl -s https://rust-lang.github.io/rustup-components-history/x86_64-unknown-linux-gnu/miri)"
-
       - name: Install latest nightly including Miri
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-${{ steps.miri-nightly-date.outputs.date }}
+          toolchain: nightly
           override: true
           components: miri
+
+      - name: Setup Miri
+        uses: actions-rs/cargo@v1
+        with:
+          command: miri
+          args: setup  
 
       - name: Checkout
         uses: actions/checkout@v3
