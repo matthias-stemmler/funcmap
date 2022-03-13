@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 concurrency: 
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: test-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
