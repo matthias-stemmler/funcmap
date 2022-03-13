@@ -96,6 +96,10 @@ However, in such cases there will be at least a minor version bump. Each version
 of this crate will support at least the four latest stable Rust versions at the
 time it is published.
 
+## Changelog
+
+See [CHANGELOG.md](https://github.com/matthias-stemmler/funcmap/blob/main/CHANGELOG.md)
+
 ## License
 
 Licensed under either of
