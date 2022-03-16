@@ -184,6 +184,9 @@ jobs:
         if: steps.check-release.outputs.found
         uses: peter-evans/create-pull-request@v3
         with:
+          # use PAT instead of GITHUB_TOKEN so created PR can trigger workflows
+          # see https://github.com/peter-evans/create-pull-request/issues/48
+          token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
           branch: release/${{ github.ref_name }}
           commit-message: "chore: bump version to ${{ steps.version.outputs.version }}"
           delete-branch: true
