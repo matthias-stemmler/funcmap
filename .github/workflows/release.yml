@@ -188,6 +188,7 @@ jobs:
           # see https://github.com/peter-evans/create-pull-request/issues/48
           token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
           branch: release/${{ github.ref_name }}
+          author: Matthias Stemmler <matthias.stemmler@gmail.com>
           commit-message: "chore: bump version to ${{ steps.version.outputs.version }}"
           delete-branch: true
           labels: release:pending
