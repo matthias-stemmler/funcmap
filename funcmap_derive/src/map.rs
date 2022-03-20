@@ -1,3 +1,5 @@
+//! Logic for deriving a mapping for a given type
+
 use crate::derivable::Derivable;
 use crate::ident::{MARKER_TYPE_IDENT, OUTPUT_TYPE_IDENT};
 use crate::predicates::UniquePredicates;
@@ -12,31 +14,63 @@ use syn::{
     PathArguments, PathSegment, QSelf, Type, TypeArray, TypeParam, TypePath,
 };
 
+/// Configuration of a mapping for a given type
 #[derive(Copy, Clone, Debug)]
 pub(crate) struct Mapping<'ast> {
+    /// Type parameter to map over
     pub(crate) type_param: &'ast TypeParam,
+
+    /// Identifier of the source type of the mapping
     pub(crate) src_type_ident: &'ast Ident,
+
+    /// Identifier of the destination type of the mapping
     pub(crate) dst_type_ident: &'ast Ident,
+
+    /// Identifier of the mapping function
     pub(crate) fn_ident: &'ast Ident,
+
+    /// Path to the `funcmap` crate
     pub(crate) crate_path: &'ast Path,
+
+    /// Trait being derived
     pub(crate) derivable: Derivable,
 }
 
+/// Result of a mapping
+pub(crate) struct Mapped {
+    /// Tokens of the mapping implementation
+    pub(crate) tokens: TokenStream,
+
+    /// Predicates required by the mapping
+    pub(crate) predicates: UniquePredicates,
+}
+
 impl Mapping<'_> {
-    pub(crate) fn map(
-        self,
-        mappable: impl ToTokens,
-        ty: &Type,
-    ) -> Result<(TokenStream, UniquePredicates), Error> {
+    /// Applies this mapping to a given expression for a given type
+    ///
+    /// Generates an implementation of the `self` mapping for the `mappable`
+    /// expression of type `ty`, also returning required predicates.
+    ///
+    /// # Errors
+    /// Fails if mapping `ty` is not supported
+    pub(crate) fn map(self, mappable: impl ToTokens, ty: &Type) -> Result<Mapped, Error> {
         let mut mapper = Mapper::new(self);
         let mapped_tokens = mapper.map(mappable.into_token_stream(), ty)?;
-        Ok((mapped_tokens, mapper.unique_predicates))
+
+        Ok(Mapped {
+            tokens: mapped_tokens,
+            predicates: mapper.unique_predicates,
+        })
     }
 }
 
+/// Helper used for collecting predicates while mapping
 #[derive(Debug)]
 struct Mapper<'ast> {
+    /// The associated [`Mapping`] configuration
     mapping: Mapping<'ast>,
+
+    /// Collected predicates
     unique_predicates: UniquePredicates,
 }
 

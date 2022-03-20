@@ -1,4 +1,4 @@
-//! [`Derivable`] type for for managing different derivable traits
+//! [`Derivable`] type for managing different derivable traits
 
 use crate::ident::{
     StaticIdent, FALLIBLE_FN_IDENT, FALLIBLE_TRAIT_IDENT, FN_IDENT,

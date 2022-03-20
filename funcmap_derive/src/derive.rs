@@ -229,18 +229,19 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
                         derivable,
                     };
 
-                    if let Some((mapped, predicates)) = mapping
+                    if let Some(mapped) = mapping
                         .map(ident, &field.ty)
                         .add_err_to(&mut result_builder)
                     {
-                        for predicate in predicates.into_iter() {
+                        for predicate in mapped.predicates.into_iter() {
                             unique_predicates
                                 .add(predicate)
                                 .add_err_to(&mut result_builder);
                         }
 
+                        let tokens = mapped.tokens;
                         patterns.push(pattern);
-                        mappings.push(quote!(#member: #mapped));
+                        mappings.push(quote!(#member: #tokens));
                     }
                 }
 
@@ -326,6 +327,8 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
     })
 }
 
+/// Substitutes a type with multiple other types within a collection of bounds
+///
 /// Substitutes the type named `type_ident` with each of `subs_idents` within
 /// each of `bounds`, returning a deduplicated `+`-punctuated sequence
 fn subs_type_in_bounds<'ast>(

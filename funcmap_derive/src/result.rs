@@ -65,7 +65,7 @@ impl Builder {
     }
 
     /// Builds a result by returning the error contained in this builder, or the
-    /// given value when this builder contains no error
+    /// given value if this builder contains no error
     pub(crate) fn err_or<T>(self, value: T) -> Result<T, Error> {
         match self.0 {
             Some(err) => Err(err),

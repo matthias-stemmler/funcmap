@@ -131,7 +131,7 @@
 //! just like the fields of a struct.
 //!
 //! Suppose you derive [`FuncMap`] for a type that is generic over `T` and then
-//! apply [`funcmap`](FuncMap::func_map) to a value of that type, providing an
+//! apply [`func_map`](FuncMap::func_map) to a value of that type, providing an
 //! `FnMut(A) -> B` closure:
 //! ```
 //! # use funcmap::FuncMap;
@@ -183,7 +183,7 @@
 //! ### [`FuncMap`] trait bounds
 //!
 //! When deriving [`FuncMap`] for a type `Foo<T>` that has a field of type
-//! `Bar<T>`, where `Bar<T>` *doesn't* implement [`FuncMap`], the derive macro
+//! `Bar<T>` where `Bar<T>` *doesn't* implement [`FuncMap`], the derive macro
 //! won't fail, nor will it just *assume* that `Bar<T>` implements [`FuncMap`],
 //! which would cause a compile error within the derived implementation.
 //!
@@ -368,12 +368,14 @@
 //! even for `Foo<'a, S, T>`,
 //! - `TypeParam<0>` refers to `S`
 //! - `TypeParam<1>` refers to `T`
+//!
 //! Note that while lifetime parameters aren't counted, const generics are. The
 //! reason for this is that when the derive macro looks at arguments of nested
 //! types, it may not be able to distinguish const arguments from type arguments
 //! syntactically. So, for `Foo<'a, const N: usize, S, const M: usize, T>`,
 //! - `TypeParam<1>` refers to `S`
 //! - `TypeParam<3>` refers to `T`
+//!
 //! and `TypeParam<0>` and `TypeParam<2>` are not used at all.
 //!
 //! The `P` parameter of [`FuncMap`] defaults to `TypeParam<0>`, so it can be
@@ -580,7 +582,7 @@
 //!
 //! Here, without the line `#[funcmap(params(S, T))]`, the [`FuncMap`] derive
 //! macro would try to generate implementations for all three type parameters
-//! `S`, `T` and `U` and fail because `U` occurs within `Foo` behind a
+//! `S`, `T` and `U`, and fail because `U` occurs within `Foo` behind a
 //! reference, which is not supported, see [How It Works](#how-it-works).
 //!
 //! The `params` option can also be used to decrease compile time when a
@@ -708,9 +710,9 @@
 //!
 //! `funcmap` has a Cargo feature named `std` that is enabled by default and
 //! provides implementations of [`FuncMap`] and [`TryFuncMap`] for many types
-//! from the [`std`] library. In order to use `funcmap` in a `no_std` context,
-//! modify your dependency on `funcmap` in `Cargo.toml` to opt out of default
-//! features:
+//! from the [standard library](`std`). In order to use `funcmap` in a `no_std`
+//! context, modify your dependency on `funcmap` in `Cargo.toml` to opt out of
+//! default features:
 //! ```toml
 //! [dependencies]
 //! funcmap = { version = "...", default-features = false }
@@ -934,7 +936,7 @@ where
     where
         F: FnMut(A) -> B;
 
-    /// Applies the closure `f` to `self` in a factorial way, allowing explicit
+    /// Applies the closure `f` to `self` in a functorial way, allowing explicit
     /// specification of the marker type `P`
     ///
     /// This is a convenience method that has the exact same functionality as
@@ -1138,7 +1140,7 @@ where
     where
         F: FnMut(A) -> Result<B, E>;
 
-    /// Tries to apply the closure `f` to `self` in a factorial way, allowing
+    /// Tries to apply the closure `f` to `self` in a functorial way, allowing
     /// explicit specification of the marker type `P`
     ///
     /// This is a convenience method that has the exact same functionality as
@@ -1246,6 +1248,7 @@ pub use funcmap_derive::TryFuncMap;
 /// For example, for a type `Foo<'a, S, T>`,
 /// - [`TypeParam<0>`] refers to `S` and
 /// - [`TypeParam<1>`] refers to `T`
+///
 /// and for a type `Foo<'a, const N: usize, S, const M: usize, T>`,
 /// - [`TypeParam<1>`] refers to `S` and
 /// - [`TypeParam<3>`] refers to `T`

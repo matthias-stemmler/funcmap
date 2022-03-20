@@ -40,11 +40,7 @@ mod predicates;
 mod result;
 mod syn_ext;
 
-// TODO check auto-impl/structopt/serde (serde: crates-io.md, explicit "include" in Cargo.toml)
-// TODO more private docs
-// TODO unit tests
-// TODO https://rust-lang.github.io/api-guidelines
-// TODO more fallible tests
+// TODO check auto-impl/structopt/serde (serde: explicit "include" in Cargo.toml)
 // TODO Test release workflow (then cleanup ktra)
 
 /// Derive macro generating implementations of the `FuncMap` trait
