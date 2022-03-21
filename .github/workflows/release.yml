@@ -63,7 +63,7 @@ jobs:
     steps:
       - name: Cache
         id: cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.cargo/
           key: cargo-bin-cargo-release-${{ env.VERSION_CARGO_RELEASE }}-convco-${{ env.VERSION_CONVCO }}
@@ -219,7 +219,7 @@ jobs:
     steps:
       - name: Cache 
         id: cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.cargo/
           key: cargo-bin-cargo-workspaces-${{ env.VERSION_CARGO_WORKSPACES }}
