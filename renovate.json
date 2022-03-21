@@ -15,6 +15,9 @@
       "rangeStrategy": "bump"
     }
   ],
+  "pre-commit": {
+    "enabled": true
+  },
   "regexManagers": [
     {
       "fileMatch": ["^\\.github\\/workflows\\/.*\\.yml$"],
