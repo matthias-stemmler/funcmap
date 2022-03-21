@@ -40,9 +40,6 @@ mod predicates;
 mod result;
 mod syn_ext;
 
-// TODO check auto-impl/structopt/serde (serde: explicit "include" in Cargo.toml)
-// TODO Test release workflow (then cleanup ktra)
-
 /// Derive macro generating implementations of the `FuncMap` trait
 #[proc_macro_derive(FuncMap, attributes(funcmap))]
 pub fn derive_func_map(item: TokenStream) -> TokenStream {

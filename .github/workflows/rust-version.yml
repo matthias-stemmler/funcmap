@@ -8,7 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: -Dwarnings
+  RUSTFLAGS: --deny warnings
   # renovate: datasource=crate depName=cargo-expand
   VERSION_CARGO_EXPAND: 1.0.17
 

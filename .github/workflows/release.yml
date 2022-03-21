@@ -10,7 +10,7 @@ on:
 env:
   BUMP_FILE: .version-bump
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: -Dwarnings
+  RUSTFLAGS: --deny warnings
   # renovate: datasource=crate depName=cargo-release
   VERSION_CARGO_RELEASE: 0.20.3
   # renovate: datasource=crate depName=cargo-workspaces
