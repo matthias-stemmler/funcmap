@@ -4,3 +4,4 @@ members = [
     "funcmap_derive",
     "funcmap_tests",
 ]
+resolver = "2"
