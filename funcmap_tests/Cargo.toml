@@ -5,7 +5,7 @@ edition = "2018" # macrotest doesn't support 2021 yet
 publish = false
 
 [dependencies]
-funcmap = { path = "../funcmap", features = ["alloc"] }
+funcmap = { path = "../funcmap" }
 
 [build-dependencies]
 # patch dependency: transitive dependency pest_derive 1.0.0 specifies quote ^0.3 but needs quote ^0.3.15
