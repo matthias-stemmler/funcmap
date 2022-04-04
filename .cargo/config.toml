@@ -1,2 +1,0 @@
-[registries]
-ktra = { index = "https://github.com/matthias-stemmler/crates.git" }

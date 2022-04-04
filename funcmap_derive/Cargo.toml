@@ -10,7 +10,6 @@ license = "MIT OR Apache-2.0"
 keywords = ["data", "derive", "macro", "map", "no_std"]
 categories = ["algorithms", "data-structures", "development-tools", "no-std", "rust-patterns"]
 include = ["src/**/*", "Cargo.toml", "LICENSE-APACHE", "LICENSE-MIT", "crates-io.md"]
-publish = ["ktra"]
 
 [lib]
 proc-macro = true
