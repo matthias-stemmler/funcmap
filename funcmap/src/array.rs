@@ -86,11 +86,7 @@ where
     mem::forget(guard);
 
     // SAFETY: `mapped` is fully initialized
-    let mapped = unsafe {
-        (&mapped as *const [MaybeUninit<B>; N])
-            .cast::<[B; N]>()
-            .read()
-    };
+    let mapped = unsafe { ptr::addr_of!(mapped).cast::<[B; N]>().read() };
 
     Ok(mapped)
 }
