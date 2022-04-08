@@ -1,3 +1,5 @@
+// This file uses edition = "2015" via Cargo.toml
+
 extern crate funcmap;
 
 use funcmap::FuncMap;

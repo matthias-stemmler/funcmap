@@ -1,3 +1,5 @@
+// This file uses edition = "2018" via Cargo.toml
+
 use funcmap::FuncMap;
 
 #[test]

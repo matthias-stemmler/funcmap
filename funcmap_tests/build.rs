@@ -23,7 +23,11 @@ fn has_rustfmt() -> bool {
 }
 
 fn main() {
-    if has_cargo_expand() && has_rustfmt() {
-        println!("cargo:rustc-cfg=expandtest");
+    if has_cargo_expand() {
+        println!("cargo:rustc-cfg=has_cargo_expand");
+    }
+
+    if has_rustfmt() {
+        println!("cargo:rustc-cfg=has_rustfmt");
     }
 }

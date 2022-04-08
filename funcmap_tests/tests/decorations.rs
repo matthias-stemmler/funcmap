@@ -64,6 +64,7 @@ fn impl_is_restricted_to_trait_bounds_on_generics_of_original_type() {
     impl TestTrait for T1 {}
     impl TestTrait for T2 {}
 
+    // derived impl is supposed to have the corresponding trait bounds
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<S: TestTrait, T: TestTrait>(S, T);
 
@@ -87,6 +88,7 @@ fn impl_is_restricted_to_self_dependent_trait_bounds_on_generics_of_original_typ
         type Assoc = S;
     }
 
+    // derived impl is supposed to have the corresponding trait bounds
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<S: TestTrait<S, Assoc = S>, T: TestTrait<T, Assoc = T>>(S, T);
 
@@ -110,6 +112,7 @@ fn impl_is_restricted_to_cross_dependent_trait_bounds_on_generics_of_original_ty
         type Assoc = S;
     }
 
+    // derived impl is supposed to have the corresponding trait bounds
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<S: TestTrait<T, Assoc = T>, T: TestTrait<S, Assoc = S>>(S, T);
 
@@ -128,8 +131,10 @@ fn impl_is_restricted_to_maybe_sized_bound_on_unmapped_generic_of_original_type(
     impl TestTrait<T1> for Unsized {}
     impl TestTrait<T2> for Unsized {}
 
-    // derived impl for mapping over S is supposed to have no `S: ?Sized` but `T: ?Sized`
-    // (even though the bound for T depends on S)
+    // derived impl for mapping over S is supposed to have no `S: ?Sized` (more
+    // precisely, no `A: ?Sized` and `B: ?Sized` where `A` and `B` are the
+    // generic source and target types) but `T: ?Sized` (even though the bound
+    // for T depends on S)
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<S: ?Sized, T: ?Sized + TestTrait<S>>(PhantomData<S>, PhantomData<T>);
 
@@ -141,6 +146,7 @@ fn impl_is_restricted_to_maybe_sized_bound_on_unmapped_generic_of_original_type(
 
 #[test]
 fn impl_is_restricted_to_lifetime_bounds_on_generics_of_original_type() {
+    // derived impl is supposed to have the corresponding lifetime bounds
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<'a, T: 'a>(T, PhantomData<&'a ()>);
 
@@ -157,6 +163,7 @@ fn impl_is_restricted_to_trait_bounds_in_where_clause_on_original_type() {
     impl TestTrait for T1 {}
     impl TestTrait for T2 {}
 
+    // derived impl is supposed to have the corresponding where predicates
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<S, T>(S, T)
     where
@@ -183,6 +190,7 @@ fn impl_is_restricted_to_self_dependent_trait_bounds_in_where_clause_on_original
         type Assoc = S;
     }
 
+    // derived impl is supposed to have the corresponding where predicates
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<S, T>(S, T)
     where
@@ -209,6 +217,7 @@ fn impl_is_restricted_to_cross_dependent_trait_bounds_in_where_clause_on_origina
         type Assoc = S;
     }
 
+    // derived impl is supposed to have the corresponding where predicates
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<S, T>(S, T)
     where
@@ -235,6 +244,7 @@ fn impl_is_restricted_to_arbitrary_trait_bounds_in_where_clause_on_original_type
         type Assoc = S;
     }
 
+    // derived impl is supposed to have the corresponding where predicates
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<S, T>(S, T)
     where
@@ -255,6 +265,7 @@ fn impl_is_restricted_to_trait_bounds_with_bound_lifetimes_in_where_clause_on_or
     impl<'a> TestTrait<'a> for T1 {}
     impl<'a> TestTrait<'a> for T2 {}
 
+    // derived impl is supposed to have the corresponding where predicates
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<S, T>(S, T)
     where
@@ -275,8 +286,10 @@ fn impl_is_restricted_to_maybe_sized_bound_on_unmapped_generic_in_where_clause_o
     impl TestTrait<T1> for Unsized {}
     impl TestTrait<T2> for Unsized {}
 
-    // derived impl for mapping over S is supposed to have no `S: ?Sized` but `T: ?Sized`
-    // (even though the bound for T depends on S)
+    // derived impl for mapping over S is supposed to have no `S: ?Sized` (more
+    // precisely, no `A: ?Sized` and `B: ?Sized` where `A` and `B` are the
+    // generic source and target types) but `T: ?Sized` (even though the bound
+    // for T depends on S)
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<S, T>(PhantomData<S>, PhantomData<T>)
     where
@@ -291,6 +304,7 @@ fn impl_is_restricted_to_maybe_sized_bound_on_unmapped_generic_in_where_clause_o
 
 #[test]
 fn impl_is_restricted_to_lifetime_bounds_in_where_clause_of_original_type() {
+    // derived impl is supposed to have the corresponding where predicates
     #[derive(FuncMap, Debug, PartialEq)]
     struct Test<'a, T>(T, PhantomData<&'a ()>)
     where

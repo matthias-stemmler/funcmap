@@ -70,7 +70,7 @@ fn field_of_repeated_generic_type_is_mapped() {
 }
 
 #[test]
-fn field_of_generic_type_with_const_literal_before_type_generic_is_mapped() {
+fn field_of_generic_type_with_const_literal_before_generic_type_is_mapped() {
     #[derive(FuncMap, Debug, PartialEq)]
     struct Inner<const N: usize, S, const M: usize, T>(S, T);
 
@@ -84,7 +84,7 @@ fn field_of_generic_type_with_const_literal_before_type_generic_is_mapped() {
 }
 
 #[test]
-fn field_of_generic_type_with_const_alias_before_type_generic_is_mapped() {
+fn field_of_generic_type_with_const_alias_before_generic_type_is_mapped() {
     #[derive(FuncMap, Debug, PartialEq)]
     struct Inner<const N: usize, S, const M: usize, T>(S, T);
 
