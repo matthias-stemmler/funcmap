@@ -3,3 +3,9 @@ error: `derive` cannot be used on items with type macros
    |
 10 | struct Test<T>(test_type!());
    |                ^^^^^^^^^^^^
+
+error: `derive` cannot be used on items with type macros
+  --> tests/ui/structure/macro_type.rs:14:23
+   |
+14 | struct TestDefault<T>(test_type!());
+   |                       ^^^^^^^^^^^^
