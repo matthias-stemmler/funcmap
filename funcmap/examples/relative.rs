@@ -1,8 +1,7 @@
 /// Usage of [`FuncMap`] to "deeply" convert from relative to absolute paths
 /// using newtype wrappers
 use funcmap::FuncMap;
-
-use crate::paths::*;
+use paths::*;
 
 /// Example data structure illustrating the use of [`FuncMap`]
 /// `T` is meant to be either [`RelativePath<P>`] or [`AbsolutePath<P>`] where

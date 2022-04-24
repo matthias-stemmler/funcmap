@@ -36,5 +36,5 @@ fn main() {
     // "deeply" apply a (fallible) conversion from string slices to integers
     let tree_i32: Result<Tree<i32>, _> = tree_str.try_func_map(|id| id.parse());
 
-    print!("{:?}", tree_i32);
+    println!("{:?}", tree_i32);
 }
