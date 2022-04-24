@@ -146,7 +146,7 @@
 //!     # _value: ()
 //! };
 //!
-//! let bar = foo.func_map(|v| { /* ... */});
+//! let bar = foo.func_map(|v| { /* ... */ });
 //! ```
 //!
 //! First of all, any field of `Foo<T>` whose type doesn't depend on `T` is left
@@ -180,7 +180,7 @@
 //!
 //! ## Caveats
 //!
-//! ### [`FuncMap`] trait bounds
+//! ### [`FuncMap`] Trait Bounds
 //!
 //! When deriving [`FuncMap`] for a type `Foo<T>` that has a field of type
 //! `Bar<T>` where `Bar<T>` *doesn't* implement [`FuncMap`], the derive macro
@@ -191,7 +191,7 @@
 //! [`FuncMap`] and it needs to deal with the fact that `Bar<T>` could implement
 //! [`FuncMap`] for *some* types `T` while it doesn't implement it for others.
 //!
-//! So what it does instead is to add an appropriate trait bound to the derived
+//! So what it does instead is add an appropriate trait bound to the derived
 //! implementation that looks like this:
 //! ```
 //! # use funcmap::FuncMap;
@@ -221,7 +221,14 @@
 //! case, the derived implementation still compiles but doesn't add any
 //! functionality.
 //!
-//! ### [`Sized`] trait bounds
+//! **Note:** If your crate's public API contains types deriving [`FuncMap`],
+//! this creates a
+//! [semver hazard](https://doc.rust-lang.org/cargo/reference/semver.html)
+//! because a change to the type of a field (even a private one) may cause
+//! bounds to be added to implementations of [`FuncMap`] for the type, which is
+//! a breaking change.
+//!
+//! ### [`Sized`] Trait Bounds
 //!
 //! The trait [`FuncMap<A, B>`] puts [`Sized`] bounds on the type parameters `A`
 //! and `B` as well as any type `Foo<A>` it is implemented for and the
@@ -239,7 +246,7 @@
 //! could be [`Sized`] for *some* `T` but not for others. So the implementation
 //! applies only to those types `T` where all the fields are [`Sized`].
 //!
-//! ### Types implementing [`Drop`]
+//! ### Types Implementing [`Drop`]
 //!
 //! Deriving [`FuncMap`] is only possible for types that do not implement
 //! [`Drop`] because the derived implementation for a type needs to move out of
@@ -289,6 +296,51 @@
 //! [`Default`], it may be possible to replace it with `Option<Bar<T>>`, which
 //! implements [`Default`].
 //!
+//! ### Recursive Types
+//!
+//! The [`FuncMap`] derive macro doesn't support recursive types for two
+//! reasons:
+//! - an infinite recursion while evaluating
+//!   [`FuncMap` trait bounds](#funcmap-trait-bounds)
+//! - an infinite recursion while determining closure types
+//!
+//! If you need to implement [`FuncMap`] for a recursive type, you can do it
+//! manually using closure trait objects like this:
+//! ```
+//! # use funcmap::FuncMap;
+//! #
+//! // example of a recursive type
+//! #[derive(Debug, PartialEq)]
+//! enum List<T> {
+//!     Nil,
+//!     Cons(T, Box<List<T>>),
+//! }
+//!
+//! impl<A, B> FuncMap<A, B> for List<A> {
+//!     type Output = List<B>;
+//!
+//!     fn func_map<F>(self, mut f: F) -> Self::Output
+//!     where
+//!         F: FnMut(A) -> B,
+//!     {
+//!         match self {
+//!             List::Nil => List::Nil,
+//!             List::Cons(head, boxed_tail) => List::Cons(
+//!                 f(head),
+//!                 boxed_tail.func_map(|tail| tail.func_map(&mut f as &mut dyn FnMut(_) -> _)),
+//!             ),
+//!         }
+//!     }
+//! }
+//!
+//! let list = List::Cons(10, Box::new(List::Cons(20, Box::new(List::Nil))));
+//!
+//! assert_eq!(
+//!     list.func_map(|v| v + 1),
+//!     List::Cons(11, Box::new(List::Cons(21, Box::new(List::Nil))))
+//! );
+//! ```
+//!
 //! # Fallible Mappings
 //!
 //! The closure passed to the [`func_map`](FuncMap::func_map) method must not
@@ -301,10 +353,10 @@
 //! closure returning a [`Result<B, E>`] for some error type `E` and returns a
 //! result with the same error type `E`:
 //! ```
-//! # use funcmap::TryFuncMap;
-//! # use std::num::{IntErrorKind, ParseIntError};
-//! # #[derive(Debug)]
-//! #[derive(TryFuncMap)]
+//! use funcmap::TryFuncMap;
+//! use std::num::{IntErrorKind, ParseIntError};
+//!
+//! #[derive(Debug, TryFuncMap)]
 //! struct Foo<T> {
 //!     value1: T,
 //!     value2: T,
@@ -464,7 +516,7 @@
 //! parameters occur within the type in a way that's not supported by the
 //! [`FuncMap`] derive macro.
 //!
-//! ## Caveat: Type aliases
+//! ## Caveat: Type Aliases
 //!
 //! Suppose a type `Foo<T>` has a field whose type has multiple type parameters:
 //! ```
@@ -511,7 +563,7 @@
 //! type Bar<T> = Baz<'static, T>;
 //! ```
 //!
-//! # Customizing derive behavior
+//! # Customizing Derive Behavior
 //!
 //! When deriving [`FuncMap`] or [`TryFuncMap`] for a type, you can change the
 //! default behavior of the derive macro through the optional `#[funcmap]`
@@ -698,7 +750,7 @@
 //!     where
 //!         F: FnMut(A) -> B,
 //!     {
-//!         self.try_func_map::<std::convert::Infallible, _>(|x| Ok(f(x))).unwrap()
+//!         self.try_func_map::<core::convert::Infallible, _>(|x| Ok(f(x))).unwrap()
 //!     }
 //! }
 //! #
@@ -706,7 +758,7 @@
 //! # assert_eq!(foo.func_map(|x| x + 1), Foo { value: 43 });
 //! ```
 //!
-//! # `no_std` support
+//! # `no_std` Support
 //!
 //! `funcmap` has a Cargo feature named `std` that is enabled by default and
 //! provides implementations of [`FuncMap`] and [`TryFuncMap`] for many types
@@ -807,7 +859,7 @@
 //! [`fmap`](https://hackage.haskell.org/package/base-4.16.0.0/docs/Data-Functor.html#v:fmap)
 //! function of Haskell's `Functor` type class.
 //!
-//! # Minimum Supported Rust Version (MSRV) policy
+//! # Minimum Supported Rust Version (MSRV) Policy
 //!
 //! The current MSRV of this crate is `1.56`.
 //!
@@ -871,7 +923,7 @@ use core::fmt::{self, Display, Formatter};
 ///
 /// See the [crate-level documentation](crate) for details.
 ///
-/// # Manually implementing [`FuncMap`]
+/// # Manually Implementing [`FuncMap`]
 ///
 /// If you need to implement [`FuncMap`] manually, make sure to uphold the
 /// following contract:
@@ -1047,7 +1099,7 @@ where
 ///
 /// See the [crate-level documentation](crate) for details.
 ///
-/// # Manually implementing [`TryFuncMap`]
+/// # Manually Implementing [`TryFuncMap`]
 ///
 /// If you need to implement [`TryFuncMap`] manually, make sure to uphold the
 /// following contract:
