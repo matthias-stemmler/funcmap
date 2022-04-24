@@ -2,6 +2,11 @@
 
 ## [Unreleased] - (release date)
 
+### Added
+
+- Documentation: section about recursive types
+- Documentation: note about semver hazard
+
 ## [0.1.0] - 2022-04-08
 
 ### Added
