@@ -87,7 +87,7 @@ For a more detailed explanation and more features, see the
 
 For larger examples, see the [examples] folder.
 
-## Minimum Supported Rust Version (MSRV) policy
+## Minimum Supported Rust Version (MSRV) Policy
 
 The current MSRV of this crate is `1.56`.
 
