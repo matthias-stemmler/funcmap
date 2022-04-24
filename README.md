@@ -24,7 +24,7 @@ order to use it, add this to the `dependencies` table of your `Cargo.toml`:
 
 ```toml
 [dependencies]
-funcmap = "0.1.0"
+funcmap = "0.1.1"
 ```
 
 ## Usage
