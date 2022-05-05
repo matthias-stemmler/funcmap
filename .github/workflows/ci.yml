@@ -12,6 +12,8 @@ concurrency:
 env:
   # renovate: datasource=crate depName=cargo-expand
   VERSION_CARGO_EXPAND: 1.0.17
+  # renovate: datasource=crate depName=cargo-nono
+  VERSION_CARGO_NONO: 0.1.9
 
 jobs:
   fmt-check:
@@ -145,9 +147,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install cargo-nono
-        run: |
-          curl -LSfs https://japaric.github.io/trust/install.sh | sh -s -- --git hobofan/cargo-nono
+      - name: Cache
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/
+          key: cargo-bin-cargo-nono-${{ env.VERSION_CARGO_NONO }}
+
+      - name: Install `cargo-nono`
+        if: ${{ !steps.cache.outputs.cache-hit }}
+        uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-nono
+          version: ${{ env.VERSION_CARGO_NONO }}
 
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
