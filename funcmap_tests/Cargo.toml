@@ -15,7 +15,7 @@ toolchain_find = "0.2"
 [dev-dependencies]
 macrotest = "1.0.8"
 rustversion = "1.0.6"
-trybuild = "1.0.61"
+trybuild = "1.0.62"
 
 [[test]]
 name = "edition2015"
