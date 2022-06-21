@@ -2,10 +2,7 @@ use funcmap::{FuncMap, TryFuncMap};
 enum Test<T> {
     UnitVariant,
     TupleVariant(T, i32),
-    StructVariant {
-        mapped_field: T,
-        unmapped_field: i32,
-    },
+    StructVariant { mapped_field: T, unmapped_field: i32 },
 }
 #[allow(absolute_paths_not_starting_with_crate)]
 #[allow(bare_trait_objects)]
@@ -43,20 +40,21 @@ where
     {
         match self {
             Self::UnitVariant {} => Self::Output::UnitVariant {},
-            Self::TupleVariant {
-                0: field_0,
-                1: field_1,
-            } => Self::Output::TupleVariant {
-                0: f(field_0),
-                1: field_1,
-            },
+            Self::TupleVariant { 0: field_0, 1: field_1 } => {
+                Self::Output::TupleVariant {
+                    0: f(field_0),
+                    1: field_1,
+                }
+            }
             Self::StructVariant {
                 mapped_field: field_mapped_field,
                 unmapped_field: field_unmapped_field,
-            } => Self::Output::StructVariant {
-                mapped_field: f(field_mapped_field),
-                unmapped_field: field_unmapped_field,
-            },
+            } => {
+                Self::Output::StructVariant {
+                    mapped_field: f(field_mapped_field),
+                    unmapped_field: field_unmapped_field,
+                }
+            }
         }
     }
 }
@@ -94,22 +92,25 @@ where
     where
         F: ::core::ops::FnMut(A) -> ::core::result::Result<B, E>,
     {
-        ::core::result::Result::Ok(match self {
-            Self::UnitVariant {} => Self::Output::UnitVariant {},
-            Self::TupleVariant {
-                0: field_0,
-                1: field_1,
-            } => Self::Output::TupleVariant {
-                0: f(field_0)?,
-                1: field_1,
+        ::core::result::Result::Ok(
+            match self {
+                Self::UnitVariant {} => Self::Output::UnitVariant {},
+                Self::TupleVariant { 0: field_0, 1: field_1 } => {
+                    Self::Output::TupleVariant {
+                        0: f(field_0)?,
+                        1: field_1,
+                    }
+                }
+                Self::StructVariant {
+                    mapped_field: field_mapped_field,
+                    unmapped_field: field_unmapped_field,
+                } => {
+                    Self::Output::StructVariant {
+                        mapped_field: f(field_mapped_field)?,
+                        unmapped_field: field_unmapped_field,
+                    }
+                }
             },
-            Self::StructVariant {
-                mapped_field: field_mapped_field,
-                unmapped_field: field_unmapped_field,
-            } => Self::Output::StructVariant {
-                mapped_field: f(field_mapped_field)?,
-                unmapped_field: field_unmapped_field,
-            },
-        })
+        )
     }
 }
