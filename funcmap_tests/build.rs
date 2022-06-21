@@ -18,16 +18,8 @@ fn has_cargo_expand() -> bool {
         .unwrap_or(false)
 }
 
-fn has_rustfmt() -> bool {
-    toolchain_find::find_installed_component("rustfmt").is_some()
-}
-
 fn main() {
     if has_cargo_expand() {
         println!("cargo:rustc-cfg=has_cargo_expand");
-    }
-
-    if has_rustfmt() {
-        println!("cargo:rustc-cfg=has_rustfmt");
     }
 }
