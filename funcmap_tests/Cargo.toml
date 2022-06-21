@@ -8,6 +8,8 @@ publish = false
 funcmap = { path = "../funcmap" }
 
 [build-dependencies]
+# patch dependency: make sure that formatting of macrotest output is consistent
+prettyplease = "0.1.3"
 # patch dependency: transitive dependency pest_derive 1.0.0 specifies quote ^0.3 but needs quote ^0.3.15
 quote = "0.3.15"
 toolchain_find = "0.2"

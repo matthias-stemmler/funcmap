@@ -7,7 +7,7 @@
     },
     {
       "matchPaths": ["funcmap_tests/**"],
-      "matchPackageNames": ["quote"],
+      "matchPackageNames": ["prettyplease", "quote"],
       "enabled": false
     },
     {
