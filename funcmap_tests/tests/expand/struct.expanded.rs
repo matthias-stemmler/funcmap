@@ -41,10 +41,12 @@ where
             Self {
                 mapped_field: field_mapped_field,
                 unmapped_field: field_unmapped_field,
-            } => Self::Output {
-                mapped_field: f(field_mapped_field),
-                unmapped_field: field_unmapped_field,
-            },
+            } => {
+                Self::Output {
+                    mapped_field: f(field_mapped_field),
+                    unmapped_field: field_unmapped_field,
+                }
+            }
         }
     }
 }
@@ -82,14 +84,18 @@ where
     where
         F: ::core::ops::FnMut(A) -> ::core::result::Result<B, E>,
     {
-        ::core::result::Result::Ok(match self {
-            Self {
-                mapped_field: field_mapped_field,
-                unmapped_field: field_unmapped_field,
-            } => Self::Output {
-                mapped_field: f(field_mapped_field)?,
-                unmapped_field: field_unmapped_field,
+        ::core::result::Result::Ok(
+            match self {
+                Self {
+                    mapped_field: field_mapped_field,
+                    unmapped_field: field_unmapped_field,
+                } => {
+                    Self::Output {
+                        mapped_field: f(field_mapped_field)?,
+                        unmapped_field: field_unmapped_field,
+                    }
+                }
             },
-        })
+        )
     }
 }

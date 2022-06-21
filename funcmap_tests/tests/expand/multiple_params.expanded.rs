@@ -12,7 +12,8 @@ struct Test<S, T>(S, T, i32);
 #[allow(clippy::disallowed_method)]
 #[allow(clippy::disallowed_type)]
 #[automatically_derived]
-impl<S, T> ::funcmap::FuncMap_cannot_be_derived_for_types_implementing_Drop for Test<S, T> {}
+impl<S, T> ::funcmap::FuncMap_cannot_be_derived_for_types_implementing_Drop
+for Test<S, T> {}
 #[allow(absolute_paths_not_starting_with_crate)]
 #[allow(bare_trait_objects)]
 #[allow(deprecated)]
@@ -36,15 +37,13 @@ where
         F: ::core::ops::FnMut(A) -> B,
     {
         match self {
-            Self {
-                0: field_0,
-                1: field_1,
-                2: field_2,
-            } => Self::Output {
-                0: f(field_0),
-                1: field_1,
-                2: field_2,
-            },
+            Self { 0: field_0, 1: field_1, 2: field_2 } => {
+                Self::Output {
+                    0: f(field_0),
+                    1: field_1,
+                    2: field_2,
+                }
+            }
         }
     }
 }
@@ -71,15 +70,13 @@ where
         F: ::core::ops::FnMut(A) -> B,
     {
         match self {
-            Self {
-                0: field_0,
-                1: field_1,
-                2: field_2,
-            } => Self::Output {
-                0: field_0,
-                1: f(field_1),
-                2: field_2,
-            },
+            Self { 0: field_0, 1: field_1, 2: field_2 } => {
+                Self::Output {
+                    0: field_0,
+                    1: f(field_1),
+                    2: field_2,
+                }
+            }
         }
     }
 }
@@ -95,7 +92,8 @@ where
 #[allow(clippy::disallowed_method)]
 #[allow(clippy::disallowed_type)]
 #[automatically_derived]
-impl<S, T> ::funcmap::TryFuncMap_cannot_be_derived_for_types_implementing_Drop for Test<S, T> {}
+impl<S, T> ::funcmap::TryFuncMap_cannot_be_derived_for_types_implementing_Drop
+for Test<S, T> {}
 #[allow(absolute_paths_not_starting_with_crate)]
 #[allow(bare_trait_objects)]
 #[allow(deprecated)]
@@ -118,17 +116,17 @@ where
     where
         F: ::core::ops::FnMut(A) -> ::core::result::Result<B, E>,
     {
-        ::core::result::Result::Ok(match self {
-            Self {
-                0: field_0,
-                1: field_1,
-                2: field_2,
-            } => Self::Output {
-                0: f(field_0)?,
-                1: field_1,
-                2: field_2,
+        ::core::result::Result::Ok(
+            match self {
+                Self { 0: field_0, 1: field_1, 2: field_2 } => {
+                    Self::Output {
+                        0: f(field_0)?,
+                        1: field_1,
+                        2: field_2,
+                    }
+                }
             },
-        })
+        )
     }
 }
 #[allow(absolute_paths_not_starting_with_crate)]
@@ -153,16 +151,16 @@ where
     where
         F: ::core::ops::FnMut(A) -> ::core::result::Result<B, E>,
     {
-        ::core::result::Result::Ok(match self {
-            Self {
-                0: field_0,
-                1: field_1,
-                2: field_2,
-            } => Self::Output {
-                0: field_0,
-                1: f(field_1)?,
-                2: field_2,
+        ::core::result::Result::Ok(
+            match self {
+                Self { 0: field_0, 1: field_1, 2: field_2 } => {
+                    Self::Output {
+                        0: field_0,
+                        1: f(field_1)?,
+                        2: field_2,
+                    }
+                }
             },
-        })
+        )
     }
 }

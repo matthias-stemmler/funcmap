@@ -35,13 +35,12 @@ where
         F: ::core::ops::FnMut(A) -> B,
     {
         match self {
-            Self {
-                0: field_0,
-                1: field_1,
-            } => Self::Output {
-                0: f(field_0),
-                1: field_1,
-            },
+            Self { 0: field_0, 1: field_1 } => {
+                Self::Output {
+                    0: f(field_0),
+                    1: field_1,
+                }
+            }
         }
     }
 }
@@ -79,14 +78,15 @@ where
     where
         F: ::core::ops::FnMut(A) -> ::core::result::Result<B, E>,
     {
-        ::core::result::Result::Ok(match self {
-            Self {
-                0: field_0,
-                1: field_1,
-            } => Self::Output {
-                0: f(field_0)?,
-                1: field_1,
+        ::core::result::Result::Ok(
+            match self {
+                Self { 0: field_0, 1: field_1 } => {
+                    Self::Output {
+                        0: f(field_0)?,
+                        1: field_1,
+                    }
+                }
             },
-        })
+        )
     }
 }
