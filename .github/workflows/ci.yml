@@ -80,8 +80,6 @@ jobs:
   minimal-versions:
     name: Cargo test using minimal dependency versions
     runs-on: ubuntu-latest
-    env:
-      FUNCMAP_MINIMAL_VERSIONS: true
 
     steps:
       - name: Cache
