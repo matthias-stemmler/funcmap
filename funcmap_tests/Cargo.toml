@@ -15,7 +15,7 @@ quote = "0.3.15"
 
 [dev-dependencies]
 macrotest = "1.0.9"
-rustversion = "1.0.7"
+rustversion = "1.0.8"
 trybuild = "1.0.63"
 
 [[test]]
