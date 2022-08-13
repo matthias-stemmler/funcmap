@@ -72,13 +72,11 @@ where
                         ::funcmap::TypeParam<0usize>,
                     >::func_map(
                         field_nested,
-                        |value| {
-                            ::funcmap::FuncMap::<
-                                _,
-                                _,
-                                ::funcmap::TypeParam<0usize>,
-                            >::func_map(value, |value| f(value))
-                        },
+                        |value| ::funcmap::FuncMap::<
+                            _,
+                            _,
+                            ::funcmap::TypeParam<0usize>,
+                        >::func_map(value, |value| f(value)),
                     ),
                     repeated: ::funcmap::FuncMap::<
                         _,
@@ -160,7 +158,7 @@ where
                         tuple: (f(field_tuple.0)?, field_tuple.1),
                         array: ::funcmap::TryFuncMap::try_func_map(
                             field_array,
-                            |value| { ::core::result::Result::Ok(f(value)?) },
+                            |value| ::core::result::Result::Ok(f(value)?),
                         )?,
                         nested: ::funcmap::TryFuncMap::<
                             _,
@@ -168,18 +166,16 @@ where
                             ::funcmap::TypeParam<0usize>,
                         >::try_func_map(
                             field_nested,
-                            |value| {
-                                ::core::result::Result::Ok(
-                                    ::funcmap::TryFuncMap::<
-                                        _,
-                                        _,
-                                        ::funcmap::TypeParam<0usize>,
-                                    >::try_func_map(
-                                        value,
-                                        |value| ::core::result::Result::Ok(f(value)?),
-                                    )?,
-                                )
-                            },
+                            |value| ::core::result::Result::Ok(
+                                ::funcmap::TryFuncMap::<
+                                    _,
+                                    _,
+                                    ::funcmap::TypeParam<0usize>,
+                                >::try_func_map(
+                                    value,
+                                    |value| ::core::result::Result::Ok(f(value)?),
+                                )?,
+                            ),
                         )?,
                         repeated: ::funcmap::TryFuncMap::<
                             _,
