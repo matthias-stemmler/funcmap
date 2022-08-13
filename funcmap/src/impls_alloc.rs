@@ -1,6 +1,8 @@
 //! Implementations of [`FuncMap`](crate::FuncMap) and
 //! [`TryFuncMap`](crate::TryFuncMap) for types in [`alloc`]
 
+#![allow(clippy::mismatching_type_param_order)]
+
 /// Implementations for types in [`alloc::collections::binary_heap`]
 mod binary_heap {
     extern crate alloc;

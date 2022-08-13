@@ -1,6 +1,8 @@
 //! Implementations of [`FuncMap`](crate::FuncMap) and
 //! [`TryFuncMap`](crate::TryFuncMap) for types in [`std`]
 
+#![allow(clippy::mismatching_type_param_order)]
+
 /// Implementations for types in [`std::collections::hash_map`]
 mod hash_map {
     use crate::{FuncMap, TryFuncMap, TypeParam};
