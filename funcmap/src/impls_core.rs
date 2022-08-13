@@ -1,6 +1,8 @@
 //! Implementations of [`FuncMap`](crate::FuncMap) and
 //! [`TryFuncMap`](crate::TryFuncMap) for types in [`core`]
 
+#![allow(clippy::mismatching_type_param_order)]
+
 /// Implementations for [arrays](prim@array)
 mod array {
     use crate::{array, FuncMap, TryFuncMap};
