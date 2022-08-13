@@ -2,6 +2,10 @@
 
 ## [Unreleased] - (release date)
 
+### Fixed
+
+- Documentation: typo in README
+
 ## [0.1.1] - 2022-04-24
 
 ### Added
