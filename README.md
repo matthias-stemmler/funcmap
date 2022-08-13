@@ -6,7 +6,7 @@
 [![license](https://img.shields.io/crates/l/funcmap.svg)](https://github.com/matthias-stemmler/funcmap/blob/main/LICENSE-APACHE)
 [![rustc 1.56+](https://img.shields.io/badge/rustc-1.56+-lightgrey.svg)](https://blog.rust-lang.org/2021/10/21/Rust-1.56.0.html)
 
-This Rust crate provides the [`FuncMap`] (and its fallible version
+This Rust crate provides the [`FuncMap`] trait (and its fallible version
 [`TryFuncMap`]) that can be automatically derived for a type that is generic
 over a type parameter. It provides a method that applies a given closure to all
 (potentially nested) occurrences of the type parameter within the type, removing
