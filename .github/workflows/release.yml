@@ -16,7 +16,7 @@ env:
   # renovate: datasource=crate depName=cargo-workspaces
   VERSION_CARGO_WORKSPACES: 0.2.35
   # renovate: datasource=crate depName=convco
-  VERSION_CONVCO: 0.3.11
+  VERSION_CONVCO: 0.3.12
 
 jobs:
   ci:
