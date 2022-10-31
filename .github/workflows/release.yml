@@ -124,36 +124,34 @@ jobs:
               exit 1 ;;
           esac
 
+      - name: Check for release
+        id: check-release
+        env:
+          LEVEL: ${{ steps.bump.outputs.level }}
+        run: |
+          if [ "$LEVEL" == 'release' ]; then
+            echo 'found=false' >> $GITHUB_OUTPUT
+          else
+            echo 'found=true' >> $GITHUB_OUTPUT
+          fi
+
       - name: cargo-release preparation
         id: prepare-release
+        if: steps.check-release.outputs.found
         run: |
           git config user.name 'GitHub' 
           git config user.email 'noreply@github.com'
 
           cat <<EOF > ~/.release.toml
-            consolidate-commits = true
             pre-release-commit-message = "{{version}}"
           EOF
 
-          echo "pre-release-commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-
       - name: Run `cargo release`
+        if: steps.check-release.outputs.found
         uses: actions-rs/cargo@v1
         with:
           command: release
           args: ${{ steps.bump.outputs.level }} --execute --no-confirm --no-publish --no-tag --no-push
-
-      - name: Check for release
-        id: check-release
-        env:
-          PRE_RELEASE_COMMIT: ${{ steps.prepare-release.outputs.pre-release-commit }}
-        run: |
-          if [ $(git rev-parse HEAD) != "$PRE_RELEASE_COMMIT" ]; then
-            echo 'Change found'
-            echo 'found=true' >> $GITHUB_OUTPUT
-          else
-            echo 'No change found' 
-          fi
 
       - name: Determine version and reset commit
         id: version
