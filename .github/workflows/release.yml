@@ -129,9 +129,7 @@ jobs:
         env:
           LEVEL: ${{ steps.bump.outputs.level }}
         run: |
-          if [ "$LEVEL" == 'release' ]; then
-            echo 'found=false' >> $GITHUB_OUTPUT
-          else
+          if [ "$LEVEL" != 'release' ]; then
             echo 'found=true' >> $GITHUB_OUTPUT
           fi
 
