@@ -46,8 +46,8 @@ jobs:
         run: |
           version=$(echo "$BODY" | sed -n 's/<!-- VERSION:\(.*\) -->/\1/p')
           echo "Version: $version"
-          echo "::set-output name=version::$version"
-          echo '::set-output name=is-release::true'
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo 'is-release=true' >> $GITHUB_OUTPUT
 
     outputs:
       is-release: ${{ steps.release.outputs.is-release }}
@@ -107,8 +107,8 @@ jobs:
           echo "Version bump type: $type"
           echo "Version bump level: $level"
 
-          echo "::set-output name=type::$type"
-          echo "::set-output name=level::$level"
+          echo "type=$type" >> $GITHUB_OUTPUT
+          echo "level=$level" >> $GITHUB_OUTPUT
 
       - name: Check version bump level
         if: startsWith(github.ref_name, 'hotfix/')
@@ -135,7 +135,7 @@ jobs:
             pre-release-commit-message = "{{version}}"
           EOF
 
-          echo "::set-output name=pre-release-commit::$(git rev-parse HEAD)"
+          echo "pre-release-commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
       - name: Run `cargo release`
         uses: actions-rs/cargo@v1
@@ -150,7 +150,7 @@ jobs:
         run: |
           if [ $(git rev-parse HEAD) != "$PRE_RELEASE_COMMIT" ]; then
             echo 'Change found'
-            echo '::set-output name=found::true'
+            echo 'found=true' >> $GITHUB_OUTPUT
           else
             echo 'No change found' 
           fi
@@ -163,7 +163,7 @@ jobs:
           git reset HEAD~
 
           echo "Version: $version"
-          echo "::set-output name=version::$version"
+          echo "version=$version" >> $GITHUB_OUTPUT
 
       - name: Reset version bump file
         if: steps.check-release.outputs.found
