@@ -5,3 +5,15 @@ members = [
     "funcmap_tests",
 ]
 resolver = "2"
+
+[workspace.package]
+authors = ["Matthias Stemmler <matthias.stemmler@gmail.com>"]
+categories = ["algorithms", "data-structures", "development-tools", "no-std", "rust-patterns"]
+description = "Derivable functorial mappings for Rust"
+edition = "2021"
+keywords = ["data", "derive", "macro", "map", "no_std"]
+license = "MIT OR Apache-2.0"
+readme = "crates-io.md"
+repository = "https://github.com/matthias-stemmler/funcmap"
+rust-version = "1.56" # should be the same as in docs and MSRV job
+version = "0.1.2"

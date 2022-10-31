@@ -1,15 +1,16 @@
 [package]
 name = "funcmap_derive"
-version = "0.1.2"
-edition = "2021"
-rust-version = "1.56" # should be the same as in Cargo.toml of funcmap, docs and MSRV job
-description = "Derivable functorial mappings for Rust"
-readme = "crates-io.md"
-repository = "https://github.com/matthias-stemmler/funcmap"
-license = "MIT OR Apache-2.0"
-keywords = ["data", "derive", "macro", "map", "no_std"]
-categories = ["algorithms", "data-structures", "development-tools", "no-std", "rust-patterns"]
 include = ["src/**/*", "Cargo.toml", "LICENSE-APACHE", "LICENSE-MIT", "crates-io.md"]
+authors.workspace = true
+categories.workspace = true
+description.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
 
 [lib]
 proc-macro = true

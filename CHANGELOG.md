@@ -2,6 +2,10 @@
 
 ## [Unreleased] - (release date)
 
+### Changed
+
+- Use Cargo workspace inheritance
+
 ## [0.1.2] - 2022-08-13
 
 ### Fixed
