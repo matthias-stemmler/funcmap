@@ -17,7 +17,7 @@ env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: --deny warnings
   # renovate: datasource=crate depName=cargo-expand
-  VERSION_CARGO_EXPAND: 1.0.35
+  VERSION_CARGO_EXPAND: 1.0.36
 
 jobs:
   test:
