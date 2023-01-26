@@ -1,12 +1,12 @@
 error[E0277]: the trait bound `T: funcmap::private::Sealed<T>` is not satisfied
-    --> tests/ui/compat/func_marker_sealed.rs:5:6
-     |
-5    | impl FuncMarker<T> for T {}
-     |      ^^^^^^^^^^^^^ the trait `funcmap::private::Sealed<T>` is not implemented for `T`
-     |
-     = help: the trait `funcmap::private::Sealed<TypeParam<N>>` is implemented for `TypeParam<N>`
+ --> tests/ui/compat/func_marker_sealed.rs:5:6
+  |
+5 | impl FuncMarker<T> for T {}
+  |      ^^^^^^^^^^^^^ the trait `funcmap::private::Sealed<T>` is not implemented for `T`
+  |
+  = help: the trait `funcmap::private::Sealed<TypeParam<N>>` is implemented for `TypeParam<N>`
 note: required by a bound in `FuncMarker`
-    --> $WORKSPACE/funcmap/src/lib.rs
-     |
-     | pub trait FuncMarker<P>: private::Sealed<P> {}
-     |                          ^^^^^^^^^^^^^^^^^^ required by this bound in `FuncMarker`
+ --> $WORKSPACE/funcmap/src/lib.rs
+  |
+  | pub trait FuncMarker<P>: private::Sealed<P> {}
+  |                          ^^^^^^^^^^^^^^^^^^ required by this bound in `FuncMarker`
