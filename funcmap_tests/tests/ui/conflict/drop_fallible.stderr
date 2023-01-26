@@ -1,4 +1,4 @@
-error[E0119]: conflicting implementations of trait `funcmap::TryFuncMap_cannot_be_derived_for_types_implementing_Drop` for type `Test<_, _>`
+error[E0119]: conflicting implementations of trait `TryFuncMap_cannot_be_derived_for_types_implementing_Drop` for type `Test<_, _>`
  --> tests/ui/conflict/drop_fallible.rs:4:8
   |
 4 | struct Test<S, T>(S, T);
