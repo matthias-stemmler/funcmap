@@ -6,6 +6,11 @@
       "enabled": false
     },
     {
+      "matchPaths": ["funcmap/**", "funcmap_derive/**"],
+      "matchUpdateTypes": ["major"],
+      "enabled": true
+    },
+    {
       "matchPaths": ["funcmap_tests/**"],
       "matchPackageNames": ["prettyplease", "quote"],
       "enabled": false
