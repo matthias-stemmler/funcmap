@@ -2,6 +2,12 @@
 
 ## [Unreleased] - (release date)
 
+### Changed
+
+- Updated `syn` dependency to `2.x`
+- [BREAKING] Derive macro no longer accepts edition 2018 keywords even in edition 2015 code\
+  *Note:* This is considered a non-major breaking change
+
 ## [0.1.2] - 2022-08-13
 
 ### Fixed
