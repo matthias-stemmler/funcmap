@@ -8,7 +8,7 @@ use crate::ident::{
 use crate::input::{FuncMapInput, Structish};
 use crate::map::Mapping;
 use crate::predicates::{UniquePredicates, UniqueTypeBounds};
-use crate::result::{self, Error, ResultExt};
+use crate::result::{self, Error, IteratorExt, ResultExt};
 use crate::syn_ext::{
     IntoGenericArgument, IntoType, SubsType, WithoutAttrs, WithoutDefault, WithoutMaybeBounds,
 };
@@ -59,7 +59,6 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
         #[allow(deprecated)]
         #[allow(drop_bounds)]
         #[allow(dyn_drop)]
-        #[allow(keyword_idents)]
         #[allow(non_camel_case_types)]
         #[allow(trivial_bounds)]
         #[allow(unused_qualifications)]
@@ -93,56 +92,54 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
         }
     };
 
-    let mut result_builder = result::Builder::new();
-
-    let impls = input
+    let impls: Vec<_> = input
         .mapped_type_params
         .into_iter()
         .map(|mapped_type_param| {
-            let impl_params = all_params
-                .iter()
-                .enumerate()
-                .flat_map(|(param_idx, param)| {
-                    if param_idx == mapped_type_param.param_idx {
-                        vec![
-                            GenericParam::Type(TypeParam {
-                                bounds: subs_type_in_bounds(
-                                    &mapped_type_param.type_param.bounds,
-                                    &mapped_type_param.type_param.ident,
-                                    &[&src_type_ident],
-                                )
-                                .without_maybe_bounds(),
-                                ..src_type_ident.clone().into()
-                            }),
-                            GenericParam::Type(TypeParam {
-                                bounds: subs_type_in_bounds(
-                                    &mapped_type_param.type_param.bounds,
-                                    &mapped_type_param.type_param.ident,
-                                    &[&dst_type_ident],
-                                )
-                                .without_maybe_bounds(),
-                                ..dst_type_ident.clone().into()
-                            }),
-                        ]
-                    } else {
-                        vec![match param {
-                            GenericParam::Type(type_param) => GenericParam::Type(TypeParam {
-                                bounds: subs_type_in_bounds(
-                                    &type_param.bounds,
-                                    &mapped_type_param.type_param.ident,
-                                    &[&src_type_ident, &dst_type_ident],
-                                ),
-                                ..type_param.ident.clone().into()
-                            }),
-                            GenericParam::Const(const_param) => GenericParam::Const(
-                                const_param.clone().without_attrs().without_default(),
-                            ),
-                            GenericParam::Lifetime(lifetime_param) => {
-                                GenericParam::Lifetime(lifetime_param.clone().without_attrs())
-                            }
-                        }]
-                    }
-                });
+            let mut result_builder = result::Builder::new();
+
+            let mut impl_params = Vec::with_capacity(all_params.len() + 1);
+
+            for (param_idx, param) in all_params.iter().enumerate() {
+                if param_idx == mapped_type_param.param_idx {
+                    impl_params.push(GenericParam::Type(TypeParam {
+                        bounds: subs_type_in_bounds(
+                            &mapped_type_param.type_param.bounds,
+                            &mapped_type_param.type_param.ident,
+                            &[&src_type_ident],
+                        )?
+                        .without_maybe_bounds(),
+                        ..src_type_ident.clone().into()
+                    }));
+
+                    impl_params.push(GenericParam::Type(TypeParam {
+                        bounds: subs_type_in_bounds(
+                            &mapped_type_param.type_param.bounds,
+                            &mapped_type_param.type_param.ident,
+                            &[&dst_type_ident],
+                        )?
+                        .without_maybe_bounds(),
+                        ..dst_type_ident.clone().into()
+                    }));
+                } else {
+                    impl_params.push(match param {
+                        GenericParam::Type(type_param) => GenericParam::Type(TypeParam {
+                            bounds: subs_type_in_bounds(
+                                &type_param.bounds,
+                                &mapped_type_param.type_param.ident,
+                                &[&src_type_ident, &dst_type_ident],
+                            )?,
+                            ..type_param.ident.clone().into()
+                        }),
+                        GenericParam::Const(const_param) => GenericParam::Const(
+                            const_param.clone().without_attrs().without_default(),
+                        ),
+                        GenericParam::Lifetime(lifetime_param) => {
+                            GenericParam::Lifetime(lifetime_param.clone().without_attrs())
+                        }
+                    });
+                }
+            }
 
             let src_args = all_params.iter().enumerate().map(|(param_idx, param)| {
                 if param_idx == mapped_type_param.param_idx {
@@ -261,7 +258,7 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
             let impl_where_clause = unique_predicates.into_where_clause();
             let marker_idx = mapped_type_param.marker_idx;
 
-            match derivable {
+            result_builder.err_or(match derivable {
                 Derivable::Standard => quote! {
                     #attrs
                     impl<#(#impl_params),*>
@@ -317,11 +314,11 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
                         }
                     }
                 },
-            }
+            })
         })
-        .collect::<Vec<_>>();
+        .collect_with_errors()?;
 
-    result_builder.err_or(quote! {
+    Ok(quote! {
         #assert_not_drop
         #(#impls)*
     })
@@ -335,8 +332,10 @@ fn subs_type_in_bounds<'ast>(
     bounds: impl IntoIterator<Item = &'ast TypeParamBound>,
     type_ident: &Ident,
     subs_idents: &[&Ident],
-) -> Punctuated<TypeParamBound, Token![+]> {
+) -> Result<Punctuated<TypeParamBound, Token![+]>, Error> {
     let mut unique_type_bounds = UniqueTypeBounds::new();
+
+    let mut result_builder = result::Builder::new();
 
     for bound in bounds {
         match bound {
@@ -350,9 +349,17 @@ fn subs_type_in_bounds<'ast>(
                     ));
                 }
             }
+
             bound @ TypeParamBound::Lifetime(..) => unique_type_bounds.add(bound.clone()),
+
+            bound => {
+                result_builder.add_err(syn::Error::new_spanned(
+                    bound,
+                    "unsupported type parameter bound",
+                ));
+            }
         };
     }
 
-    unique_type_bounds.into_bounds()
+    result_builder.err_or(unique_type_bounds.into_bounds())
 }

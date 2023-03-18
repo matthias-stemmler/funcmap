@@ -6,8 +6,8 @@ use syn::fold::{self, Fold};
 use syn::punctuated::Punctuated;
 use syn::visit::{self, Visit};
 use syn::{
-    ConstParam, GenericArgument, GenericParam, LifetimeDef, PathSegment, PredicateType, TraitBound,
-    TraitBoundModifier, Type, TypeParam, TypeParamBound, TypePath, WherePredicate,
+    ConstParam, GenericArgument, GenericParam, LifetimeParam, PathSegment, PredicateType,
+    TraitBound, TraitBoundModifier, Type, TypeParam, TypeParamBound, TypePath, WherePredicate,
 };
 
 /// Extension trait for determining the dependency of an AST node on a type
@@ -141,7 +141,7 @@ impl IntoGenericArgument for GenericParam {
     fn into_generic_argument(self) -> GenericArgument {
         match self {
             GenericParam::Type(TypeParam { ident, .. }) => GenericArgument::Type(ident.into_type()),
-            GenericParam::Lifetime(LifetimeDef { lifetime, .. }) => {
+            GenericParam::Lifetime(LifetimeParam { lifetime, .. }) => {
                 GenericArgument::Lifetime(lifetime)
             }
             GenericParam::Const(ConstParam { ident, .. }) => {
@@ -226,9 +226,9 @@ impl WithoutAttrs for GenericParam {
     }
 }
 
-impl WithoutAttrs for LifetimeDef {
+impl WithoutAttrs for LifetimeParam {
     fn without_attrs(self) -> Self {
-        WithoutAttrsFolder.fold_lifetime_def(self)
+        WithoutAttrsFolder.fold_lifetime_param(self)
     }
 }
 
@@ -257,10 +257,10 @@ impl Fold for WithoutAttrsFolder {
         }
     }
 
-    fn fold_lifetime_def(&mut self, lifetime_def: LifetimeDef) -> LifetimeDef {
-        LifetimeDef {
+    fn fold_lifetime_param(&mut self, lifetime_param: LifetimeParam) -> LifetimeParam {
+        LifetimeParam {
             attrs: Vec::new(),
-            ..lifetime_def
+            ..lifetime_param
         }
     }
 
