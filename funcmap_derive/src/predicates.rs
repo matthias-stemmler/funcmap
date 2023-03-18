@@ -4,8 +4,8 @@ use crate::result::Error;
 
 use indexmap::{IndexMap, IndexSet};
 use syn::{
-    punctuated::Punctuated, BoundLifetimes, Lifetime, PredicateEq, PredicateLifetime,
-    PredicateType, Token, Type, TypeParamBound, WhereClause, WherePredicate,
+    punctuated::Punctuated, BoundLifetimes, Lifetime, PredicateLifetime, PredicateType, Token,
+    Type, TypeParamBound, WhereClause, WherePredicate,
 };
 
 /// A set of unique type bounds
@@ -108,12 +108,10 @@ impl UniquePredicates {
                 .or_default()
                 .extend(predicate_lifetime.bounds),
 
-            WherePredicate::Eq(PredicateEq { eq_token, .. }) => {
-                // currently unsupported in Rust
-                // see https://github.com/rust-lang/rust/issues/20041
+            predicate => {
                 return Err(syn::Error::new_spanned(
-                    eq_token,
-                    "equality constraints in `where` clauses are not supported",
+                    predicate,
+                    "unsupported `where` predicate type",
                 )
                 .into());
             }

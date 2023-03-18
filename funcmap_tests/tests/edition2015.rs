@@ -6,32 +6,32 @@ use funcmap::FuncMap;
 use std::fmt::Debug;
 
 #[test]
-fn edition_2018_keywords_are_supported_as_identifiers() {
-    // deny this here to make sure it is explicitly allowed for the derived impl
-    #![deny(keyword_idents)]
-
+fn edition_2018_keywords_are_supported_as_raw_identifiers() {
     #[derive(FuncMap, Debug, PartialEq)]
-    #[allow(keyword_idents)]
     struct Test<T> {
         // from edition 2018 onwards, these field names are keywords
-        async: T,
-        await: T,
-        try: T,
+        // we still require them to be used as raw identifiers in order to be able to parse them with syn 2.x
+        r#async: T,
+        r#await: T,
+        r#dyn: T,
+        r#try: T,
     }
 
     let src = Test {
-        r#async: T1,
-        r#await: T1,
-        r#try: T1,
+        async: T1,
+        await: T1,
+        dyn: T1,
+        try: T1,
     };
     let dst = src.func_map(|_| T2);
 
     assert_eq!(
         dst,
         Test {
-            r#async: T2,
-            r#await: T2,
-            r#try: T2,
+            async: T2,
+            await: T2,
+            dyn: T2,
+            try: T2,
         }
     );
 }

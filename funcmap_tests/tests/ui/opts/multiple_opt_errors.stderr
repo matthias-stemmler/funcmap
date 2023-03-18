@@ -1,8 +1,8 @@
 error: expected attribute arguments in parentheses: #[funcmap(...)]
- --> tests/ui/opts/multiple_opt_errors.rs:4:1
+ --> tests/ui/opts/multiple_opt_errors.rs:4:3
   |
 4 | #[funcmap]
-  | ^^^^^^^^^^
+  |   ^^^^^^^
 
 error: duplicate crate path
  --> tests/ui/opts/multiple_opt_errors.rs:5:45

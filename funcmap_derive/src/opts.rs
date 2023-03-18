@@ -1,20 +1,5 @@
 //! Functionality for parsing options configured via `#[funcmap]` helper
 //! attributes
-//!
-//! Note that this is implemented using custom parsing logic rather than using
-//! [`Attribute::parse_meta`] in order to support syntax such as
-//! `#[funcmap(params('a, 'b))]` where one or more of the given parameters are
-//! lifetimes. This wouldn't be possible with
-//! [`parse_meta`](`syn::Attribute::parse_meta`) because the elements of a list
-//! would be parsed as [`NestedMeta`](syn::NestedMeta) and hence would have to
-//! be literals or paths, not lifetimes.
-//!
-//! This is necessary despite the fact that lifetimes aren't actually supported
-//! *semantically* in this position in order to produce more consistent error
-//! messages: If lifetimes were already rejected *syntactically* at this point,
-//! const generics (that aren't supported either) would have to be rejected
-//! syntactically as well for consistency. That is, however, not possible since
-//! const generics are syntactically indistinguishable from type parameters.
 
 use crate::ident::ATTR_IDENT;
 use crate::result::{self, Error};
@@ -28,7 +13,7 @@ use syn::{
     parenthesized,
     parse::{Parse, ParseStream, Parser},
     punctuated::Punctuated,
-    Attribute, ConstParam, GenericParam, Lifetime, LifetimeDef, LitStr, Path, Token, TypeParam,
+    Attribute, ConstParam, GenericParam, Lifetime, LifetimeParam, LitStr, Path, Token, TypeParam,
 };
 
 /// Custom keywords
@@ -63,7 +48,7 @@ impl TryFrom<Vec<Attribute>> for FuncMapOpts {
 
         for args_result in attrs
             .into_iter()
-            .filter(|attr| attr.path.is_ident(&ATTR_IDENT))
+            .filter(|attr| attr.path().is_ident(&ATTR_IDENT))
             .map(TryInto::<Args>::try_into)
         {
             match args_result {
@@ -238,7 +223,9 @@ impl ToTokens for Param {
 impl PartialEq<GenericParam> for Param {
     fn eq(&self, other: &GenericParam) -> bool {
         match (self, other) {
-            (Self::Lifetime(l), GenericParam::Lifetime(LifetimeDef { lifetime: r, .. })) => l == r,
+            (Self::Lifetime(l), GenericParam::Lifetime(LifetimeParam { lifetime: r, .. })) => {
+                l == r
+            }
             (
                 Self::TypeOrConst(l),
                 GenericParam::Type(TypeParam { ident: r, .. })
@@ -261,7 +248,7 @@ impl PartialEq<GenericParam> for Param {
 pub(crate) fn assert_absent(attrs: &[Attribute], name: &str) -> Result<(), Error> {
     attrs
         .iter()
-        .filter(|attr| attr.path.is_ident(&ATTR_IDENT))
+        .filter(|attr| attr.path().is_ident(&ATTR_IDENT))
         .map(|attr| {
             syn::Error::new_spanned(
                 attr,
