@@ -1,22 +1,40 @@
 {
-  "extends": ["config:base"],
+  "extends": [
+    "config:base"
+  ],
   "packageRules": [
     {
-      "matchPaths": ["funcmap/**", "funcmap_derive/**"],
+      "matchPaths": [
+        "funcmap/**",
+        "funcmap_derive/**"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "pinDigest",
+        "digest",
+        "lockFileMaintenance",
+        "rollback",
+        "bump",
+        "replacement"
+      ],
       "enabled": false
     },
     {
-      "matchPaths": ["funcmap/**", "funcmap_derive/**"],
-      "matchUpdateTypes": ["major"],
-      "enabled": true
-    },
-    {
-      "matchPaths": ["funcmap_tests/**"],
-      "matchPackageNames": ["prettyplease", "quote"],
+      "matchPaths": [
+        "funcmap_tests/**"
+      ],
+      "matchPackageNames": [
+        "prettyplease",
+        "quote"
+      ],
       "enabled": false
     },
     {
-      "matchManagers": ["regex"],
+      "matchManagers": [
+        "regex"
+      ],
       "rangeStrategy": "bump"
     }
   ],
@@ -25,7 +43,9 @@
   },
   "regexManagers": [
     {
-      "fileMatch": ["^\\.github\\/workflows\\/.*\\.yml$"],
+      "fileMatch": [
+        "^\\.github\\/workflows\\/.*\\.yml$"
+      ],
       "matchStrings": [
         "\\s*renovate:\\s*datasource=(?<datasource>.*?)\\s*depName=(?<depName>.*?)\\s*\\n.*?:\\s*(?<currentValue>.*)\\s*"
       ]
