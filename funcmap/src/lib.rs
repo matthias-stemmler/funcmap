@@ -859,6 +859,28 @@
 //! [`fmap`](https://hackage.haskell.org/package/base-4.16.0.0/docs/Data-Functor.html#v:fmap)
 //! function of Haskell's `Functor` type class.
 //!
+//! # Edition support
+//!
+//! This crate supports all Rust editions. There is one caveat, however: When deriving [`FuncMap`] for a type in edition
+//! 2015 code that contains an identifier that is a keyword from edition 2018 onwards, i.e. one of `async`, `await`,
+//! `dyn` and `try`, the identifier has to be written as a raw identifier in the type definition:
+//! ```edition2015
+//! # use funcmap::FuncMap;
+//! #
+//! #[derive(FuncMap)]
+//! struct Foo<T> {
+//!     r#async: T, // this would fail with `async` instead of `r#async`
+//! }
+//!
+//! let foo = Foo {
+//!     async: 1,
+//! };
+//!
+//! let bar = foo.func_map(|v| v.to_string());
+//!
+//! assert_eq!(bar.async, "1");
+//! ```
+//!
 //! # Minimum Supported Rust Version (MSRV) Policy
 //!
 //! The current MSRV of this crate is `1.56`.
