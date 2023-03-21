@@ -12,7 +12,7 @@ env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: --deny warnings
   # renovate: datasource=crate depName=cargo-release
-  VERSION_CARGO_RELEASE: 0.24.6
+  VERSION_CARGO_RELEASE: 0.24.7
   # renovate: datasource=crate depName=cargo-workspaces
   VERSION_CARGO_WORKSPACES: 0.2.36
   # renovate: datasource=crate depName=convco
