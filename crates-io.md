@@ -24,7 +24,7 @@ order to use it, add this to the `dependencies` table of your `Cargo.toml`:
 
 ```toml
 [dependencies]
-funcmap = "0.1.2"
+funcmap = "0.1.3"
 ```
 
 ## Usage
@@ -119,8 +119,8 @@ Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
 
-[examples]: https://github.com/matthias-stemmler/funcmap/tree/v0.1.2/funcmap/examples
-[docs]: https://docs.rs/funcmap/0.1.2/funcmap/
-[`funcmap`]: https://docs.rs/funcmap/0.1.2/funcmap/trait.FuncMap.html
-[`tryfuncmap`]: https://docs.rs/funcmap/0.1.2/funcmap/trait.TryFuncMap.html
-[`func_map`]: https://docs.rs/funcmap/0.1.2/funcmap/trait.FuncMap.html#tymethod.func_map
+[examples]: https://github.com/matthias-stemmler/funcmap/tree/v0.1.3/funcmap/examples
+[docs]: https://docs.rs/funcmap/0.1.3/funcmap/
+[`funcmap`]: https://docs.rs/funcmap/0.1.3/funcmap/trait.FuncMap.html
+[`tryfuncmap`]: https://docs.rs/funcmap/0.1.3/funcmap/trait.TryFuncMap.html
+[`func_map`]: https://docs.rs/funcmap/0.1.3/funcmap/trait.FuncMap.html#tymethod.func_map
