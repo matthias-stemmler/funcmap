@@ -66,21 +66,15 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cargo/
-          key: cargo-bin-cargo-release-${{ env.VERSION_CARGO_RELEASE }}-convco-${{ env.VERSION_CONVCO }}
+          key: cargo-release-${{ env.VERSION_CARGO_RELEASE }}-convco-${{ env.VERSION_CONVCO }}
 
       - name: Install `cargo-release`
         if: ${{ !steps.cache.outputs.cache-hit }}
-        uses: actions-rs/install@v0.1
-        with:
-          crate: cargo-release
-          version: ${{ env.VERSION_CARGO_RELEASE }}
+        run: cargo install --locked cargo-release@${{ env.VERSION_CARGO_RELEASE }}
 
       - name: Install `convco`
         if: ${{ !steps.cache.outputs.cache-hit }}
-        uses: actions-rs/install@v0.1
-        with:
-          crate: convco
-          version: ${{ env.VERSION_CONVCO }}
+        run: cargo install --locked convco@${{ env.VERSION_CONVCO }}
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -218,14 +212,11 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cargo/
-          key: cargo-bin-cargo-workspaces-${{ env.VERSION_CARGO_WORKSPACES }}
+          key: cargo-workspaces-${{ env.VERSION_CARGO_WORKSPACES }}
 
       - name: Install `cargo-workspaces`
         if: ${{ !steps.cache.outputs.cache-hit }}
-        uses: actions-rs/install@v0.1
-        with:
-          crate: cargo-workspaces
-          version: ${{ env.VERSION_CARGO_WORKSPACES }}
+        run: cargo install --locked cargo-workspaces@${{ env.VERSION_CARGO_WORKSPACES }}
 
       - name: Checkout
         uses: actions/checkout@v3

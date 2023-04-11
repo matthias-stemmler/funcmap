@@ -40,14 +40,11 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cargo/
-          key: cargo-bin-cargo-expand-${{ env.VERSION_CARGO_EXPAND }}
+          key: cargo-expand-${{ env.VERSION_CARGO_EXPAND }}
 
       - name: Install `cargo-expand`
         if: ${{ matrix.toolchain == 'nightly' && !steps.cache.outputs.cache-hit }}
-        uses: actions-rs/install@v0.1
-        with:
-          crate: cargo-expand
-          version: ${{ env.VERSION_CARGO_EXPAND }}
+        run: cargo install --locked cargo-expand@${{ env.VERSION_CARGO_EXPAND }}
 
       - name: Install latest ${{ matrix.toolchain }}
         uses: actions-rs/toolchain@v1
