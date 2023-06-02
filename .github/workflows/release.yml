@@ -14,7 +14,7 @@ env:
   # renovate: datasource=crate depName=cargo-release
   VERSION_CARGO_RELEASE: 0.24.10
   # renovate: datasource=crate depName=cargo-workspaces
-  VERSION_CARGO_WORKSPACES: 0.2.41
+  VERSION_CARGO_WORKSPACES: 0.2.42
   # renovate: datasource=crate depName=convco
   VERSION_CONVCO: 0.4.0
 
