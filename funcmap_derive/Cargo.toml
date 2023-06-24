@@ -15,7 +15,7 @@ include = ["src/**/*", "Cargo.toml", "LICENSE-APACHE", "LICENSE-MIT", "crates-io
 proc-macro = true
 
 [dependencies]
-indexmap = { version = "1", features = ["std"] }
+indexmap = { version = "2", features = ["std"] }
 proc-macro2 = "1.0.19"
 quote = "1"
 syn = { version = "2", features = ["extra-traits", "fold", "full", "visit"] }
