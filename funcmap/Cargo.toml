@@ -1,6 +1,6 @@
 [package]
 name = "funcmap"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Matthias Stemmler <matthias.stemmler@gmail.com>"]
 edition = "2021"
 rust-version = "1.64" # should be the same as in Cargo.toml of funcmap_derive, docs and MSRV job
@@ -18,4 +18,4 @@ alloc = []
 std = ["alloc"]
 
 [dependencies]
-"funcmap_derive" = { version = "=0.1.3", path = "../funcmap_derive" }
+"funcmap_derive" = { version = "=0.1.4", path = "../funcmap_derive" }
