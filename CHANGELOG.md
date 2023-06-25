@@ -2,6 +2,11 @@
 
 ## [Unreleased] - (release date)
 
+### Changed
+
+- Updated `indexmap` dependency to `2.x`
+- Increased MSRV to `1.64`
+
 ## [0.1.3] - 2023-03-21
 
 ### Changed

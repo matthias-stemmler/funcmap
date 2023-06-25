@@ -2,7 +2,7 @@
 //! [![crates.io](https://img.shields.io/crates/v/funcmap.svg)](https://crates.io/crates/funcmap)
 //! [![docs.rs](https://img.shields.io/docsrs/funcmap)](https://docs.rs/funcmap/latest/funcmap/)
 //! [![license](https://img.shields.io/crates/l/funcmap.svg)](https://github.com/matthias-stemmler/funcmap/blob/main/LICENSE-APACHE)
-//! [![rustc 1.56+](https://img.shields.io/badge/rustc-1.56+-lightgrey.svg)](https://blog.rust-lang.org/2021/10/21/Rust-1.56.0.html)
+//! [![rustc 1.64+](https://img.shields.io/badge/rustc-1.64+-lightgrey.svg)](https://blog.rust-lang.org/2022/09/22/Rust-1.64.0.html)
 //!
 //! Derivable functorial mappings for Rust
 //!
@@ -883,7 +883,7 @@
 //!
 //! # Minimum Supported Rust Version (MSRV) Policy
 //!
-//! The current MSRV of this crate is `1.56`.
+//! The current MSRV of this crate is `1.64`.
 //!
 //! Increasing the MSRV of this crate is *not* considered a breaking change.
 //! However, in such cases there will be at least a minor version bump.
