@@ -129,13 +129,13 @@ impl TryFrom<DeriveInput> for FuncMapInput {
                 (Some(GenericParam::Lifetime(..)), param) => {
                     result_builder.add_err(syn::Error::new_spanned(
                         param,
-                        format!("cannot implement {} over lifetime parameter", TRAIT_IDENT),
+                        format!("cannot implement {TRAIT_IDENT} over lifetime parameter"),
                     ));
                 }
                 (Some(GenericParam::Const(..)), param) => {
                     result_builder.add_err(syn::Error::new_spanned(
                         param,
-                        format!("cannot implement {} over const generic", TRAIT_IDENT),
+                        format!("cannot implement {TRAIT_IDENT} over const generic"),
                     ));
                 }
                 (_, param) => {
