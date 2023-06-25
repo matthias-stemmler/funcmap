@@ -121,7 +121,7 @@ jobs:
 
     strategy:
       matrix:
-        toolchain: [1.56] # should be the same as in Cargo.toml of funcmap and funcmap_derive, and in docs
+        toolchain: [1.64] # should be the same as in Cargo.toml of funcmap and funcmap_derive, and in docs
 
     steps:
       - name: Install ${{ matrix.toolchain }}
