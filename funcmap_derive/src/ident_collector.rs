@@ -59,8 +59,8 @@ impl IdentCollector {
                 (desired_letter..='Z').chain('A'..=desired_letter).map(
                     move |letter| match iteration {
                         0 => letter.to_string(),
-                        1 => format!("__FUNCMAP_{}", letter),
-                        i => format!("__FUNCMAP_{}{}", letter, i),
+                        1 => format!("__FUNCMAP_{letter}"),
+                        i => format!("__FUNCMAP_{letter}{i}"),
                     },
                 )
             })

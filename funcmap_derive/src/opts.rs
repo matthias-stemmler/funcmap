@@ -252,10 +252,7 @@ pub(crate) fn assert_absent(attrs: &[Attribute], name: &str) -> Result<(), Error
         .map(|attr| {
             syn::Error::new_spanned(
                 attr,
-                format!(
-                    "#[{}] helper attribute is not supported for {}",
-                    ATTR_IDENT, name
-                ),
+                format!("#[{ATTR_IDENT}] helper attribute is not supported for {name}"),
             )
         })
         .collect::<result::Builder>()
