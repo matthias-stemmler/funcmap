@@ -19,7 +19,7 @@ quote = "0.3.15"
 [dev-dependencies]
 macrotest = "1.0.9"
 rustversion = "1.0.13"
-trybuild = "1.0.80"
+trybuild = "1.0.81"
 
 [[test]]
 name = "edition2015"
