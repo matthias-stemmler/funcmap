@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/crate-ci/committed
-    rev: v1.0.18
+    rev: v1.0.20
     hooks:
       - id: committed
         stages:
