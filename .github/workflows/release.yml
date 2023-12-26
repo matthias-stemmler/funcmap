@@ -235,7 +235,7 @@ jobs:
         env:
           TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
         run: |
-          output=$(cargo workspaces publish --yes --from-git --token "$TOKEN" 2>&1)
+          output=$(cargo workspaces publish --yes --publish-as-is --token "$TOKEN" 2>&1)
           echo "$output"
           echo 'Crate URLs:'
           echo 'CRATE_URLS<<EOF' >> "$GITHUB_ENV"
