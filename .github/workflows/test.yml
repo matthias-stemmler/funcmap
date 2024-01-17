@@ -37,7 +37,7 @@ jobs:
       - name: Cache
         id: cache
         if: matrix.toolchain == 'nightly'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cargo/
           key: cargo-expand-${{ env.VERSION_CARGO_EXPAND }}
