@@ -243,7 +243,7 @@ jobs:
           echo 'EOF' >> "$GITHUB_ENV"
 
       - name: Create tag and GitHub release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           name: v${{ needs.release-merged.outputs.version }}
           tag_name: v${{ needs.release-merged.outputs.version }}
