@@ -31,6 +31,7 @@ mod fake_funcmap {
     pub trait FuncMap<A, B, P = TypeParam<0>> {
         type Output;
 
+        #[allow(dead_code)]
         fn func_map<F>(self, _: F) -> Self::Output
         where
             F: FnMut(A) -> B;
@@ -43,6 +44,7 @@ mod fake_funcmap {
     }
 }
 
+#[allow(dead_code)]
 trait AssertNotOriginalFuncMap {}
 
 impl<T> AssertNotOriginalFuncMap for T where T: funcmap::FuncMap<T1, T2> {}

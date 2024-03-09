@@ -157,9 +157,7 @@ mod tests {
         use super::*;
         use drop_trace::*;
 
-        use std::boxed::Box;
         use std::panic::{self, AssertUnwindSafe};
-        use std::vec::Vec;
 
         #[test]
         fn all_elements_are_dropped_when_all_are_mapped_successfully() {
@@ -266,7 +264,7 @@ mod tests {
 
         mod drop_trace {
             use std::cell::RefCell;
-            use std::vec::{self, Vec};
+            use std::vec;
 
             #[derive(Debug)]
             pub(super) struct DropTrace<T>(RefCell<Vec<T>>);

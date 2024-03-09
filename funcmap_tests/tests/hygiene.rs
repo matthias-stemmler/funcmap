@@ -55,6 +55,7 @@ fn trait_methods_are_not_confused_with_methods_of_other_traits() {
     #[derive(FuncMap)]
     struct Inner<T>(T);
 
+    #[allow(dead_code)]
     trait LikeFuncMap: Sized {
         fn func_map(self) {}
         fn func_map_over(self) {}

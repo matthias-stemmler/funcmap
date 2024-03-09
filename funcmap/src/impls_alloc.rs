@@ -72,11 +72,7 @@ mod binary_heap {
 
 /// Implementations for types in [`alloc::boxed`]
 mod boxed {
-    extern crate alloc;
-
     use crate::{FuncMap, TryFuncMap};
-
-    use alloc::boxed::Box;
 
     impl<A, B> FuncMap<A, B> for Box<A> {
         type Output = Box<B>;
