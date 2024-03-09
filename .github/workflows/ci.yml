@@ -21,61 +21,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install latest stable
-        uses: actions-rs/toolchain@v1
+      - name: Install stable toolchain with rustfmt
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          override: true
-          profile: minimal
+          components: rustfmt
 
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run `cargo fmt --check`
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --check
+      - name: Run format check
+        run: cargo fmt --check
 
   lint:
     name: Cargo clippy
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install latest stable
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          profile: minimal
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run `cargo clippy`
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
+      - name: Run Clippy
+        run: cargo clippy
 
   doc:
     name: Cargo doc
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install latest stable
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          profile: minimal
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run `cargo doc`
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
+      - name: Build docs
+        run: cargo doc
 
   minimal-versions:
     name: Cargo test using minimal dependency versions
@@ -93,51 +76,34 @@ jobs:
         if: ${{ !steps.cache.outputs.cache-hit }}
         run: cargo install --locked cargo-expand@${{ env.VERSION_CARGO_EXPAND }}
 
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          override: true
-          profile: minimal
+      - name: Install nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run `cargo update -Zminimal-versions`
-        uses: actions-rs/cargo@v1
-        with:
-          command: update
-          args: -Zminimal-versions
+      - name: Install minimal dependency versions
+        run: cargo +nightly update -Zminimal-versions
 
-      - name: Run `cargo test -- --skip ui`
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: -- --skip ui
+      - name: Test
+        run: cargo +stable test -- --skip ui
 
   msrv:
-    name: Cargo check (${{ matrix.toolchain }})
+    name: Check using minimal supported Rust version
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        toolchain: [1.64] # should be the same as in Cargo.toml of funcmap and funcmap_derive, and in docs
-
     steps:
-      - name: Install ${{ matrix.toolchain }}
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          override: true
-          profile: minimal
+      - name: Install MSRV toolchain
+        uses: dtolnay/rust-toolchain@1.64
 
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run `cargo check`
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
+      - name: Check
+        run: cargo check
 
   no-std:
     name: Cargo nono check
@@ -155,45 +121,30 @@ jobs:
         if: ${{ !steps.cache.outputs.cache-hit }}
         run: cargo install --locked cargo-nono@${{ env.VERSION_CARGO_NONO }}
 
-      - name: Install latest stable
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          profile: minimal
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run `cargo nono check --package funcmap`
-        uses: actions-rs/cargo@v1
-        with:
-          command: nono
-          args: check --package funcmap
+      - name: Run cargo-nono
+        run: cargo nono check --package funcmap
 
   miri:
     name: Cargo miri
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install latest nightly including Miri
-        uses: actions-rs/toolchain@v1
+      - name: Install nightly toolchain with Miri
+        uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
-          override: true
           components: miri
 
       - name: Setup Miri
-        uses: actions-rs/cargo@v1
-        with:
-          command: miri
-          args: setup  
+        run: cargo miri setup
 
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run `cargo miri test -p funcmap --lib`
-        uses: actions-rs/cargo@v1
-        with:
-          command: miri
-          args: test -p funcmap --lib
+      - name: Run tests with Miri
+        run: cargo miri test -p funcmap --lib

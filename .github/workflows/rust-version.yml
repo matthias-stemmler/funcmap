@@ -9,43 +9,18 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: --deny warnings
-  # renovate: datasource=crate depName=cargo-expand
-  VERSION_CARGO_EXPAND: 1.0.65
 
 jobs:
   test:
-    name: Cargo test (${{ matrix.toolchain }})
+    name: Test (on beta)
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        toolchain: [stable, beta, nightly]
-
     steps:
-      - name: Cache
-        id: cache
-        if: matrix.toolchain == 'nightly'
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/
-          key: cargo-expand-${{ env.VERSION_CARGO_EXPAND }}
-
-      - name: Install `cargo-expand`
-        if: ${{ matrix.toolchain == 'nightly' && !steps.cache.outputs.cache-hit }}
-        run: cargo install --locked cargo-expand@${{ env.VERSION_CARGO_EXPAND }}
-
-      - name: Install latest ${{ matrix.toolchain }}
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          override: true
-          profile: minimal
+      - name: Install beta toolchain
+        uses: dtolnay/rust-toolchain@beta
 
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run `cargo test`
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
+      - name: Test
+        run: cargo test

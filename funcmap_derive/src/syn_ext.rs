@@ -578,7 +578,7 @@ mod tests {
     #[test]
     fn without_maybe_bounds_removes_maybe_bounds_from_sequence_of_type_param_bounds() {
         let bounds: Punctuated<TypeParamBound, Token![+]> = parse_quote!(?Sized + Trait + 'b);
-        assert_eq!(bounds.without_maybe_bounds(), parse_quote!(Trait + 'b))
+        assert_eq!(bounds.without_maybe_bounds(), parse_quote!(Trait + 'b));
     }
 
     #[test]
@@ -592,6 +592,6 @@ mod tests {
                 predicate => predicate,
             },
             parse_quote!(for<'a> Type: Trait + 'c),
-        )
+        );
     }
 }
