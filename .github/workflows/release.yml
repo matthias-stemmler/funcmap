@@ -140,10 +140,7 @@ jobs:
 
       - name: Run `cargo release`
         if: steps.check-release.outputs.found
-        uses: actions-rs/cargo@v1
-        with:
-          command: release
-          args: ${{ steps.bump.outputs.level }} --execute --no-confirm --no-publish --no-tag --no-push
+        run: cargo release ${{ steps.bump.outputs.level }} --execute --no-confirm --no-publish --no-tag --no-push  
 
       - name: Determine version and reset commit
         id: version

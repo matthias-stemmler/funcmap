@@ -18,9 +18,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Checkout
         uses: actions/checkout@v4
 
-      - uses: actions-rs/audit-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run audit
+        run: cargo audit

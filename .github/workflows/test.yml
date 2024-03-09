@@ -46,17 +46,13 @@ jobs:
         if: ${{ matrix.toolchain == 'nightly' && !steps.cache.outputs.cache-hit }}
         run: cargo install --locked cargo-expand@${{ env.VERSION_CARGO_EXPAND }}
 
-      - name: Install latest ${{ matrix.toolchain }}
-        uses: actions-rs/toolchain@v1
+      - name: Install ${{ matrix.toolchain }} toolchain
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.toolchain }}
-          override: true
-          profile: minimal
 
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run `cargo test`
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
+      - name: Test
+        run: cargo test

@@ -169,16 +169,13 @@ mod tests {
     #[test]
     fn unique_type_bounds_produces_bounds_in_insertion_order() {
         let mut unique_bounds = UniqueTypeBounds::new();
-        unique_bounds.extend(
-            [
-                parse_quote!(TestTrait1),
-                parse_quote!((TestTrait2)),
-                parse_quote!(?Sized),
-                parse_quote!(for<'a> TestTrait3<'a>),
-                parse_quote!('b),
-            ]
-            .into_iter(),
-        );
+        unique_bounds.extend([
+            parse_quote!(TestTrait1),
+            parse_quote!((TestTrait2)),
+            parse_quote!(?Sized),
+            parse_quote!(for<'a> TestTrait3<'a>),
+            parse_quote!('b),
+        ]);
 
         assert_eq!(
             unique_bounds.into_bounds(),
@@ -192,8 +189,7 @@ mod tests {
         let trait_ident2 = Ident::new("TestTrait", Span::mixed_site());
 
         let mut unique_bounds = UniqueTypeBounds::new();
-        unique_bounds
-            .extend([parse_quote!(#trait_ident1), parse_quote!(#trait_ident2)].into_iter());
+        unique_bounds.extend([parse_quote!(#trait_ident1), parse_quote!(#trait_ident2)]);
 
         assert_eq!(unique_bounds.into_bounds(), parse_quote!(TestTrait));
     }
