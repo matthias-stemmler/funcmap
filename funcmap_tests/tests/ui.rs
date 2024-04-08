@@ -1,6 +1,6 @@
 use trybuild::TestCases;
 
-#[rustversion::attr(nightly, ignore)] // UI tests are too unstable on nightly
+#[rustversion::attr(any(beta, nightly), ignore)]
 #[test]
 fn ui() {
     let t = TestCases::new();
