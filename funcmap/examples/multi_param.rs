@@ -42,15 +42,19 @@ fn main() {
 /// Helpers dealing with units
 mod units {
     #[derive(Debug)]
+    #[allow(dead_code)]
     pub struct Meter(pub u32);
 
     #[derive(Debug)]
+    #[allow(dead_code)]
     pub struct Kilometer(pub u32);
 
     #[derive(Debug)]
+    #[allow(dead_code)]
     pub struct Gram(pub u32);
 
     #[derive(Debug)]
+    #[allow(dead_code)]
     pub struct Kilogram(pub u32);
 
     impl From<Kilometer> for Meter {
