@@ -2,6 +2,7 @@
   "extends": [
     "config:base"
   ],
+  "rangeStrategy": "update-lockfile",
   "packageRules": [
     {
       "matchPaths": [
