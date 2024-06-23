@@ -21,6 +21,9 @@ macrotest = "1.0.12"
 rustversion = "1.0.15"
 trybuild = "1.0.91"
 
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(has_cargo_expand)"] }
+
 [[test]]
 name = "edition2015"
 edition = "2015"
