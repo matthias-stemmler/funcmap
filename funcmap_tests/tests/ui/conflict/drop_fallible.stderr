@@ -7,3 +7,29 @@ error[E0119]: conflicting implementations of trait `TryFuncMap_cannot_be_derived
   = note: conflicting implementation in crate `funcmap`:
           - impl<T> TryFuncMap_cannot_be_derived_for_types_implementing_Drop for T
             where T: Drop, T: ?Sized;
+
+error[E0509]: cannot move out of type `Test<A, T>`, which implements the `Drop` trait
+ --> tests/ui/conflict/drop_fallible.rs:3:10
+  |
+3 | #[derive(TryFuncMap)]
+  |          ^^^^^^^^^^
+  |          |
+  |          cannot move out of here
+  |          data moved here
+  |          ...and here
+  |
+  = note: move occurs because these variables have types that don't implement the `Copy` trait
+  = note: this error originates in the derive macro `TryFuncMap` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0509]: cannot move out of type `Test<S, A>`, which implements the `Drop` trait
+ --> tests/ui/conflict/drop_fallible.rs:3:10
+  |
+3 | #[derive(TryFuncMap)]
+  |          ^^^^^^^^^^
+  |          |
+  |          cannot move out of here
+  |          data moved here
+  |          ...and here
+  |
+  = note: move occurs because these variables have types that don't implement the `Copy` trait
+  = note: this error originates in the derive macro `TryFuncMap` (in Nightly builds, run with -Z macro-backtrace for more info)
