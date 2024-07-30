@@ -22,7 +22,7 @@ pub(crate) struct IdentCollector {
 /// This is to statically ensure the following order of invocations:
 /// 1. Calls to `visit_*` methods from the [`Visit`] trait
 /// 2. Calls to
-/// [`reserve_uppercase_letter`](`IdentCollector::reserve_uppercase_letter`)
+///    [`reserve_uppercase_letter`](`IdentCollector::reserve_uppercase_letter`)
 ///
 /// This way, we make sure that identifiers reserved through
 /// [`reserve_uppercase_letter`](IdentCollector::reserve_uppercase_letter)
