@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 #[test]
 fn crate_path_uses_leading_colon_by_default() {
     use ::funcmap::FuncMap;
