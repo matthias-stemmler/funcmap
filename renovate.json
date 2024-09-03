@@ -1,6 +1,6 @@
 {
   "extends": [
-    "config:base"
+    "config:recommended"
   ],
   "rangeStrategy": "update-lockfile",
   "packageRules": [
@@ -34,7 +34,7 @@
     },
     {
       "matchManagers": [
-        "regex"
+        "custom.regex"
       ],
       "rangeStrategy": "bump"
     }
@@ -42,13 +42,14 @@
   "pre-commit": {
     "enabled": true
   },
-  "regexManagers": [
+  "customManagers": [
     {
+      "customType": "regex",
       "fileMatch": [
         "^\\.github\\/workflows\\/.*\\.yml$"
       ],
       "matchStrings": [
-        "\\s*renovate:\\s*datasource=(?<datasource>.*?)\\s*depName=(?<depName>.*?)\\s*\\n.*?:\\s*(?<currentValue>.*)\\s*"
+        "\\s*renovate:\\s*datasource=(?<datasource>.*?)\\s*versioning=(?<versioning>.*?)\\s*depName=(?<depName>.*?)\\s*\\n.*?:\\s*(?<currentValue>.*)\\s*"
       ]
     }
   ]

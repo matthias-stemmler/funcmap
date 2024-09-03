@@ -10,9 +10,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # renovate: datasource=crate depName=cargo-expand
+  # renovate: datasource=crate versioning=semver-coerced depName=cargo-expand
   VERSION_CARGO_EXPAND: 1.0.65
-  # renovate: datasource=crate depName=cargo-nono
+  # renovate: datasource=crate versioning=semver-coerced depName=cargo-nono
   VERSION_CARGO_NONO: 0.1.9
 
 jobs:
