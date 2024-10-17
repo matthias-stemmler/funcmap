@@ -113,7 +113,7 @@ impl<'a> SubsTypeFolder<'a> {
     }
 }
 
-impl<'a> Fold for SubsTypeFolder<'a> {
+impl Fold for SubsTypeFolder<'_> {
     fn fold_type(&mut self, mut ty: Type) -> Type {
         match &mut ty {
             Type::Path(TypePath { qself: None, path }) if path.leading_colon.is_none() => {
