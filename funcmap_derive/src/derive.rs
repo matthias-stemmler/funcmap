@@ -197,22 +197,18 @@ pub(crate) fn try_derive(item: TokenStream, derivable: Derivable) -> Result<Toke
                 let mut patterns = Vec::new();
 
                 for (field_idx, field) in fields.iter().enumerate() {
-                    let (member, ident) = match &field.ident {
-                        Some(field_ident) => {
-                            let member: Member = field_ident.clone().into();
-                            let ident = format_ident!(
-                                "field_{}",
-                                field_ident.clone(),
-                                span = Span::mixed_site()
-                            );
-                            (member, ident)
-                        }
-                        None => {
-                            let member: Member = field_idx.into();
-                            let ident =
-                                format_ident!("field_{}", field_idx, span = Span::mixed_site());
-                            (member, ident)
-                        }
+                    let (member, ident) = if let Some(field_ident) = &field.ident {
+                        let member: Member = field_ident.clone().into();
+                        let ident = format_ident!(
+                            "field_{}",
+                            field_ident.clone(),
+                            span = Span::mixed_site()
+                        );
+                        (member, ident)
+                    } else {
+                        let member: Member = field_idx.into();
+                        let ident = format_ident!("field_{}", field_idx, span = Span::mixed_site());
+                        (member, ident)
                     };
 
                     let pattern = quote!(#member: #ident);
