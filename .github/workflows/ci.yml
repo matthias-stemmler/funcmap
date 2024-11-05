@@ -97,7 +97,7 @@ jobs:
 
     steps:
       - name: Install MSRV toolchain
-        uses: dtolnay/rust-toolchain@1.64
+        uses: dtolnay/rust-toolchain@1.65
 
       - name: Checkout
         uses: actions/checkout@v4
