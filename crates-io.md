@@ -4,7 +4,7 @@
 [![crates.io](https://img.shields.io/crates/v/funcmap.svg)](https://crates.io/crates/funcmap)
 [![docs.rs](https://img.shields.io/docsrs/funcmap)](https://docs.rs/funcmap/latest/funcmap/)
 [![license](https://img.shields.io/crates/l/funcmap.svg)](https://github.com/matthias-stemmler/funcmap/blob/main/LICENSE-APACHE)
-[![rustc 1.64+](https://img.shields.io/badge/rustc-1.64+-lightgrey.svg)](https://blog.rust-lang.org/2022/09/22/Rust-1.64.0.html)
+[![rustc 1.65+](https://img.shields.io/badge/rustc-1.65+-lightgrey.svg)](https://blog.rust-lang.org/2022/11/03/Rust-1.65.0.html)
 
 This Rust crate provides the [`FuncMap`] trait (and its fallible version
 [`TryFuncMap`]) that can be automatically derived for a type that is generic
@@ -89,7 +89,7 @@ For larger examples, see the [examples] folder.
 
 ## Minimum Supported Rust Version (MSRV) Policy
 
-The current MSRV of this crate is `1.64`.
+The current MSRV of this crate is `1.65`.
 
 Increasing the MSRV of this crate is _not_ considered a breaking change.
 However, in such cases there will be at least a minor version bump. Each version
