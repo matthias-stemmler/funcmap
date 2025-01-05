@@ -11,7 +11,7 @@ concurrency:
 
 env:
   # renovate: datasource=crate versioning=semver-coerced depName=cargo-expand
-  VERSION_CARGO_EXPAND: 1.0.96
+  VERSION_CARGO_EXPAND: 1.0.97
   # renovate: datasource=crate versioning=semver-coerced depName=cargo-nono
   VERSION_CARGO_NONO: 0.1.9
 
