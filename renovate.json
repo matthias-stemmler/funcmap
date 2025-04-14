@@ -5,7 +5,7 @@
   "rangeStrategy": "update-lockfile",
   "packageRules": [
     {
-      "matchPaths": [
+      "matchFileNames": [
         "funcmap/**",
         "funcmap_derive/**"
       ],
@@ -23,7 +23,7 @@
       "enabled": false
     },
     {
-      "matchPaths": [
+      "matchFileNames": [
         "funcmap_tests/**"
       ],
       "matchPackageNames": [
@@ -39,7 +39,9 @@
       "rangeStrategy": "bump"
     },
     {
-      "matchPackageNames": ["rustsec/audit-check"],
+      "matchPackageNames": [
+        "rustsec/audit-check"
+      ],
       "allowedVersions": "<2",
       "description": "v2 does not handle missing lockfiles correctly"
     }
