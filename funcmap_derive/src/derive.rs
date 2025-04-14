@@ -354,7 +354,7 @@ fn subs_type_in_bounds<'ast>(
                     "unsupported type parameter bound",
                 ));
             }
-        };
+        }
     }
 
     result_builder.err_or(unique_type_bounds.into_bounds())
