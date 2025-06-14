@@ -4,19 +4,17 @@ use funcmap::{FuncMap, TypeParam};
 
 #[test]
 fn generics_to_be_mapped_can_be_configured() {
-    fn noop() {}
-
     #[derive(FuncMap, Debug, PartialEq)]
     #[funcmap(params(S, U))]
     struct Test<S, T, U> {
         value1: S,
-        not_mappable: fn() -> T,
+        not_mappable: *const T,
         value2: U,
     }
 
     let src = Test {
         value1: T1,
-        not_mappable: noop,
+        not_mappable: std::ptr::null::<()>(),
         value2: T1,
     };
     let dst = src
@@ -27,7 +25,7 @@ fn generics_to_be_mapped_can_be_configured() {
         dst,
         Test {
             value1: T2,
-            not_mappable: noop,
+            not_mappable: std::ptr::null::<()>(),
             value2: T2,
         }
     );
