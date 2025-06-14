@@ -274,7 +274,7 @@ mod tests {
                     Self::default()
                 }
 
-                pub(super) fn guard(&self, payload: T) -> DropTraceGuard<T> {
+                pub(super) fn guard(&self, payload: T) -> DropTraceGuard<'_, T> {
                     DropTraceGuard {
                         drop_trace: self,
                         payload: Some(payload),
