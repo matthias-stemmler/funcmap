@@ -20,7 +20,7 @@ jobs:
         uses: dtolnay/rust-toolchain@beta
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Test
         run: cargo test
