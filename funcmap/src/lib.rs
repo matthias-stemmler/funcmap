@@ -916,7 +916,7 @@
 mod array;
 mod impls_core;
 
-#[cfg(feature = "alloc")]
+#[cfg(doc)]
 extern crate alloc;
 
 #[cfg(feature = "alloc")]
