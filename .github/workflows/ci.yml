@@ -5,7 +5,7 @@ on:
   - workflow_call
   - workflow_dispatch
 
-concurrency: 
+concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
@@ -99,7 +99,7 @@ jobs:
 
     steps:
       - name: Install MSRV toolchain
-        uses: dtolnay/rust-toolchain@1.65
+        uses: dtolnay/rust-toolchain@1.82
 
       - name: Checkout
         uses: actions/checkout@v5
