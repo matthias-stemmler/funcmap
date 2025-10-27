@@ -42,7 +42,8 @@ where
             let init_slice = unsafe { self.array_mut.get_unchecked_mut(..self.init_until_idx) };
 
             // SAFETY: by definition of `init_until_idx`, `init_slice` is fully initialized
-            let init_slice = unsafe { &mut *(init_slice as *mut [MaybeUninit<T>]).cast::<T>() };
+            let init_slice =
+                unsafe { &mut *ptr::from_mut::<[MaybeUninit<T>]>(init_slice).cast::<T>() };
 
             // SAFETY:
             // - `init_slice` is valid for dropping
