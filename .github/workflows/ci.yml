@@ -27,7 +27,7 @@ jobs:
           components: rustfmt
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run format check
         run: cargo fmt --check
@@ -43,7 +43,7 @@ jobs:
           components: clippy
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run Clippy
         run: cargo clippy
@@ -57,7 +57,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Build docs
         run: cargo doc
@@ -85,7 +85,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install minimal dependency versions
         run: cargo +nightly update -Zminimal-versions
@@ -102,7 +102,7 @@ jobs:
         uses: dtolnay/rust-toolchain@1.82
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Check
         run: cargo check
@@ -127,7 +127,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run cargo-nono
         run: cargo nono check --package funcmap
@@ -146,7 +146,7 @@ jobs:
         run: cargo miri setup
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run tests with Miri
         run: cargo miri test -p funcmap --lib

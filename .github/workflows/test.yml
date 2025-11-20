@@ -52,7 +52,7 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Test
         run: cargo test
