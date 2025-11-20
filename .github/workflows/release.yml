@@ -77,7 +77,7 @@ jobs:
         run: cargo install --locked convco@${{ env.VERSION_CONVCO }}
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -216,7 +216,7 @@ jobs:
         run: cargo install --locked cargo-workspaces@${{ env.VERSION_CARGO_WORKSPACES }}
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Get release notes from changelog
         id: release-notes
