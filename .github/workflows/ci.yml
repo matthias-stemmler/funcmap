@@ -69,7 +69,7 @@ jobs:
     steps:
       - name: Cache
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cargo/
           key: cargo-expand-${{ env.VERSION_CARGO_EXPAND }}
@@ -114,7 +114,7 @@ jobs:
     steps:
       - name: Cache
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cargo/
           key: cargo-nono-${{ env.VERSION_CARGO_NONO }}
