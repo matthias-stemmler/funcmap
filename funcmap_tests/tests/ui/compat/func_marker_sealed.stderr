@@ -9,7 +9,11 @@ help: the trait `funcmap::private::Sealed<T>` is not implemented for `T`
   |
 3 | enum T {}
   | ^^^^^^
-  = help: the trait `funcmap::private::Sealed<TypeParam<N>>` is implemented for `TypeParam<N>`
+help: the trait `funcmap::private::Sealed<TypeParam<N>>` is implemented for `TypeParam<N>`
+ --> $WORKSPACE/funcmap/src/lib.rs
+  |
+  |     impl<const N: usize> Sealed<TypeParam<N>> for TypeParam<N> {}
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 note: required by a bound in `FuncMarker`
  --> $WORKSPACE/funcmap/src/lib.rs
   |
