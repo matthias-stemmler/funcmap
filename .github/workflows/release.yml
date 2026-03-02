@@ -16,7 +16,7 @@ env:
   # renovate: datasource=crate versioning=semver-coerced depName=cargo-workspaces
   VERSION_CARGO_WORKSPACES: 0.4.2
   # renovate: datasource=crate versioning=semver-coerced depName=convco
-  VERSION_CONVCO: 0.6.2
+  VERSION_CONVCO: 0.6.3
 
 jobs:
   ci:
