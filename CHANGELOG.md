@@ -2,6 +2,8 @@
 
 ## [Unreleased] - (release date)
 
+## [0.1.7] - 2026-03-13
+
 ### Fixed
 
 - Fixed derive macro generating incorrect code for single-element tuple types like `(T,)`
@@ -53,7 +55,8 @@
 Initial version
 
 <!-- next-url -->
-[Unreleased]: https://github.com/matthias-stemmler/funcmap/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/matthias-stemmler/funcmap/compare/v0.1.7...HEAD
+[0.1.7]: https://github.com/matthias-stemmler/funcmap/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/matthias-stemmler/funcmap/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/matthias-stemmler/funcmap/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/matthias-stemmler/funcmap/compare/v0.1.3...v0.1.4
