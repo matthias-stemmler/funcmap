@@ -307,7 +307,7 @@ impl<'ast> Mapper<'ast> {
                     })
                     .collect::<Result<Vec<_>, _>>()?;
 
-                Ok(quote!((#(#mapped),*)))
+                Ok(quote!((#(#mapped,)*)))
             }
 
             Type::BareFn(..) => Err(syn::Error::new_spanned(

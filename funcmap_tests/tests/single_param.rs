@@ -73,6 +73,17 @@ fn tuple_entry_of_generic_param_type_is_mapped() {
     assert_eq!(dst, Test((T2, 42, T2)));
 }
 
+#[test]
+fn single_element_tuple_is_mapped() {
+    #[derive(FuncMap, Debug, PartialEq)]
+    struct Test<T>((T,));
+
+    let src = Test((T1,));
+    let dst = src.func_map(|_| T2);
+
+    assert_eq!(dst, Test((T2,)));
+}
+
 #[derive(Debug, PartialEq)]
 struct T1;
 

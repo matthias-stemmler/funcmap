@@ -56,13 +56,13 @@ impl IdentCollector {
 
         (0..=usize::MAX)
             .flat_map(|iteration| {
-                (desired_letter..='Z').chain('A'..=desired_letter).map(
-                    move |letter| match iteration {
+                (desired_letter..='Z')
+                    .chain('A'..desired_letter)
+                    .map(move |letter| match iteration {
                         0 => letter.to_string(),
                         1 => format!("__FUNCMAP_{letter}"),
                         i => format!("__FUNCMAP_{letter}{i}"),
-                    },
-                )
+                    })
             })
             .find(|letter| !self.idents.contains(letter))
             .unwrap()

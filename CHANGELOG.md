@@ -2,6 +2,10 @@
 
 ## [Unreleased] - (release date)
 
+### Fixed
+
+- Fixed derive macro generating incorrect code for single-element tuple types like `(T,)`
+
 ## [0.1.6] - 2025-10-27
 
 ### Changed
