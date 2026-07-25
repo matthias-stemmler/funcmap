@@ -127,6 +127,7 @@ impl UniquePredicates {
 
             (!bounds.is_empty()).then(|| {
                 WherePredicate::Lifetime(PredicateLifetime {
+                    attrs: Vec::new(),
                     lifetime: lhs,
                     colon_token: <Token![:]>::default(),
                     bounds,
@@ -139,6 +140,7 @@ impl UniquePredicates {
 
             (!bounds.is_empty()).then(|| {
                 WherePredicate::Type(PredicateType {
+                    attrs: Vec::new(),
                     lifetimes: lhs.lifetimes,
                     bounded_ty: lhs.bounded_ty,
                     colon_token: <Token![:]>::default(),

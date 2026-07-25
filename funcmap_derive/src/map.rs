@@ -127,6 +127,7 @@ impl<'ast> Mapper<'ast> {
                             leading_colon,
                             segments,
                         },
+                    ..
                 } = type_path;
 
                 if let Some(QSelf { ty: inner_ty, .. }) = &qself {
@@ -145,7 +146,7 @@ impl<'ast> Mapper<'ast> {
                 let (prefix, ident, arguments) = {
                     let mut prefix = segments.clone();
 
-                    match prefix.pop() {
+                    match prefix.pop_pair() {
                         Some(Pair::End(PathSegment { ident, arguments })) => {
                             (prefix, ident, arguments)
                         }
@@ -167,6 +168,7 @@ impl<'ast> Mapper<'ast> {
                 };
 
                 let prefix_type = Type::Path(TypePath {
+                    attrs: Vec::new(),
                     qself: qself.clone(),
                     path: Path {
                         leading_colon: *leading_colon,
@@ -249,6 +251,7 @@ impl<'ast> Mapper<'ast> {
                         });
 
                         Type::Path(TypePath {
+                            attrs: Vec::new(),
                             qself: qself.clone(),
                             path: Path {
                                 leading_colon: *leading_colon,
@@ -310,7 +313,7 @@ impl<'ast> Mapper<'ast> {
                 Ok(quote!((#(#mapped,)*)))
             }
 
-            Type::BareFn(..) => Err(syn::Error::new_spanned(
+            Type::FnPtr(..) => Err(syn::Error::new_spanned(
                 ty,
                 "mapping over function type is not supported",
             )
