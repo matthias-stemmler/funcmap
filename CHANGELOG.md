@@ -2,6 +2,10 @@
 
 ## [Unreleased] - (release date)
 
+### Changed
+
+- Updated `syn` dependency to `3.x`
+
 ## [0.1.8] - 2026-04-17
 
 ### Changed

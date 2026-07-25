@@ -6,8 +6,9 @@ use syn::fold::{self, Fold};
 use syn::punctuated::Punctuated;
 use syn::visit::{self, Visit};
 use syn::{
-    ConstParam, GenericArgument, GenericParam, LifetimeParam, PathSegment, PredicateType,
-    TraitBound, TraitBoundModifier, Type, TypeParam, TypeParamBound, TypePath, WherePredicate,
+    ConstParam, FnPtrVariadic, GenericArgument, GenericParam, LifetimeParam, NamedArg, PathSegment,
+    PredicateLifetime, PredicateType, TraitBound, Type, TypeParam, TypeParamBound, TypePath,
+    WherePredicate,
 };
 
 /// Extension trait for determining the dependency of an AST node on a type
@@ -58,14 +59,14 @@ impl<'ast> Visit<'ast> for DependencyOnTypeVisitor<'ast, '_> {
         }
 
         match ty {
-            Type::Path(TypePath { qself: None, path }) if path.leading_colon.is_none() => {
-                match path.segments.first() {
-                    Some(PathSegment { ident, .. }) if ident == self.type_ident => {
-                        self.dependency = Some(ident);
-                    }
-                    _ => visit::visit_type(self, ty),
+            Type::Path(TypePath {
+                qself: None, path, ..
+            }) if path.leading_colon.is_none() => match path.segments.first() {
+                Some(PathSegment { ident, .. }) if ident == self.type_ident => {
+                    self.dependency = Some(ident);
                 }
-            }
+                _ => visit::visit_type(self, ty),
+            },
             _ => visit::visit_type(self, ty),
         }
     }
@@ -116,14 +117,14 @@ impl<'a> SubsTypeFolder<'a> {
 impl Fold for SubsTypeFolder<'_> {
     fn fold_type(&mut self, mut ty: Type) -> Type {
         match &mut ty {
-            Type::Path(TypePath { qself: None, path }) if path.leading_colon.is_none() => {
-                match path.segments.first_mut() {
-                    Some(PathSegment { ident, .. }) if ident == self.type_ident => {
-                        *ident = self.subs_ident.clone();
-                    }
-                    _ => (),
+            Type::Path(TypePath {
+                qself: None, path, ..
+            }) if path.leading_colon.is_none() => match path.segments.first_mut() {
+                Some(PathSegment { ident, .. }) if ident == self.type_ident => {
+                    *ident = self.subs_ident.clone();
                 }
-            }
+                _ => (),
+            },
             _ => (),
         }
 
@@ -160,6 +161,7 @@ pub(crate) trait IntoType {
 impl IntoType for Ident {
     fn into_type(self) -> Type {
         Type::Path(TypePath {
+            attrs: Vec::new(),
             qself: None,
             path: self.into(),
         })
@@ -251,24 +253,95 @@ struct WithoutAttrsFolder;
 
 impl Fold for WithoutAttrsFolder {
     fn fold_const_param(&mut self, const_param: ConstParam) -> ConstParam {
-        ConstParam {
-            attrs: Vec::new(),
-            ..const_param
-        }
+        fold::fold_const_param(
+            self,
+            ConstParam {
+                attrs: Vec::new(),
+                ..const_param
+            },
+        )
+    }
+
+    fn fold_fn_ptr_variadic(&mut self, variadic: FnPtrVariadic) -> FnPtrVariadic {
+        fold::fold_fn_ptr_variadic(
+            self,
+            FnPtrVariadic {
+                attrs: Vec::new(),
+                ..variadic
+            },
+        )
     }
 
     fn fold_lifetime_param(&mut self, lifetime_param: LifetimeParam) -> LifetimeParam {
-        LifetimeParam {
-            attrs: Vec::new(),
-            ..lifetime_param
+        fold::fold_lifetime_param(
+            self,
+            LifetimeParam {
+                attrs: Vec::new(),
+                ..lifetime_param
+            },
+        )
+    }
+
+    fn fold_named_arg(&mut self, named_arg: NamedArg) -> NamedArg {
+        fold::fold_named_arg(
+            self,
+            NamedArg {
+                attrs: Vec::new(),
+                ..named_arg
+            },
+        )
+    }
+
+    fn fold_predicate_lifetime(&mut self, predicate: PredicateLifetime) -> PredicateLifetime {
+        fold::fold_predicate_lifetime(
+            self,
+            PredicateLifetime {
+                attrs: Vec::new(),
+                ..predicate
+            },
+        )
+    }
+
+    fn fold_predicate_type(&mut self, predicate: PredicateType) -> PredicateType {
+        fold::fold_predicate_type(
+            self,
+            PredicateType {
+                attrs: Vec::new(),
+                ..predicate
+            },
+        )
+    }
+
+    fn fold_type(&mut self, mut ty: Type) -> Type {
+        match &mut ty {
+            Type::Array(inner) => inner.attrs = Vec::new(),
+            Type::FnPtr(inner) => inner.attrs = Vec::new(),
+            Type::Group(inner) => inner.attrs = Vec::new(),
+            Type::ImplTrait(inner) => inner.attrs = Vec::new(),
+            Type::Infer(inner) => inner.attrs = Vec::new(),
+            Type::Macro(inner) => inner.attrs = Vec::new(),
+            Type::Never(inner) => inner.attrs = Vec::new(),
+            Type::Paren(inner) => inner.attrs = Vec::new(),
+            Type::Path(inner) => inner.attrs = Vec::new(),
+            Type::Ptr(inner) => inner.attrs = Vec::new(),
+            Type::Reference(inner) => inner.attrs = Vec::new(),
+            Type::Slice(inner) => inner.attrs = Vec::new(),
+            Type::TraitObject(inner) => inner.attrs = Vec::new(),
+            Type::Tuple(inner) => inner.attrs = Vec::new(),
+            _ => (),
         }
+
+        fold::fold_type(self, ty)
     }
 
     fn fold_type_param(&mut self, type_param: TypeParam) -> TypeParam {
-        TypeParam {
-            attrs: Vec::new(),
-            ..type_param
-        }
+        fold::fold_type_param(
+            self,
+            TypeParam {
+                attrs: Vec::new(),
+                ..type_param
+            },
+        )
     }
 }
 
@@ -281,7 +354,6 @@ pub(crate) trait WithoutDefault {
 impl WithoutDefault for ConstParam {
     fn without_default(self) -> Self {
         Self {
-            eq_token: None,
             default: None,
             ..self
         }
@@ -301,7 +373,6 @@ impl WithoutDefault for GenericParam {
 impl WithoutDefault for TypeParam {
     fn without_default(self) -> Self {
         Self {
-            eq_token: None,
             default: None,
             ..self
         }
@@ -324,7 +395,7 @@ where
                 !matches!(
                     bound,
                     TypeParamBound::Trait(TraitBound {
-                        modifier: TraitBoundModifier::Maybe(..),
+                        maybe: Some(..),
                         ..
                     })
                 )
@@ -547,6 +618,41 @@ mod tests {
         );
 
         assert_eq!(type_param.without_attrs(), parse_quote!(T: Trait = Test));
+    }
+
+    #[test]
+    fn without_attrs_removes_attributes_from_predicate_type() {
+        let predicate: WherePredicate = parse_quote!(#[attr] T: Trait);
+
+        assert_eq!(predicate.without_attrs(), parse_quote!(T: Trait));
+    }
+
+    #[test]
+    fn without_attrs_removes_attributes_from_predicate_lifetime() {
+        let predicate: WherePredicate = parse_quote!(#[attr] 'a: 'b);
+
+        assert_eq!(predicate.without_attrs(), parse_quote!('a: 'b));
+    }
+
+    #[test]
+    fn without_attrs_removes_attributes_from_nested_types() {
+        let predicate: WherePredicate =
+            parse_quote!(T: Trait<fn(#[attr] usize) -> bool, fn(#[attr] u8, #[attr] ...)>);
+
+        assert_eq!(
+            predicate.without_attrs(),
+            parse_quote!(T: Trait<fn(usize) -> bool, fn(u8, ...)>)
+        );
+    }
+
+    #[test]
+    fn without_attrs_removes_attributes_from_bounds_of_type_param() {
+        let type_param: GenericParam = parse_quote!(T: Trait<fn(#[attr] usize)>);
+
+        assert_eq!(
+            type_param.without_attrs(),
+            parse_quote!(T: Trait<fn(usize)>)
+        );
     }
 
     #[test]
