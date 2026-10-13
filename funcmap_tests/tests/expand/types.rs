@@ -7,3 +7,7 @@ struct Test<T> {
     nested: Foo<Bar<T>>,
     repeated: Foo<T, T>,
 }
+
+struct Foo<S, T = ()>(S, T);
+
+struct Bar<T>(T);
