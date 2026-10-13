@@ -194,3 +194,5 @@ where
         )
     }
 }
+struct Foo<S, T = ()>(S, T);
+struct Bar<T>(T);
